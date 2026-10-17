@@ -1,20 +1,25 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.2 (draft) | Status: for review | Date: 2026-10-17
+Version 0.3 (draft) | Status: for review | Date: 2026-10-17
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
 
-**Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain. The product scope and design are unchanged.
+**Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain.
+
+**Change in 0.3.** Applies the decisions D1 to D10 from [STRATEGY.md](STRATEGY.md) (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory) and the prototype feedback that the layout wasted space. Reading is now an equal first class job. New sections 4.5 (space budget) and 7.8 (read, extract, write). Layouts, widgets, data model and phases updated.
 
 ---
 
 ## 1. Product summary
 
-VisaryNotes is a note taking app and document reader for Android phones, foldables and tablets. It has three jobs.
+VisaryNotes is a document reader and a note taking app in one, for Android phones, foldables and tablets. Both jobs are equally important, and the product is built around the loop that connects them.
 
-1. Capture and organize notes quickly, with full Markdown and inline images.
-2. Open documents people receive (Markdown, plain text, RTF, ODF) and show them in two ways. A reflowed reading view that is comfortable on a phone, and a faithful view that respects the layout the author intended.
-3. Save and share notes in the formats people actually use.
+1. **Read.** Open documents people receive (Markdown, plain text, RTF, ODF) and show them in two ways. A reflowed Reading view that is comfortable on a phone, and an Original view that respects the layout the author intended.
+2. **Extract.** Highlight passages and quote them into notes. Every quote keeps a link back to its place in the document.
+3. **Write.** Capture and organise notes quickly, with full Markdown and inline images.
+4. **Reply.** Save and share in the formats other people use, including the sender's own format.
+
+Notes and documents live together in one **Library**. Strategy analysis behind this framing is in [STRATEGY.md](STRATEGY.md).
 
 The visual identity is a distinct glass style called **Visary Glass**, built on top of Material 3 so the app still feels native to Android.
 
@@ -30,6 +35,8 @@ The visual identity is a distinct glass style called **Visary Glass**, built on 
 | G6 | Several themes that all pass WCAG 2.2 AA contrast for text |
 | G7 | Works fully offline, no account, no tracking |
 | G8 | Developed, built, debugged and published from Visual Studio on Windows, with very low GitHub Actions usage |
+| G9 | Reading and note taking connected by highlights and linked quotes (the read, extract, write loop) |
+| G10 | Content first. Chrome takes as little screen space as possible and hides while reading |
 
 ### 1.2 Non goals for v1
 
@@ -88,9 +95,9 @@ Layouts are chosen by window width, never by device type, so the same rules work
 
 | Width class | Typical device | Layout |
 | --- | --- | --- |
-| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. Note list, tap opens editor full screen. Bottom glass navigation bar |
-| Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | List and detail side by side when the hinge allows, otherwise single pane. Navigation rail |
-| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three panes. Folders, note list, editor or viewer. Navigation rail or permanent side panel |
+| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. Library list, tap opens the reader or editor full screen. No tab bar. A slim bottom action dock (Open file, voice, New note) on the Library only. While reading, a pull up sheet shows the linked note |
+| Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | Two panes. Document and its linked note side by side, or Library and detail. Library opens as a drawer from the top bar |
+| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three panes. Library list, document, linked note. When a note without a document is open, the middle pane is the editor and the right pane shows backlinks |
 
 **Implementation.** A single `AdaptiveShellPage` hosts the panes. It listens to the window size (`Window.SizeChanged`) and switches between layouts through `VisualStateManager` states driven by MAUI's built in `AdaptiveTrigger` (MinWindowWidth 600 and 840). Pane content is reused across states, so switching layout never recreates the editor or loses its cursor.
 
@@ -104,7 +111,7 @@ Hinge and posture data come from Jetpack WindowManager (`FoldingFeature`), acces
 | Posture | Behaviour |
 | --- | --- |
 | Flat, unfolded | Normal expanded or medium layout. Panes never straddle a separating hinge |
-| Book (vertical hinge, half open) | List on the left, editor on the right, split exactly at the hinge |
+| Book (vertical hinge, half open) | Document on the left, linked note on the right, split exactly at the hinge. For a plain note, Library on the left and note on the right |
 | Tabletop (horizontal hinge, half open) | Document or note on the top half, formatting toolbar and keyboard area on the bottom half. In viewer mode, the bottom half shows page thumbnails and zoom controls |
 | Folded (outer screen) | Compact layout. State is preserved across fold and unfold with no reload |
 
@@ -159,22 +166,36 @@ MAUI has no built in backdrop blur, so the glass is a custom control.
 | Level | Use | Tint opacity | Blur |
 | --- | --- | --- | --- |
 | Glass 0 | Aurora backdrop | n/a | n/a |
-| Glass 1 | Note cards, list items | 55 percent | aurora copy only (no capture) |
+| Glass 1 | Library list panel (one panel holding all rows, not one card per row) | 60 percent | aurora copy only (no capture) |
 | Glass 2 | Top bar, bottom bar, rail | 65 percent | 24dp capture |
 | Glass 3 | Sheets, dialogs, menus, formatting toolbar | 80 percent | 32dp capture |
 
-### 4.5 Readability rules (non negotiable)
+### 4.5 Space budget (non negotiable)
+
+Driven by prototype feedback and decision D4 in STRATEGY.md. Content gets the screen. Glass is a thin frame around it.
+
+| Element | Rule |
+| --- | --- |
+| Top bar | One floating glass bar, 52dp tall, 8dp from the edges. It holds search on the Library and the file name plus view switch in the reader. No large page titles |
+| Bottom | No permanent tab bar. Library shows a 60dp action dock. Reader and editor show nothing at the bottom except the 56dp linked note handle (reader) or the formatting bar docked to the keyboard (editor) |
+| Reading surface | Edge to edge, 20dp side padding in Reading view, 8dp around the page in Original view |
+| Immersive reading | A tap on the document hides all chrome. A second tap shows it. Scrolling down hides it automatically (setting) |
+| List density | Comfortable, Compact (default) and Dense. Compact fits about ten Library rows on a 6.1 inch phone. Dense hides the snippet line |
+| Gaps | 8dp outer margin, 6 to 8dp between chrome elements. No decorative spacing |
+| Panes on large screens | No navigation rail. Panes sit 8dp apart and use the full height |
+
+### 4.6 Readability rules (non negotiable)
 
 * Text is never placed directly on blur alone. There is always a tint layer whose opacity guarantees the contrast targets in section 5.3 against the worst case backdrop.
 * The editor and document viewer body area is **solid**, not glass. Glass is used for chrome (bars, cards, sheets, toolbars) only. Long form reading happens on an opaque "paper" surface.
 * A "Reduce transparency" setting replaces all glass with solid tinted surfaces. It is turned on automatically when the system high contrast text setting is on, and when battery saver is active.
 * A "Reduce motion" setting stops the aurora animation and shortens transitions. It follows the system animation scale by default.
 
-### 4.6 Motion
+### 4.7 Motion
 
 Container transitions use MAUI animation APIs with spring like easing. Glass panes fade their blur in over 150ms when they appear so the screen does not flash. The aurora drifts very slowly (one full cycle per 60 seconds) and pauses when the app is in the background.
 
-### 4.7 Fallbacks by Android version
+### 4.8 Fallbacks by Android version
 
 | Android version | Glass treatment |
 | --- | --- |
@@ -182,7 +203,7 @@ Container transitions use MAUI animation APIs with spring like easing. Glass pan
 | 8 to 11 (API 26 to 30) | Tint, grain, edge glint and the pre softened aurora. No capture blur |
 | Any, with Reduce transparency on | Solid surfaces, edge glint kept as a subtle border |
 
-### 4.8 Typography
+### 4.9 Typography
 
 * Fonts are bundled in `Resources/Fonts` and registered with `ConfigureFonts` in `MauiProgram`.
 * UI font proposal: Inter (SIL Open Font Licence), fallback Roboto.
@@ -233,8 +254,10 @@ Glass contrast is tested against the worst case backdrop (the lightest and darke
 
 ## 6. Notes and editor
 
-### 6.1 Notes and organization
+### 6.1 Library and organisation
 
+* **One Library** for notes and documents. Filters All, Notes, Documents, Pinned, Linked. Documents show a type badge (MD, TXT, RTF, ODT) and page count. A "Continue reading" row sits at the top when a document is in progress.
+* **Markdown folder import** in phase 1. Point at an existing folder (for example a Markor or Obsidian folder) and its .md files become notes. Optional "work in folder" mode keeps editing those files in place.
 * Create, edit, duplicate, delete (with a 30 day recycle bin), pin, archive.
 * Folders (nested two levels) and tags (unlimited, colour coded).
 * Sort by edited, created, title, or manual drag order.
@@ -347,7 +370,24 @@ Document
     Image, CodeBlock, Quote, PageBreak, HorizontalRule, Footnote
 ```
 
-### 7.7 Safety and robustness
+### 7.7 Zero setup open
+
+A file opened from another app (Files, email, chat, browser) goes straight to the reader with no onboarding. The top bar offers "Save to Library" and the selection menu offers "Quote to note". Nothing is added to the Library unless the user chooses to. This is the trial path (STRATEGY.md decision D5).
+
+### 7.8 Read, extract, write
+
+The feature that ties the two jobs together (STRATEGY.md decisions D2 and D3).
+
+* **Select text** in either view. A small glass menu offers Highlight, Quote to note, Copy.
+* **Highlight** stores the passage and shows it tinted in both views and in the Library row ("2 highlights").
+* **Quote to note** inserts a Markdown blockquote into the linked note, followed by a source link line (document name, page, nearest heading). Tapping the source link opens the document at that passage.
+* **Linked note.** Each document can have one primary linked note, created on the first quote. More notes can link to the same document.
+* **Where it shows.** Phone, a pull up sheet over the reader (56dp handle, opens to about half height). Foldable book posture, document and note on either side of the hinge. Tablet, third pane.
+* **Anchors.** A quote stores the document's file hash, a block path in the document model, character offsets and the quoted text. If the file changes, the anchor is re matched by text search and marked "moved" if it cannot be found exactly.
+* **Export.** Notes export with quotes as normal blockquotes and source lines, so they stay readable in any Markdown app.
+* **Sidecar option.** Highlights stay in the app database by default and never change the original file. Writing highlights into the file is not planned.
+
+### 7.9 Safety and robustness
 
 * All parsing runs on background threads (`Task.Run`) with size and time limits and a `CancellationToken`. A malformed file shows a friendly error and a "Show as plain text" fallback, never a crash.
 * ZIP reading guards against zip bombs (maximum uncompressed size, maximum entry count) and path traversal in entry names.
@@ -403,6 +443,7 @@ MAUI has no widget framework, so widgets are written as native Android widgets i
 | Widget | Sizes | Interaction |
 | --- | --- | --- |
 | Quick Capture | 2x1, 4x1 | Buttons for new text note, new checklist, new photo note, voice to text note. Opens straight into the editor |
+| Continue Reading | 2x2 up to 4x2 | Last opened document with page and progress bar. Tap reopens it at the same position |
 | Pinned Note | 2x2 up to 4x4, resizable | Shows a chosen note (simple Markdown styling via spans). Tap to open. Scrollable |
 | Checklist | 2x2 up to 4x5, resizable | Tick and untick items on the home screen without opening the app. Add item button |
 | Recent Notes | 4x2 up to 4x4 | List of latest notes, tap to open, plus a new note button |
@@ -446,7 +487,7 @@ Home screen widgets cannot blur the wallpaper behind them, so they use the "glas
 * TalkBack support with `SemanticProperties.Description` and `SemanticProperties.HeadingLevel` on all controls. The WebView viewer uses real HTML headings and table markup so TalkBack reads structure correctly.
 * All touch targets at least 48dp.
 * Font scale up to 200 percent without clipping or overlapping.
-* Reduce transparency and Reduce motion settings (section 4.5).
+* Reduce transparency and Reduce motion settings (section 4.6).
 * Never use colour alone to show state (tags also show a name, checked items are also struck through).
 * Switch Access and keyboard navigation with visible focus rings on glass.
 
@@ -514,8 +555,13 @@ Tag         Id, Name, Color
 NoteTag     NoteId, TagId
 Attachment  Id, NoteId, FileName, MimeType, Size
 NoteVersion Id, NoteId, Body, SavedAt
-RecentFile  Uri, DisplayName, MimeType, LastOpenedAt, ViewMode
+Document    Id, Uri, DisplayName, MimeType, FileHash, PageCount, LastPosition,
+            LastOpenedAt, ViewMode, InLibrary
+Highlight   Id, DocumentId, BlockPath, StartOffset, EndOffset, Text, Color,
+            CreatedAt, AnchorState
+NoteLink    Id, NoteId, DocumentId, HighlightId (nullable), IsPrimary
 NoteSearch  FTS5 virtual table over Title and Body
+DocSearch   FTS5 virtual table over extracted document text
 ```
 
 ### 11.4 Permissions
@@ -577,10 +623,11 @@ Release builds use trimming and the .NET for Android AOT defaults to keep startu
 | Phase | Scope | Exit criteria |
 | --- | --- | --- |
 | 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), 3 themes (Dynamic, Emerald Mist, Paper), adaptive shell, CI workflow | App runs from Visual Studio on phone, foldable and tablet emulators with glass chrome and correct pane layouts |
-| 1. Notes core | SQLite storage, note list, folders, tags, Markdown editor with live spans and images, search, trash, autosave | Daily usable as a notes app |
-| 2. Open documents | TXT, MD, RTF, ODT readers, document model, WebView viewer with Reading and Original views, open with and share intents, recent files | Sample corpus of 50 real world files opens without crash and passes visual review |
-| 3. Export and widgets | All export formats, four widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |
-| 4. Polish and stretch | Accessibility audit, performance pass, version history UI, .ods and .odp viewing, .docx viewing, math and Mermaid, multi window | Release candidate |
+| 1. Library core | SQLite storage, unified Library with density setting, folders, tags, Markdown editor with live spans and images, search, trash, autosave, Markdown folder import | Daily usable as a notes app, existing Markdown notes imported |
+| 2. Reader and loop | TXT, MD, RTF, ODT readers, document model, Reading and Original views, immersive mode, zero setup open with, highlights, Quote to note, linked notes, test corpus in the repo | Corpus of 50 real world files opens without crash. A quote round trip (select, quote, tap source) works on phone, foldable and tablet |
+| 3. Reply and widgets | All export formats and Save back, five widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |
+| 4. Beta and polish | Beta with 15 to 30 testers using the TPB and diffusion questionnaires in STRATEGY.md section 5, accessibility audit, performance pass, version history UI | Release candidate |
+| Later | .ods and .odp viewing, .docx viewing, math and Mermaid, multi window | After v1 (STRATEGY.md decision D10) |
 
 ---
 
@@ -602,6 +649,8 @@ iOS and Windows builds from the same solution, optional sync through user chosen
 ---
 
 ## Appendix A. References
+
+* VisaryNotes strategy analysis (VRIO, TPB, IDT). [STRATEGY.md](STRATEGY.md)
 
 * Microsoft Learn, .NET target frameworks (default Android API per .NET version). https://learn.microsoft.com/dotnet/standard/frameworks
 * Microsoft, .NET MAUI first app tutorial (Visual Studio setup). https://dotnet.microsoft.com/learn/maui/first-app-tutorial/intro
