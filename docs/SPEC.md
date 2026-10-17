@@ -1,12 +1,14 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.4 (draft) | Status: for review | Date: 2026-10-17
+Version 0.5 (draft) | Status: for review | Date: 2026-10-17
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
 
 **Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain.
 
 **Change in 0.3.** Applies the decisions D1 to D10 from [STRATEGY.md](STRATEGY.md) (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory) and the prototype feedback that the layout wasted space. Reading is now an equal first class job. New sections 4.5 (space budget) and 7.8 (read, extract, write). Layouts, widgets, data model and phases updated.
+
+**Change in 0.5.** Visible glass (62 percent tint, adaptive to 85 percent over images), frosted glass on home screen widgets, and a token system with an automated layout check that owns spacing and padding. See DESIGN.md sections 4.2.1, 4.2.2, 4.7 and 4.8.
 
 **Change in 0.4.** Visual design rebuilt on a documented CMF system, colour theory, UX laws and one handed, ambidextrous ergonomics. Full reasoning and sources are in [DESIGN.md](DESIGN.md), which now governs every visual and interaction decision. Sections 3.1, 4, 5 and 9.3 are rewritten to match. Shapes are crisp (0, 2, 4dp plus one chamfer), all actions moved to the bottom of the screen, a handedness setting was added, and the palette was rebuilt so body text reaches 7 to 1 contrast or more in every theme.
 
@@ -140,11 +142,15 @@ The complete rationale, with sources and measurements, is in [DESIGN.md](DESIGN.
 | --- | --- | --- |
 | Desk | Matte | `Desk` colour token. Background behind panes and behind pages in Original view |
 | Paper | Matte, no texture | `Paper` token. Every content surface. Fully opaque |
-| Glass | Satin etched: blur 24dp, tint 90 percent, grain 2 percent, 1dp light top edge, 1dp dark bottom edge | `GlassView` control (4.3). Tools only. Text on glass is limited to labels of about four words |
+| Glass | Satin etched: blur 24dp at 150 percent saturation, tint 62 percent rising to 85 percent over images, grain 3 percent, top sheen, 1dp light top edge, 1dp dark bottom edge | `GlassView` control (4.3). Tools only. Content always scrolls under it. Text on glass is limited to labels of about four words |
 | Ink | Flat | `Ink` and `InkSecondary` tokens. Never semi transparent |
 | Accent light | Flat, chamfered | `Accent`, `OnAccent`, `AccentText` tokens. One primary action per screen |
 
-### 4.2 Shape tokens
+### 4.2 Spacing, size and shape tokens
+
+All values come from `tools/design/tokens.json` and are generated into `Tokens.xaml` by `tools/design/generate.py`. XAML never contains a literal padding, margin, spacing or corner radius. `tools/design/lint_layout.py` enforces this (DESIGN.md 4.7 and 4.8). Spacing scale 4, 8, 12, 16, 24, 32, 48dp. Sizes: strip 48, control 48, primary 56, rows 48, 56, 64, badge 40, icon 24dp.
+
+**Shape tokens**
 
 | Token | Value | Used for |
 | --- | --- | --- |
@@ -162,7 +168,8 @@ MAUI has no built in backdrop blur, so glass is a custom control.
 * **`GlassView`** is a MAUI `ContentView` with bindable properties for tint and edge lines. Tint, grain and edge lines are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
 * **Backdrop blur** is a custom Android handler. On Android 12+ it records the content behind the bar into a `RenderNode` and applies `RenderEffect.CreateBlurEffect` on the GPU. `RenderEffect` set directly on a view blurs the view itself, which is why the `RenderNode` capture step is needed.
 * **Evaluate first.** The third party package VitrumMAUI describes the same approach with a tint only fallback below Android 12 ([NuGet, VitrumMAUI](https://www.nuget.org/packages/VitrumMAUI)). Phase 0 compares it with the custom handler and picks one.
-* Because tint is 90 percent opaque, contrast does not depend on the blur. Below Android 12, and with Reduce transparency on, glass becomes the solid paper colour with edge lines kept.
+* **Adaptive tint.** The handler samples the blurred backdrop under each bar at low resolution when scrolling settles and a few times a second while it moves. Over typical content the tint stays at 62 percent. Over images it eases to 85 percent within 150ms. Both levels are proven by `tools/design/contrast.py`.
+* Below Android 12, and with Reduce transparency on, glass becomes the solid paper colour with edge lines kept. High Contrast themes switch glass off.
 
 ### 4.4 Screen zones and one handed rules
 
@@ -447,7 +454,7 @@ Each configurable widget has a small configuration activity (chosen note, theme)
 
 ### 9.3 Widget styling
 
-Home screen widgets cannot blur the wallpaper behind them, so they use paper at 94 percent opacity with the cut edge lines, drawn with Android shape and layer list drawables in XML. Inner controls use the 2dp control shape and the chamfered primary action. The launcher may apply its own corner radius to the widget's outer background on Android 12 and newer, which is accepted. Widgets follow the app theme, chosen in the configuration screen. Users are encouraged (in the widget picker preview) to place widgets in the lower half of the home screen, inside thumb reach.
+Home screen widgets use **frosted glass**: light frost at 80 percent or dark frost at 85 percent, so the wallpaper shows through, plus a 4 percent grain tile, a top sheen and the cut edge lines. Everything is a `layer-list` drawable, which `RemoteViews` supports. A widget cannot blur the wallpaper behind it and cannot read the wallpaper image (DESIGN.md 4.2.2), so translucency plus grain is how glass is expressed. Polarity is Auto (from wallpaper colour hints where available), Light or Dark, set in the widget configuration screen. The 80 and 85 percent levels are the lowest that keep ink at 7 to 1 and labels at 4.5 to 1 over a pure white or pure black wallpaper. The outer corner radius is the launcher's (`system_app_widget_background_radius`). Inner controls use the 2dp control shape and the chamfered primary action, with sizes from the generated `dimens.xml`.
 
 ### 9.4 Other system integration
 
@@ -605,7 +612,7 @@ Release builds use trimming and the .NET for Android AOT defaults to keep startu
 ### 14.2 Rules
 
 1. **Visual Studio is the primary build machine.** Debug, tests and signed release APKs all come from Visual Studio on the developer's PC. CI is a safety net, not a requirement.
-2. **One workflow, one Linux job.** `ubuntu-latest`, `actions/setup-dotnet` for .NET 10, `dotnet workload install maui-android`, run `VisaryNotes.Core.Tests`, then `dotnet build -f net10.0-android`. No matrix, no emulator. The workload install step is verified on the first run.
+2. **One workflow, one Linux job.** `ubuntu-latest`, `actions/setup-dotnet` for .NET 10, `dotnet workload install maui-android`, run `tools/design/contrast.py` and `tools/design/lint_layout.py src`, run `VisaryNotes.Core.Tests`, then `dotnet build -f net10.0-android`. No matrix, no emulator. The workload install step is verified on the first run.
 3. **Manual or tag triggered only.** `workflow_dispatch` and version tags (`v*`), not every push. Optionally pull requests to `main` with path filters so documentation changes never trigger a build.
 4. **Cancel superseded runs** with a `concurrency` group and `cancel-in-progress: true`.
 5. **Caching** of NuGet packages and the .NET workload.
@@ -618,7 +625,7 @@ Release builds use trimming and the .NET for Android AOT defaults to keep startu
 
 | Phase | Scope | Exit criteria |
 | --- | --- | --- |
-| 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), themes generated from themes.json (Daylight, Dusk, High Contrast), handedness setting, bottom bar layouts, adaptive shell, CI workflow running the contrast check | App runs from Visual Studio on phone, foldable and tablet emulators with glass bars, correct pane layouts and passing contrast checks |
+| 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), themes generated from themes.json (Daylight, Dusk, High Contrast), handedness setting, bottom bar layouts, adaptive shell, token generator, CI workflow running the contrast and layout checks | App runs from Visual Studio on phone, foldable and tablet emulators with glass bars, correct pane layouts and passing contrast checks |
 | 1. Library core | SQLite storage, unified Library with density setting, folders, tags, Markdown editor with live spans and images, search, trash, autosave, Markdown folder import | Daily usable as a notes app, existing Markdown notes imported |
 | 2. Reader and loop | TXT, MD, RTF, ODT readers, document model, Reading and Original views, immersive mode, zero setup open with, highlights, Quote to note, linked notes, test corpus in the repo | Corpus of 50 real world files opens without crash. A quote round trip (select, quote, tap source) works on phone, foldable and tablet |
 | 3. Reply and widgets | All export formats and Save back, five widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |

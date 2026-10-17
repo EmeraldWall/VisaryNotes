@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VisaryNotes phone v4</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;family=JetBrains+Mono:wght@400&amp;family=Tinos:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+/* lint:off  token definitions, generated from tools/design/tokens.json */
+.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--h-row-dense:48px;--h-row:56px;--h-row-comfortable:64px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--chamfer:8px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
+/* lint:on */
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app *{box-sizing:border-box}
+.app button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+.app button:focus-visible,.app input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.app input::placeholder{color:var(--soft)}
+.glass{position:relative;isolation:isolate;background:var(--glassBase);-webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);border-top:1px solid var(--edgeHi);border-bottom:1px solid var(--edgeLo)}
+.glass.adaptive{background:var(--glassMax)}
+.glass::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--sheen) 0,rgba(255,255,255,0) 55%);pointer-events:none;z-index:-1}
+.glass::after{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--grainDot) 0.6px,transparent 0.8px);background-size:3px 3px;opacity:.5;pointer-events:none;z-index:-1}
+.solid .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--paper)}
+.chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.chamfer-l{clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px)}
+.primary{flex:1.3;height:var(--h-primary);background:linear-gradient(225deg,var(--bevel) 0 6px,rgba(255,255,255,0) 6px),var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);font-size:var(--fs-title);line-height:var(--lh-title);font-weight:700;border-radius:var(--r-0)}
+.slot{flex:1;min-width:0;height:var(--h-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-0);font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;border-radius:var(--r-1)}
+.slot:active{background:var(--fill)}
+.segs{display:flex;gap:var(--sp-1)}
+.seg{flex:1;height:var(--h-control);font-size:var(--fs-ui);font-weight:600;border:1.5px solid var(--ink);border-radius:var(--r-1)}
+.seg.on{background:var(--ink);color:var(--paper)}
+.bar{position:absolute;left:0;right:0;bottom:0;padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.strip{position:absolute;top:0;left:0;right:0;height:var(--h-strip);display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-0) var(--sp-4)}
+.row{display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:left;padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line)}
+.row:active{background:var(--fill)}
+.badge{width:var(--badge);height:var(--badge);flex:none;display:grid;place-items:center;font-size:var(--fs-caption);font-weight:700;border:1.5px solid var(--ink);border-radius:var(--r-1)}
+.badge.doc{background:var(--ink);color:var(--paper)}
+.t1{font-size:var(--fs-title);line-height:var(--lh-title);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t2{font-size:var(--fs-label);line-height:var(--lh-label);font-weight:500;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.read{font-family:'Literata',Georgia,serif;font-size:var(--fs-read);line-height:var(--lh-read)}
+.read h2{margin:var(--sp-0);font-size:var(--fs-h2);line-height:var(--lh-h2);font-weight:600}
+.read h3{margin:var(--sp-0);font-size:var(--fs-h3);line-height:var(--lh-h3);font-weight:600}
+.read p{margin:var(--sp-0)}
+.flow{display:flex;flex-direction:column;gap:var(--sp-4)}
+.quote{border-left:4px solid var(--accent);padding:var(--sp-0) var(--sp-0) var(--sp-0) var(--sp-3)}
+.src{font-family:'Figtree',sans-serif;font-size:var(--fs-label);line-height:var(--lh-label);color:var(--accentText);font-weight:700}
+.mk{color:var(--soft);font-family:'JetBrains Mono',monospace;font-size:var(--fs-ui)}
+.hl{background:var(--hl);box-shadow:inset 0 -2px 0 var(--accent)}
+.sel{background:var(--sel)}
+.chk{width:var(--icon);height:var(--icon);border:2px solid var(--ink);border-radius:var(--r-1);display:grid;place-items:center;flex:none}
+.chk.on{background:var(--ink);color:var(--paper)}
+.chk svg{opacity:0}.chk.on svg{opacity:1}
+.done{text-decoration:line-through;color:var(--soft)}
+.ib{width:var(--h-control);height:var(--h-control);display:grid;place-items:center;border-radius:var(--r-1);flex:none}
+.ib.fill{background:var(--fill)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.noscroll{scrollbar-width:none}.noscroll::-webkit-scrollbar{display:none}
+.lbl{font-size:var(--fs-caption);line-height:var(--lh-caption);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);padding:var(--sp-6) var(--sp-4) var(--sp-2)}
+.opt{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:var(--h-row);padding:var(--sp-2) var(--sp-4);text-align:left;border-bottom:1px solid var(--line)}
+.opt.on{box-shadow:inset 4px 0 0 var(--accent)}
+.sw{width:44px;height:28px;border:2px solid var(--ink);border-radius:var(--r-1);position:relative;flex:none}
+.sw .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--ink);border-radius:var(--r-0);transition:left .12s}
+.sw.on{background:var(--ink)}
+.sw.on .knob{left:18px;background:var(--paper)}
+.field{flex:1;height:var(--h-primary);display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-0) var(--sp-4);background:var(--paper);border:2px solid var(--ink);border-radius:var(--r-1)}
+.field input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--ink);font:inherit;font-size:var(--fs-title);font-weight:500}
+</style>
+</helmet>
+<div class="app {{rootCls}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; background: var(--paper); color: var(--ink); font-family: 'Figtree', system-ui, sans-serif; {{vars}}">
+
+<sc-if value="{{isLibrary}}" hint-placeholder-val="{{true}}">
+<div style="position: absolute; inset: 0">
+<div class="noscroll" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--h-strip) var(--sp-0) var(--sp-0)">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="12">
+<button class="row" onClick="{{it.open}}" style="min-height: {{rowH}}">
+<span class="badge {{it.badgeCls}}">{{it.badge}}</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="display: flex; justify-content: space-between; gap: var(--sp-3); align-items: baseline"><span class="t1">{{it.title}}</span><span class="t2" style="flex: none">{{it.date}}</span></span>
+<sc-if value="{{showSnippet}}" hint-placeholder-val="{{true}}"><span class="t2">{{it.snippet}}</span></sc-if>
+</span>
+</button>
+</sc-for>
+<div style="height: 220px"></div>
+</div>
+<sc-if value="{{showScroller}}" hint-placeholder-val="{{false}}">
+<div aria-hidden="true" style="position: absolute; top: 120px; width: 6px; height: 72px; background: var(--ink); opacity: 0.55; {{scrollerSide}}"></div>
+</sc-if>
+<div class="glass strip">
+<span class="t1" style="font-weight: 700">Library</span>
+<span class="t2" style="flex: 1">{{countText}}</span>
+<button class="ib" aria-label="Settings" onClick="{{goSettings}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><rect x="14" y="5" width="4" height="4"></rect><rect x="8" y="15" width="4" height="4"></rect></svg></button>
+</div>
+<div class="glass bar">
+<button onClick="{{goReader}}" style="display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-1) var(--sp-2); text-align: left">
+<span class="badge doc">ODT</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1)"><span style="display: flex; justify-content: space-between"><span class="t1">Continue: Autumn Newsletter</span><span class="t2" style="font-weight: 700; color: var(--ink)">2 / 3</span></span><span style="height: 4px; background: var(--line); display: block"><span style="display: block; width: 58%; height: 100%; background: var(--accent)"></span></span></span>
+</button>
+<div class="segs" role="group" aria-label="Filter">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button class="seg {{f.cls}}" aria-pressed="{{f.on}}" onClick="{{f.pick}}">{{f.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{notSearching}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; gap: var(--sp-2)">
+<button class="slot" style="order: {{oOpen}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"></path></svg>Open file</button>
+<button class="primary chamfer" style="order: {{oNew}}" onClick="{{goEditor}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New note</button>
+<button class="slot" style="order: {{oSearch}}" onClick="{{openSearch}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Search</button>
+</div>
+</sc-if>
+<sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; gap: var(--sp-2)">
+<label class="field"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg><span class="sr">Search notes and documents</span><input type="search" placeholder="Search notes and documents"></label>
+<button class="slot" style="flex: none; width: 72px" onClick="{{closeSearch}}">Cancel</button>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isReader}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0">
+<sc-if value="{{isReading}}" hint-placeholder-val="{{true}}">
+<div class="noscroll read" onClick="{{toggleChrome}}" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--sp-4) var(--sp-6) var(--sp-0)">
+<div class="flow">
+<p>Join us on Saturday morning for the shared harvest. <span class="hl">Bring a basket and gloves.</span> Squash, beans and the last tomatoes will be split between all plot holders.</p>
+<h3>Composting</h3>
+<p>The new bays by the gate are ready. <span class="sel">Green waste goes in the left bay, woody waste in the right.</span> Please do not add cooked food.</p>
+<div class="glass" role="toolbar" aria-label="Selection" style="display: flex; font-family: 'Figtree', sans-serif; border: 1px solid var(--line)">
+<button onClick="{{highlight}}" class="slot" style="flex-direction: row; font-size: var(--fs-ui)">Highlight</button>
+<button class="primary chamfer" onClick="{{quote}}" style="font-size: var(--fs-ui)">Quote to note</button>
+<button class="slot" style="flex-direction: row; font-size: var(--fs-ui)">Copy</button>
+</div>
+<h3>Tool shed rota</h3>
+<div style="font-family: 'Figtree', sans-serif; font-size: var(--fs-ui); font-weight: 500; border-top: 1px solid var(--line)">
+<div style="display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-0); border-bottom: 1px solid var(--line)"><span style="color: var(--soft)">Week 1</span><span style="font-weight: 600">Amara</span></div>
+<div style="display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-0); border-bottom: 1px solid var(--line)"><span style="color: var(--soft)">Week 2</span><span style="font-weight: 600">Jonas</span></div>
+<div style="display: flex; justify-content: space-between; padding: var(--sp-2) var(--sp-0); border-bottom: 1px solid var(--line)"><span style="color: var(--soft)">Week 3</span><span style="font-weight: 600">Priya</span></div>
+</div>
+<figure style="margin: var(--sp-0)">
+<svg role="img" aria-label="Illustration of the garden beds at harvest time" width="100%" height="200" viewBox="0 0 342 200" preserveAspectRatio="xMidYMid slice" style="display: block"><rect width="342" height="200" fill="#5E8C61"></rect><rect y="0" width="342" height="70" fill="#9CC5D8"></rect><circle cx="280" cy="34" r="20" fill="#F2C14E"></circle><rect x="20" y="96" width="92" height="70" fill="#7A4E2D"></rect><rect x="126" y="96" width="92" height="70" fill="#7A4E2D"></rect><rect x="232" y="96" width="92" height="70" fill="#7A4E2D"></rect><circle cx="46" cy="118" r="10" fill="#D9482B"></circle><circle cx="78" cy="138" r="10" fill="#D9482B"></circle><circle cx="152" cy="122" r="12" fill="#E8A33D"></circle><circle cx="190" cy="140" r="12" fill="#E8A33D"></circle><rect x="250" y="104" width="6" height="56" fill="#3F6B3A"></rect><rect x="280" y="104" width="6" height="56" fill="#3F6B3A"></rect><rect x="300" y="104" width="6" height="56" fill="#3F6B3A"></rect></svg>
+<figcaption class="t2" style="padding-top: var(--sp-1); font-family: 'Figtree', sans-serif">Page 1 illustration</figcaption>
+</figure>
+<h3>Seed swap</h3>
+<p>Bring saved seeds in labelled envelopes to the shed on the first Sunday of the month.</p>
+<div style="height: 220px"></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isOriginal}}" hint-placeholder-val="{{false}}">
+<div class="noscroll" onClick="{{toggleChrome}}" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--h-strip) var(--sp-0) var(--sp-0); background: var(--desk); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2)">
+<!-- lint:off  the document's own formatting -->
+<div style="width: 382px; min-height: 540px; flex: none; background: #ffffff; color: #1a1a1a; border: 1px solid var(--line); padding: 28px 24px 16px; font-family: 'Tinos', 'Times New Roman', serif; font-size: 9.6px; line-height: 1.38; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; font-size: 7.5px; color: #444; border-bottom: 0.5px solid #888; padding-bottom: 4px"><span>Riverside Community Garden</span><span>Autumn edition</span></div>
+<div style="text-align: center; font-size: 21px; font-weight: 700; margin: 14px 0 2px">Autumn Newsletter</div>
+<div style="text-align: center; font-style: italic; margin-bottom: 12px">For plot holders and volunteers</div>
+<div style="column-count: 2; column-gap: 14px; text-align: justify">
+<div style="font-weight: 700; font-size: 11px; margin-bottom: 3px">Harvest day</div>
+<p style="margin: 0 0 6px">Join us on Saturday morning for the shared harvest. <span style="background: #ffe680">Bring a basket and gloves.</span> Squash, beans and the last tomatoes will be split between all plot holders.</p>
+<div style="font-weight: 700; font-size: 11px; margin-bottom: 3px">Composting</div>
+<p style="margin: 0 0 6px">The new bays by the gate are ready. Green waste goes in the left bay, woody waste in the right. Please do not add cooked food.</p>
+<div style="font-weight: 700; font-size: 11px; margin-bottom: 3px">Tool shed rota</div>
+<table style="border-collapse: collapse; width: 100%; font-size: 9px; margin-bottom: 6px">
+<tr><th style="border: 0.5px solid #666; padding: 2px 4px; text-align: left; background: #eee">Week</th><th style="border: 0.5px solid #666; padding: 2px 4px; text-align: left; background: #eee">Volunteer</th></tr>
+<tr><td style="border: 0.5px solid #666; padding: 2px 4px">1</td><td style="border: 0.5px solid #666; padding: 2px 4px">Amara</td></tr>
+<tr><td style="border: 0.5px solid #666; padding: 2px 4px">2</td><td style="border: 0.5px solid #666; padding: 2px 4px">Jonas</td></tr>
+<tr><td style="border: 0.5px solid #666; padding: 2px 4px">3</td><td style="border: 0.5px solid #666; padding: 2px 4px">Priya</td></tr>
+</table>
+<div style="font-weight: 700; font-size: 11px; margin-bottom: 3px">Seed swap</div>
+<p style="margin: 0">Bring saved seeds in labelled envelopes to the shed on the first Sunday of the month.</p>
+</div>
+<div style="margin-top: auto; text-align: center; font-size: 7.5px; color: #444; padding-top: 10px">Page 1 of 3</div>
+</div>
+<!-- lint:on -->
+<div class="t2" style="color: var(--ink)">Times New Roman shown as Tinos, same metrics</div>
+<div style="height: 220px; flex: none"></div>
+</div>
+</sc-if>
+<sc-if value="{{chrome}}" hint-placeholder-val="{{true}}">
+<div class="glass strip">
+<span class="t1" style="flex: 1">Autumn Newsletter.odt</span>
+<span class="t2" style="font-weight: 700; color: var(--ink)">Page 1 / 3</span>
+</div>
+<sc-if value="{{sheetClosed}}" hint-placeholder-val="{{true}}">
+<div class="glass bar {{readerBarCls}}">
+<div class="segs" role="group" aria-label="View mode">
+<button class="seg {{readingCls}}" aria-pressed="{{isReading}}" onClick="{{pickReading}}">Reading</button>
+<button class="seg {{originalCls}}" aria-pressed="{{isOriginal}}" onClick="{{pickOriginal}}">Original</button>
+</div>
+<div style="display: flex; gap: var(--sp-2)">
+<button class="slot" style="order: {{oBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
+<button class="slot" style="order: 2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Find</button>
+<button class="primary chamfer" style="order: {{oNotes}}" onClick="{{openSheet}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="4" y="3" width="16" height="18"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Notes ({{quoteCount}})</button>
+</div>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{sheetOpen}}" hint-placeholder-val="{{false}}">
+<div class="chamfer-l" style="position: absolute; left: 0; right: 0; bottom: 0; height: 472px; background: var(--paper); border-top: 2px solid var(--ink); display: flex; flex-direction: column">
+<div class="noscroll read" style="flex: 1; overflow-y: auto; padding: var(--sp-4) var(--sp-6) var(--sp-2)">
+<div class="flow">
+<div style="display: flex; align-items: baseline; justify-content: space-between; font-family: 'Figtree', sans-serif"><span class="t1" style="font-weight: 700">Garden notes, autumn</span><span class="t2">Linked to this file</span></div>
+<div class="quote"><div>Bring a basket and gloves.</div><span class="src">Page 1, Harvest day</span></div>
+<p>Ask Jonas if the shed key is still under the pot.</p>
+<sc-if value="{{quoted}}" hint-placeholder-val="{{false}}">
+<div class="quote"><div>Green waste goes in the left bay, woody waste in the right.</div><span class="src">Page 1, Composting</span></div>
+</sc-if>
+</div>
+</div>
+<div class="glass" style="padding: var(--sp-2); display: flex; gap: var(--sp-2)">
+<label class="field" style="order: {{oInput}}"><span class="sr">Add a thought</span><input placeholder="Add a thought"></label>
+<button class="slot" style="flex: none; width: 80px; order: {{oClose}}" onClick="{{closeSheet}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 9l7 7 7-7"></path></svg>Close</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isEditor}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0">
+<div class="noscroll read" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--sp-12) var(--sp-6) var(--sp-0)">
+<div class="flow">
+<h2 style="font-family: 'Figtree', sans-serif; font-weight: 700"><span class="mk"># </span>Garden plan for spring</h2>
+<p>Raised beds along the <span class="mk">**</span><b>south fence</b><span class="mk">**</span> get the most sun after eleven. Keep the shady corner for mint.</p>
+<div class="quote"><div><span class="mk">&gt; </span>Green waste goes in the left bay, woody waste in the right.</div><button class="src" onClick="{{goReader}}" style="min-height: var(--h-control); text-align: left">Autumn Newsletter.odt, page 1</button></div>
+<h3 style="font-family: 'Figtree', sans-serif; font-weight: 700"><span class="mk">## </span>To plant</h3>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{checks}}" as="k" hint-placeholder-count="4">
+<button onClick="{{k.toggle}}" aria-pressed="{{k.done}}" style="display: flex; align-items: center; gap: var(--sp-3); min-height: var(--h-control); text-align: left">
+<span class="chk {{k.cls}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="square" aria-hidden="true"><path d="M5 12l4 4 10-10"></path></svg></span>
+<span class="{{k.textCls}}">{{k.text}}</span>
+</button>
+</sc-for>
+</div>
+<p>Compost goes on in March, two barrows per bed. Ask the allotment office about the water butt rota before April.</p>
+<div style="height: 220px"></div>
+</div>
+</div>
+<div class="glass strip">
+<span class="t1" style="flex: 1">Garden plan for spring</span>
+<span class="t2">Saved</span>
+</div>
+<div class="glass bar">
+<div role="toolbar" aria-label="Formatting" class="noscroll" style="display: flex; gap: var(--sp-1); overflow-x: auto">
+<button class="ib fill" aria-label="Bold" style="font-weight: 800; font-size: var(--fs-h3)">B</button>
+<button class="ib fill" aria-label="Italic" style="font-style: italic; font-family: 'Literata', serif; font-size: var(--fs-h3)">I</button>
+<button class="ib fill" aria-label="Heading" style="font-weight: 700; font-size: var(--fs-title)">H</button>
+<button class="ib fill" aria-label="Checklist"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="3" y="4" width="7" height="7"></rect><path d="M14 7h7M3 15h7v6H3zM14 18h7"></path></svg></button>
+<button class="ib fill" aria-label="Insert image"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="3" y="4" width="18" height="16"></rect><path d="M21 16l-5-5-9 9"></path></svg></button>
+<button class="ib fill" aria-label="Quote from a document" style="font-family: 'Literata', serif; font-size: var(--fs-h2); font-weight: 600">&#8220;</button>
+<button class="ib fill" aria-label="Insert link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4M8 11l-3 3 5 5 3-3M16 13l3-3-5-5-3 3"></path></svg></button>
+</div>
+<div style="display: flex; gap: var(--sp-2)">
+<button class="slot" style="order: {{oBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
+<button class="slot" style="order: 2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><rect x="10" y="10" width="4" height="4"></rect></svg>Preview</button>
+<button class="primary chamfer" style="order: {{oNotes}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isSettings}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0">
+<div class="noscroll" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--h-strip) var(--sp-0) var(--sp-0)">
+<div class="lbl">Hand</div>
+<div class="segs" role="group" aria-label="Handedness" style="padding: var(--sp-0) var(--sp-4)">
+<sc-for list="{{hands}}" as="h" hint-placeholder-count="3">
+<button class="seg {{h.cls}}" aria-pressed="{{h.on}}" onClick="{{h.pick}}">{{h.label}}</button>
+</sc-for>
+</div>
+<div class="t2" style="padding: var(--sp-2) var(--sp-4) var(--sp-0); white-space: normal">Left or Right moves the main button and the scroll handle to that thumb. Centre suits both hands.</div>
+<div class="lbl">Density</div>
+<div class="segs" role="group" aria-label="List density" style="padding: var(--sp-0) var(--sp-4)">
+<sc-for list="{{densities}}" as="d" hint-placeholder-count="3">
+<button class="seg {{d.cls}}" aria-pressed="{{d.on}}" onClick="{{d.pick}}">{{d.label}}</button>
+</sc-for>
+</div>
+<div class="lbl">Theme</div>
+<div style="border-top: 1px solid var(--line)">
+<sc-for list="{{themes}}" as="th" hint-placeholder-count="7">
+<button class="opt {{th.cls}}" onClick="{{th.pick}}" aria-pressed="{{th.on}}">
+<span style="width: var(--badge); height: var(--badge); flex: none; display: flex; flex-direction: column; justify-content: center; padding: var(--sp-0) var(--sp-1); gap: var(--sp-1); border: 1px solid var(--line); {{th.sw}}"><span style="height: 4px; {{th.inkBar}}"></span><span style="height: 4px; width: 70%; {{th.inkBar}}"></span><span style="height: 4px; width: 50%; {{th.accBar}}"></span></span>
+<span style="flex: 1; display: flex; flex-direction: column"><span class="t1">{{th.name}}</span><span class="t2">{{th.note}}</span></span>
+</button>
+</sc-for>
+</div>
+<div class="lbl">Glass</div>
+<div style="border-top: 1px solid var(--line)">
+<button class="opt" role="switch" aria-checked="{{solidOn}}" onClick="{{toggleSolid}}"><span style="flex: 1; display: flex; flex-direction: column"><span class="t1">Reduce transparency</span><span class="t2">Bars become solid paper</span></span><span class="sw {{solidCls}}"><span class="knob"></span></span></button>
+</div>
+<div style="height: 120px"></div>
+</div>
+<div class="glass strip"><span class="t1" style="font-weight: 700">Settings</span></div>
+<div class="glass bar" style="flex-direction: row">
+<button class="slot" onClick="{{goLibrary}}" style="{{settingsBack}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Back to Library</button>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["Daylight","Sepia","Dusk","Night","OLED","High Contrast Light","High Contrast Dark"],"default":"Daylight"},"hand":{"editor":"enum","options":["Centre","Left","Right"],"default":"Centre"},"density":{"editor":"enum","options":["Comfortable","Compact","Dense"],"default":"Compact"},"$preview":{"width":390,"height":844}}'>
+const GLASS = {base: 0.62, max: 0.85};
+const THEMES = {
+  'Daylight': {note:'Default, light paper, emerald', paper:'#FBFAF7', desk:'#E6E9E5', ink:'#15181A', soft:'#474D52', glass:'#F7F7F4', accent:'#0A6249', accentText:'#08573F', onAccent:'#FFFFFF', hl:'#FFE680', sel:'#C7DBFF', line:'#7E8780', fill:'#ECEEEA', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.22)', sheen:'rgba(255,255,255,0.55)', grainDot:'rgba(0,0,0,0.10)', bevel:'rgba(255,255,255,0.45)'},
+  'Sepia': {note:'Warm paper for long reading', paper:'#F3EBD9', desk:'#E3D7BE', ink:'#251C12', soft:'#54452F', glass:'#F1E8D4', accent:'#7A3B10', accentText:'#6E340D', onAccent:'#FFFFFF', hl:'#F6D27A', sel:'#C9D7F2', line:'#8C7B60', fill:'#E8DDC6', edgeHi:'rgba(255,255,255,0.8)', edgeLo:'rgba(60,40,10,0.28)', sheen:'rgba(255,255,255,0.45)', grainDot:'rgba(60,40,10,0.12)', bevel:'rgba(255,255,255,0.4)'},
+  'Dusk': {note:'Dark grey, not black', paper:'#1C1E20', desk:'#131415', ink:'#ECEDEE', soft:'#B9BEC3', glass:'#232628', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#06261C', hl:'#5B4A12', sel:'#24406E', line:'#7B8288', fill:'#2A2D30', edgeHi:'rgba(255,255,255,0.22)', edgeLo:'rgba(0,0,0,0.6)', sheen:'rgba(255,255,255,0.08)', grainDot:'rgba(255,255,255,0.07)', bevel:'rgba(255,255,255,0.5)'},
+  'Night': {note:'Warm and dim, amber accent', paper:'#17140F', desk:'#0E0C09', ink:'#ECE1CE', soft:'#BCAE96', glass:'#1E1A14', accent:'#E2A658', accentText:'#EBB673', onAccent:'#2A1A05', hl:'#5A4313', sel:'#3A3550', line:'#857A68', fill:'#26211A', edgeHi:'rgba(255,240,210,0.2)', edgeLo:'rgba(0,0,0,0.6)', sheen:'rgba(255,240,210,0.07)', grainDot:'rgba(255,240,210,0.07)', bevel:'rgba(255,255,255,0.5)'},
+  'OLED': {note:'True black, off white text', paper:'#000000', desk:'#000000', ink:'#E4E4E4', soft:'#A9A9A9', glass:'#101010', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#00180F', hl:'#4A3C0E', sel:'#1E3560', line:'#6E6E6E', fill:'#1A1A1A', edgeHi:'rgba(255,255,255,0.24)', edgeLo:'rgba(255,255,255,0.06)', sheen:'rgba(255,255,255,0.06)', grainDot:'rgba(255,255,255,0.06)', bevel:'rgba(255,255,255,0.5)'},
+  'High Contrast Light': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#FFFFFF', desk:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', accent:'#002FA7', accentText:'#002FA7', onAccent:'#FFFFFF', hl:'#FFE94D', sel:'#BFD3FF', line:'#000000', fill:'#FFFFFF', edgeHi:'#000000', edgeLo:'#000000', sheen:'rgba(255,255,255,0)', grainDot:'rgba(0,0,0,0)', bevel:'rgba(255,255,255,0)'},
+  'High Contrast Dark': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#000000', desk:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', accent:'#FFD60A', accentText:'#FFD60A', onAccent:'#000000', hl:'#5C4A00', sel:'#1F3A80', line:'#FFFFFF', fill:'#000000', edgeHi:'#FFFFFF', edgeLo:'#FFFFFF', sheen:'rgba(255,255,255,0)', grainDot:'rgba(0,0,0,0)', bevel:'rgba(0,0,0,0)'}
+};
+const LIB = [
+  {kind:'doc',badge:'ODT',title:'Autumn Newsletter.odt',snippet:'3 pages, 2 highlights, linked note',date:'Today',linked:true},
+  {kind:'note',badge:'MD',title:'Garden plan for spring',snippet:'Raised beds along the south fence.',date:'Today',linked:true},
+  {kind:'doc',badge:'RTF',title:'Lease renewal.rtf',snippet:'2 pages, from email',date:'Yesterday',linked:false},
+  {kind:'note',badge:'MD',title:'Sprint 14 retro',snippet:'Release train held. Flaky upload test.',date:'Yesterday',linked:false},
+  {kind:'doc',badge:'MD',title:'README.md',snippet:'Setup and usage, 4 images',date:'Mon',linked:false},
+  {kind:'note',badge:'MD',title:'Lisbon, four days',snippet:'Alfama walk, tram 28 early.',date:'Mon',linked:false},
+  {kind:'note',badge:'MD',title:'Book notes: The Overstory',snippet:'Chapter three, Patricia Westerford.',date:'12 Oct',linked:false},
+  {kind:'doc',badge:'TXT',title:'server-log.txt',snippet:'1.1 MB, read only',date:'11 Oct',linked:false},
+  {kind:'note',badge:'MD',title:'Groceries',snippet:'Oat milk, lemons, sourdough.',date:'10 Oct',linked:false},
+  {kind:'doc',badge:'ODT',title:'Minutes, September.odt',snippet:'4 pages, linked note',date:'2 Oct',linked:true},
+  {kind:'note',badge:'MD',title:'Reading list',snippet:'Braiding Sweetgrass.',date:'28 Sep',linked:false},
+  {kind:'doc',badge:'RTF',title:'Plot agreement.rtf',snippet:'1 page',date:'20 Sep',linked:false},
+  {kind:'note',badge:'MD',title:'Seed inventory',snippet:'Beans, squash, two tomato varieties.',date:'18 Sep',linked:false}
+];
+const FILTERS = ['All','Notes','Docs','Linked'];
+const CHECKS = ['Tomatoes, San Marzano','Basil, two rows','Climbing beans on the trellis','Order compost'];
+const DENS = {Comfortable:{h:'var(--h-row-comfortable)',snip:true},Compact:{h:'var(--h-row)',snip:true},Dense:{h:'var(--h-row-dense)',snip:false}};
+function rgba(hex, a) {
+  const h = hex.replace('#', '');
+  return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {screen:'library', theme:null, hand:null, density:null, solid:false, mode:'reading', filter:'All', chrome:true, sheet:false, quoted:false, search:false, checks:[true,false,false,true]};
+  }
+  renderVals() {
+    const s = this.state;
+    const themeName = s.theme ?? this.props.theme ?? 'Daylight';
+    const t = THEMES[themeName] || THEMES.Daylight;
+    const hand = s.hand ?? this.props.hand ?? 'Centre';
+    const density = s.density ?? this.props.density ?? 'Compact';
+    const dn = DENS[density] || DENS.Compact;
+    const go = (screen) => () => this.setState({screen, chrome: true, sheet: false, search: false});
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+    const list = LIB.filter((x) => s.filter === 'All' || (s.filter === 'Notes' && x.kind === 'note') || (s.filter === 'Docs' && x.kind === 'doc') || (s.filter === 'Linked' && x.linked));
+    const glassBase = t.solidGlass ? t.glass : rgba(t.glass, GLASS.base);
+    const glassMax = t.solidGlass ? t.glass : rgba(t.glass, GLASS.max);
+    const vars = Object.keys(t).filter((k) => k !== 'note' && k !== 'solidGlass').map((k) => '--' + k + ':' + t[k]).join(';') + ';--glassBase:' + glassBase + ';--glassMax:' + glassMax;
+    const left = hand === 'Left', right = hand === 'Right';
+    return {
+      vars,
+      rootCls: s.solid ? 'solid' : '',
+      isLibrary: s.screen === 'library', isReader: s.screen === 'reader', isEditor: s.screen === 'editor', isSettings: s.screen === 'settings',
+      goLibrary: go('library'), goReader: go('reader'), goEditor: go('editor'), goSettings: go('settings'),
+      countText: '7 notes, 6 documents',
+      filters: FILTERS.map((label) => ({label, on: s.filter === label, cls: s.filter === label ? 'on' : '', pick: () => this.setState({filter: label})})),
+      showSnippet: dn.snip, rowH: dn.h,
+      items: list.map((x) => ({...x, badgeCls: x.kind === 'doc' ? 'doc' : '', open: go(x.kind === 'doc' ? 'reader' : 'editor')})),
+      oOpen: left ? 3 : 1, oNew: left ? 1 : (right ? 3 : 2), oSearch: 2,
+      oBack: left ? 3 : 1, oNotes: left ? 1 : 3,
+      oInput: left ? 2 : 1, oClose: left ? 1 : 2,
+      settingsBack: left ? 'flex:none;width:50%' : (right ? 'margin-left:auto;flex:none;width:50%' : ''),
+      showScroller: left || right,
+      scrollerSide: left ? 'left:2px' : 'right:2px',
+      searching: s.search, notSearching: !s.search,
+      openSearch: () => this.setState({search: true}), closeSearch: () => this.setState({search: false}),
+      hands: ['Left','Centre','Right'].map((label) => ({label, on: label === hand, cls: label === hand ? 'on' : '', pick: () => this.setState({hand: label})})),
+      densities: Object.keys(DENS).map((label) => ({label, on: label === density, cls: label === density ? 'on' : '', pick: () => this.setState({density: label})})),
+      themes: Object.keys(THEMES).map((name) => ({name, note: THEMES[name].note, on: name === themeName, cls: name === themeName ? 'on' : '', sw: 'background:' + THEMES[name].paper, inkBar: 'background:' + THEMES[name].ink, accBar: 'background:' + THEMES[name].accent, pick: () => this.setState({theme: name})})),
+      solidOn: s.solid, solidCls: s.solid ? 'on' : '', toggleSolid: () => this.setState({solid: !s.solid}),
+      checks: CHECKS.map((text, i) => ({text, done: s.checks[i], cls: s.checks[i] ? 'on' : '', textCls: s.checks[i] ? 'done' : '', toggle: () => { const c = s.checks.slice(); c[i] = !c[i]; this.setState({checks: c}); }})),
+      isReading: s.mode === 'reading', isOriginal: s.mode === 'original',
+      readerBarCls: s.mode === 'reading' ? 'adaptive' : '',
+      readingCls: s.mode === 'reading' ? 'on' : '', originalCls: s.mode === 'original' ? 'on' : '',
+      pickReading: () => this.setState({mode: 'reading'}), pickOriginal: () => this.setState({mode: 'original'}),
+      chrome: s.chrome, toggleChrome: () => this.setState({chrome: !s.chrome}),
+      sheetOpen: s.sheet, sheetClosed: !s.sheet,
+      openSheet: () => this.setState({sheet: true}), closeSheet: () => this.setState({sheet: false}),
+      quoteCount: s.quoted ? 2 : 1, quoted: s.quoted,
+      quote: (e) => { stop(e); this.setState({quoted: true, sheet: true, chrome: true}); },
+      highlight: (e) => { stop(e); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,14 +1,20 @@
 # VisaryNotes Design Rationale
 
-Version 1.0 | Date: 2026-10-17 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
+Version 1.1 | Date: 2026-10-17 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
 
 Every visual and interaction decision in VisaryNotes is listed here with the reason behind it. If a decision cannot be justified by a principle, a measurement or a cited source, it does not ship. Where a reason is the design team's own judgement, it is labelled **Rationale**. Where it rests on research, it carries a citation.
 
-This version responds to three pieces of feedback on prototype v2.
+Version 1.0 responded to three pieces of feedback on prototype v2.
 
 1. The shapes were too rounded.
 2. The colours were not legible enough.
 3. The app must be usable with one hand, by left and right handed people.
+
+Version 1.1 responds to feedback on prototype v3.
+
+4. Nobody owned consistency and padding. Section 4.7 adds a token system and an automated check, and section 4.8 names who owns it.
+5. The glass effect had disappeared. Section 4.2.1 explains why and how glass is now visible without losing legibility.
+6. Glass must also apply to Android home screen widgets. Section 4.2.2 sets out what the platform allows and the frosted widget design.
 
 ---
 
@@ -78,10 +84,54 @@ CMF is used here the way industrial designers use it on physical products. Every
 | Finish | Applies to | Specification | Why |
 | --- | --- | --- | --- |
 | **Matte** | Paper, desk | Flat colour. No grain, no gradient, no texture | Texture under text lowers effective contrast and adds visual noise. Paper must be calm |
-| **Satin etched** | Glass | Backdrop blur 24dp, tint at 90 percent opacity, 2 percent grain | 90 percent opacity is what keeps the worst case contrast at 7 to 1 or better (section 4.3). The faint grain stops large glass areas looking like flat plastic. It is the only texture in the app |
+| **Satin etched** | Glass | Backdrop blur 24dp at 150 percent saturation, tint at 62 percent that rises to 85 percent over images (adaptive), 3 percent grain, a soft sheen on the top half | Low enough for content to be clearly visible through the glass, high enough to keep every contrast target (section 4.2.1). The grain stops glass looking like flat plastic. It is the only texture in the app |
+| **Bevel glint** | Primary action | A 6dp light triangle in the chamfered corner | The cut corner catches light like the edge of cut glass, tying the accent button to the glass material |
 | **Cut edge** | Glass | 1dp light line on the top edge (the cut catching light), 1dp darker line on the bottom edge | This is how real cut glass shows its thickness. It separates the bar from the paper without a drop shadow |
 | **Polished** | Pressed and selected states | Glass opacity rises to 100 percent and a 2dp accent edge appears on the leading side | Feedback by change of finish rather than by colour alone, so the state is visible to colour blind users too |
 | **Ink flat** | Text, icons | Solid colour, 100 percent opacity | Semi transparent text changes contrast depending on what is behind it |
+
+#### 4.2.1 Why glass vanished in v3, and the fix
+
+In v3 the glass tint was 90 percent opaque and there was nothing behind the bars except plain paper. Glass at 90 percent over a flat colour looks like a flat bar, so the effect disappeared. The 90 percent value came from a worst case that was too strict. It assumed solid ink could sit behind the whole bar, which never happens once 24dp of blur averages the text into the paper.
+
+The checker now tests glass the way it is actually seen.
+
+| Situation | Backdrop after blur | Tint needed for every target | Tint used |
+| --- | --- | --- | --- |
+| Normal scrolling (text, paper, highlights, selection, accent controls, desk) | Paper with text averaged in at 15 percent, plus each of those colours | 50 percent in every theme | **62 percent** |
+| A photo or large dark or bright block under a bar | Pure white or pure black | 77 to 83 percent depending on theme | **85 percent** |
+
+**Adaptive glass.** The glass handler samples the blurred backdrop under each bar at low resolution, once when scrolling settles and at most a few times a second while it moves. If the sample is far from the paper colour (an image), the tint eases from 62 to 85 percent over 150ms and back. So glass is clearly transparent over text and stays legible over images.
+
+**What makes the glass visible.**
+
+* Content always continues under the bars. Lists, document text and images scroll beneath the top strip and the bottom bar.
+* The 24dp blur at 150 percent saturation makes colours behind the glass glow softly, which is what reads as glass.
+* A sheen on the top half (light themes 55 percent white, dark themes 6 to 8 percent) and the cut edge lines give the pane thickness.
+* A fine grain makes it read as etched glass, not tinted plastic.
+
+High Contrast themes keep glass switched off, because they exist for people who need maximum contrast.
+
+#### 4.2.2 Glass on Android home screen widgets
+
+What the platform allows.
+
+* Android 12 added blur APIs for an app's own windows, such as `Window#setBackgroundBlurRadius` ([Android Open Source Project, window blurs](https://source.android.com/docs/core/display/window-blurs)). Widgets are drawn by the launcher through `RemoteViews`, so these APIs cannot blur the wallpaper behind a widget. This last point is our reading of how widgets work and will be confirmed on devices in phase 3.
+* Apps cannot read the wallpaper image any more. `WallpaperManager.getDrawable` returns the default or throws on Android 13 and always throws on Android 14 unless the app holds the all files permission ([Android Developers, WallpaperManager](https://developer.android.com/reference/android/app/WallpaperManager)). So a pre blurred copy of the wallpaper is not an option.
+* On Android 12 and newer the launcher rounds widget corners using `system_app_widget_background_radius` ([Android Developers, Android 12 widgets](https://developer.android.com/about/versions/12/features/widgets)). The outer radius is therefore the system's, not ours. Our 0, 2, 4dp and chamfer shapes apply inside the widget.
+
+**Frosted widget design.**
+
+| Layer | Specification | Why |
+| --- | --- | --- |
+| Frost tint | Light frost 80 percent, dark frost 85 percent | The lowest tints that keep ink at 7 to 1 and labels at 4.5 to 1 over a pure white or pure black wallpaper (section 4.3.4). The wallpaper shows through, unblurred |
+| Grain | A tiled 64px noise PNG at 4 percent | Makes the translucency read as frosted glass rather than a faded panel |
+| Sheen | Top half gradient, as in the app | Thickness |
+| Cut edges | 1dp light top edge, 1dp dark bottom edge | Same material language as in the app |
+| Polarity | Auto (default), Light, Dark. Auto uses the wallpaper colour hints from `WallpaperManager.getWallpaperColors` where available, otherwise follows the app theme | Light frost on light wallpapers and dark frost on dark ones looks most like glass. Permission requirements for `getWallpaperColors` are to be confirmed in phase 3 |
+| Fallback | Solid paper when the app is in a High Contrast theme | Accessibility first |
+
+All of this is built from `layer-list` drawables, which `RemoteViews` supports. The prototype's widget board has a wallpaper switch (dark, bright, busy stripes) to judge legibility.
 
 ### 4.3 Colour
 
@@ -120,21 +170,23 @@ Measured with the WCAG 2 formula, most text pairs in prototype v2 technically pa
 
 All values below come from `tools/design/contrast.py`, which runs against `tools/design/themes.json` and fails if any pair is under its minimum.
 
-| Theme | Paper | Ink | Secondary | Accent | Ink on paper | Secondary on paper | Ink on glass (worst) | Secondary on glass (worst) | Label on accent |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Daylight (default) | #FBFAF7 | #15181A | #474D52 | #0A6249 | 17.1 | 8.2 | 13.6 | 6.5 | 7.4 |
-| Sepia | #F3EBD9 | #251C12 | #54452F | #7A3B10 | 14.1 | 7.8 | 11.3 | 6.3 | 8.5 |
-| Dusk (dark grey) | #1C1E20 | #ECEDEE | #B9BEC3 | #5ACBA4 | 14.3 | 8.9 | 9.8 | 6.1 | 8.1 |
-| Night (warm, low light) | #17140F | #ECE1CE | #BCAE96 | #E2A658 | 14.2 | 8.4 | 10.4 | 6.2 | 7.9 |
-| OLED | #000000 | #E4E4E4 | #A9A9A9 | #5ACBA4 | 16.5 | 8.9 | 12.7 | 6.9 | 9.2 |
-| High Contrast Light | #FFFFFF | #000000 | #262626 | #002FA7 | 21.0 | 15.1 | 21.0 | 15.1 | 10.7 |
-| High Contrast Dark | #000000 | #FFFFFF | #E6E6E6 | #FFD60A | 21.0 | 16.8 | 21.0 | 16.8 | 14.9 |
+| Theme | Paper | Ink | Secondary | Accent | Ink on paper | Secondary on paper | Secondary on glass 62%, typical | Secondary on glass 85%, any image | Widget label, any wallpaper | Label on accent |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Daylight (default) | #FBFAF7 | #15181A | #474D52 | #0A6249 | 17.1 | 8.2 | 6.0 | 5.7 | 5.0 | 7.4 |
+| Sepia | #F3EBD9 | #251C12 | #54452F | #7A3B10 | 14.1 | 7.8 | 5.7 | 5.4 | 4.8 | 8.5 |
+| Dusk (dark grey) | #1C1E20 | #ECEDEE | #B9BEC3 | #5ACBA4 | 14.3 | 8.9 | 5.6 | 5.0 | 5.0 | 8.1 |
+| Night (warm, low light) | #17140F | #ECE1CE | #BCAE96 | #E2A658 | 14.2 | 8.4 | 5.6 | 5.0 | 5.0 | 7.9 |
+| OLED | #000000 | #E4E4E4 | #A9A9A9 | #5ACBA4 | 16.5 | 8.9 | 5.9 | 5.3 | 5.3 | 9.2 |
+| High Contrast Light | #FFFFFF | #000000 | #262626 | #002FA7 | 21.0 | 15.1 | 15.1 (glass off) | 15.1 | 15.1 | 10.7 |
+| High Contrast Dark | #000000 | #FFFFFF | #E6E6E6 | #FFD60A | 21.0 | 16.8 | 16.8 (glass off) | 16.8 | 16.8 | 14.9 |
 
-Highlight and selection colours in every theme keep ink at 7.2 to 1 or more. Dividers measure 3.5 to 1 or more against paper. Night uses an amber accent instead of emerald (**Rationale**: warm hues sit more comfortably in a warm, low light palette, and amber keeps saturation contrast against brown neutrals).
+Ink (body text) on glass is 8.0 to 1 or more in every case, including widgets. Highlight and selection colours in every theme keep ink at 7.2 to 1 or more. Dividers measure 3.5 to 1 or more against paper. Night uses an amber accent instead of emerald (**Rationale**: warm hues sit more comfortably in a warm, low light palette, and amber keeps saturation contrast against brown neutrals).
 
 **Why emerald as the brand accent.** It is the organisation's name colour (EmeraldWall). It is rare among note apps that lean on yellow, blue and purple (**Rationale**, based on the apps listed in STRATEGY.md). At #0A6249 it reaches 7.0 to 1 on paper, so it can carry text, not only fills.
 
 ### 4.4 Shape
+
+All shape values are tokens (section 4.7).
 
 | Element | Shape | Why |
 | --- | --- | --- |
@@ -162,6 +214,40 @@ No drop shadows on paper. Elevation is shown by material (glass above paper) and
 | Hyperlegible option | Atkinson Hyperlegible (SIL OFL) | Replaces both UI and reading fonts | For readers who need clearer letter shapes |
 
 ---
+
+### 4.7 Spacing, sizing and layout tokens
+
+Consistency is not left to judgement. Every spacing, size, radius and type value comes from one file, `tools/design/tokens.json`.
+
+**Spacing scale.** A 4dp base, matching Material's guidance that components align to an 8dp grid while icons, type and some inner elements align to 4dp ([Material Design, spacing methods](https://material.io/design/layout/spacing-methods.html)).
+
+| Token | Value | Use |
+| --- | --- | --- |
+| sp-1 | 4dp | Icon to label, segment gaps |
+| sp-2 | 8dp | Bar padding, gaps between controls, pane gaps |
+| sp-3 | 12dp | Inside a row (badge to text) |
+| sp-4 | 16dp | Screen margin, row padding |
+| sp-6 | 24dp | Reading margin, section spacing |
+| sp-8 | 32dp | Large outer margins |
+| sp-12 | 48dp | Strip height, touch target |
+
+**Sizes.** Strip 48dp, control 48dp, primary 56dp, rows 48, 56 or 64dp by density, badge 40dp, icon 24dp. **Type.** Seven styles (caption 12/16, label 13/20, UI 15/20, title 16/24, reading 17/28, heading 20/28, title large 26/32). Every line height is a multiple of 4, so text sits on the 4dp grid. **Shape.** 0, 2, 4dp and the 8dp chamfer. **Borders.** 1dp hairline, 2dp strong, 4dp quote bar.
+
+**Layout rules expressed as tokens.** Screen margin sp-4, reading margin sp-6, bar padding sp-2, gap between bar controls sp-2, row padding sp-2 by sp-4, gap inside rows sp-3, gap between sections sp-6, gap between panes sp-2.
+
+### 4.8 Who owns consistency
+
+| Layer | What enforces it |
+| --- | --- |
+| Single source | `tools/design/tokens.json` (spacing, size, shape, type, glass) and `tools/design/themes.json` (colours). Nothing else defines a value |
+| Generation | `python3 tools/design/generate.py` writes `Tokens.xaml` and one `Theme.<name>.xaml` per theme for MAUI, `dimens.xml` for the Android widgets and `tokens.css` for the document viewer and prototypes. Generated files are never edited by hand |
+| Components carry the padding | MAUI implicit styles and the custom controls (`BottomBar`, `GlassStrip`, `LibraryRow`, `ChamferButton`, `Segment`) set their own padding and sizes from tokens. Pages only arrange components, they do not set padding |
+| Automated check | `python3 tools/design/lint_layout.py src` fails if any XAML `Padding`, `Margin`, `Spacing` or `CornerRadius` uses a literal number, or if any HTML or CSS spacing, radius or font size is not a token. The only exception is content that reproduces a document's own formatting, marked `lint:off` |
+| Colour check | `python3 tools/design/contrast.py` fails if any theme misses a contrast target |
+| When they run | Locally before every commit (a Visual Studio pre build step can run both), and in the CI job |
+| Human owner | The design owner, which on this project is the app owner, approves any change to the token files. Claude Code keeps prototypes and code on tokens and runs both checks before each push |
+
+When the check was first run on prototype v3 it found **483** hard coded spacing, radius and font size values. Prototype v4 has **zero**.
 
 ## 5. One handed, ambidextrous ergonomics
 
@@ -228,14 +314,17 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 
 ---
 
-## 8. What changed from prototype v2 to v3
+## 8. What changed from prototype v2 to v3, and v3 to v4
 
 | Area | v2 | v3 | Reason |
 | --- | --- | --- | --- |
 | Corners | 16 to 26dp radii, pill chips, mixed radius cards | 0, 2 and 4dp plus one chamfer | Feedback, P5 |
 | Search and actions | Top bar | Bottom bar | E1, Fitts's law |
 | Primary action | Right side | Centre, or the user's hand side | E2, E3 |
-| Colours | Translucent glass over a moving aurora | Opaque paper for content, 90 percent glass for tools, aurora removed from content screens | 4.3.2, P1 |
+| Colours | Translucent glass over a moving aurora | Opaque paper for content, glass for tools, aurora removed from content screens | 4.3.2, P1 |
+| Glass (v4) | 90 percent tint over plain paper, effect invisible | 62 percent tint, content scrolls under bars, sheen and grain, adaptive 85 percent over images | 4.2.1 |
+| Spacing (v4) | 483 hand written values | Tokens only, checked automatically | 4.7, 4.8 |
+| Home screen widgets (v4) | 94 percent paper | Frosted glass, 80 percent light or 85 percent dark, grain, sheen, cut edges, launcher radius | 4.2.2 |
 | Text | 12 to 13px regular secondary text | 13sp minimum at weight 500 or more | 4.6 |
 | Default theme | Emerald Mist Dark | Daylight (light) | Positive polarity research |
 | Themes | 8, several with tinted text | 7, neutral text, all AAA for body text | 4.3.4 |
@@ -246,7 +335,10 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 
 | Test | Method | Pass criterion |
 | --- | --- | --- |
-| Contrast | `python3 tools/design/contrast.py` runs locally and in CI | Every pair at or above its minimum |
+| Contrast | `python3 tools/design/contrast.py` runs locally and in CI | Every pair at or above its minimum, including glass and widgets |
+| Consistency | `python3 tools/design/lint_layout.py` on XAML and prototypes, locally and in CI | Zero violations |
+| Widget legibility | Widgets placed over 5 real wallpapers (light, dark, busy photo, gradient, solid) on Android 12, 14 and 17 | Every label readable, no clipping by the launcher's corner radius |
+| Glass visibility | Same participants as the legibility test are asked whether bars look like glass or a solid bar | Most say glass, with no drop in reading comfort |
 | One handed reach | 6 or more right handed and 6 or more left handed participants complete 10 tasks with one hand on a 6.1 inch and a 6.7 inch phone (open a file, quote a passage, create a note, switch view, search) | No task needs the second hand. No grip change reported for frequent tasks |
 | Legibility | Same participants read a 300 word passage in Daylight, Dusk and OLED and rate comfort | No theme rated below "comfortable" by more than one participant |
 | Handedness setting | Participants try Centre, then their own side | Preference recorded. Default stays Centre unless most prefer their side |
@@ -264,6 +356,10 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 * Hoober, S. (2013). How do users really hold mobile devices? UXmatters. https://www.uxmatters.com/mt/archives/2013/02/how-do-users-really-hold-mobile-devices.php
 * Itten, J. (1973). The Art of Color (rev. English ed.). John Wiley.
 * Material Design 2. Dark theme. https://m2.material.io/design/color/dark-theme
+* Material Design. Spacing methods. https://material.io/design/layout/spacing-methods.html
+* Android Open Source Project. Window blurs. https://source.android.com/docs/core/display/window-blurs
+* Android Developers. WallpaperManager reference. https://developer.android.com/reference/android/app/WallpaperManager
+* Android Developers. Android 12 widgets improvements. https://developer.android.com/about/versions/12/features/widgets
 * Nielsen Norman Group. Jakob's Law of Internet User Experience. https://nngroup.com/videos/jakobs-law-internet-ux/
 * Oklab colour space (Ottosson, 2020), summary. https://en.wikipedia.org/wiki/Oklab_color_space
 * Piepenbrock, C., and colleagues (2013). Positive display polarity is advantageous for both younger and older adults. Ergonomics, 56(7). Catalogue record: https://documentacion.fundacionmapfre.org/documentacion/publico/pt/bib/143702.do
