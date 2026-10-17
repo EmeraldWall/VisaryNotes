@@ -30,7 +30,7 @@ The gap the frameworks keep pointing to is **between** these apps. Note apps do 
 
 ## 2. VRIO analysis
 
-Framework source. Barney (1991) proposed that resources yield sustained advantage when they are valuable, rare, imperfectly imitable and non substitutable ([Barney 1991, Journal of Management 17(1), 99 to 120](https://doi.org/10.1177/014920639101700108)). Barney (1995) restated it as Value, Rarity, Imitability and Organization ([Barney 1995, Academy of Management Executive 9(4), 49 to 65](https://doi.org/10.5465/ame.1995.9512032192)).
+Framework source. Barney (1991) proposed that resources yield sustained advantage when they are valuable, rare, imperfectly imitable and non substitutable (Barney 1991, Journal of Management 17(1), 99 to 120). Barney (1995) restated it as Value, Rarity, Imitability and Organization (Barney 1995, Academy of Management Executive 9(4), 49 to 65).
 
 Reading the table. V, R, I, O are answered Yes, Partly or No. "Costly to imitate" counts as Yes for I. The outcome follows the usual VRIO ladder: competitive disadvantage, parity, temporary advantage, unused advantage, sustained advantage.
 
@@ -141,8 +141,8 @@ These are applied in SPEC.md version 0.3 and in the prototype.
 ## References
 
 * Ajzen, I. (1991). The theory of planned behavior. Organizational Behavior and Human Decision Processes, 50(2), 179 to 211. https://doi.org/10.1016/0749-5978(91)90020-T
-* Barney, J. (1991). Firm resources and sustained competitive advantage. Journal of Management, 17(1), 99 to 120. https://doi.org/10.1177/014920639101700108
-* Barney, J. B. (1995). Looking inside for competitive advantage. Academy of Management Executive, 9(4), 49 to 65. https://doi.org/10.5465/ame.1995.9512032192
+* Barney, J. (1991). Firm resources and sustained competitive advantage. Journal of Management, 17(1), 99 to 120.
+* Barney, J. B. (1995). Looking inside for competitive advantage. Academy of Management Executive, 9(4), 49 to 65.
 * Moore, G. C., and Benbasat, I. (1991). Development of an instrument to measure the perceptions of adopting an information technology innovation. Information Systems Research, 2(3), 192 to 222. https://doi.org/10.1287/isre.2.3.192
 * Rogers, E. M. (2003). Diffusion of Innovations (5th ed.). Free Press.
 * Markor. https://github.com/gsantner/markor

@@ -1,12 +1,14 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.3 (draft) | Status: for review | Date: 2026-10-17
+Version 0.4 (draft) | Status: for review | Date: 2026-10-17
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
 
 **Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain.
 
 **Change in 0.3.** Applies the decisions D1 to D10 from [STRATEGY.md](STRATEGY.md) (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory) and the prototype feedback that the layout wasted space. Reading is now an equal first class job. New sections 4.5 (space budget) and 7.8 (read, extract, write). Layouts, widgets, data model and phases updated.
+
+**Change in 0.4.** Visual design rebuilt on a documented CMF system, colour theory, UX laws and one handed, ambidextrous ergonomics. Full reasoning and sources are in [DESIGN.md](DESIGN.md), which now governs every visual and interaction decision. Sections 3.1, 4, 5 and 9.3 are rewritten to match. Shapes are crisp (0, 2, 4dp plus one chamfer), all actions moved to the bottom of the screen, a handedness setting was added, and the palette was rebuilt so body text reaches 7 to 1 contrast or more in every theme.
 
 ---
 
@@ -95,9 +97,9 @@ Layouts are chosen by window width, never by device type, so the same rules work
 
 | Width class | Typical device | Layout |
 | --- | --- | --- |
-| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. Library list, tap opens the reader or editor full screen. No tab bar. A slim bottom action dock (Open file, voice, New note) on the Library only. While reading, a pull up sheet shows the linked note |
-| Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | Two panes. Document and its linked note side by side, or Library and detail. Library opens as a drawer from the top bar |
-| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three panes. Library list, document, linked note. When a note without a document is open, the middle pane is the editor and the right pane shows backlinks |
+| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. A passive glance strip at the top (title, counts, page). Every action lives in the bottom glass bar: Library has Continue reading, filters, then Open file, New note (centre) and Search. Reader has the Reading and Original switch, then Library, Find and Notes. The linked note opens as a bottom sheet |
+| Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | Two panes. Document and its linked note side by side, or Library and detail. Each pane has its own bottom bar. Library opens from the bottom bar, never from a side edge |
+| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three paper panes on the desk: Library, document, linked note. Each pane has its own bottom bar. When a note without a document is open, the middle pane is the editor and the right pane shows backlinks |
 
 **Implementation.** A single `AdaptiveShellPage` hosts the panes. It listens to the window size (`Window.SizeChanged`) and switches between layouts through `VisualStateManager` states driven by MAUI's built in `AdaptiveTrigger` (MinWindowWidth 600 and 840). Pane content is reused across states, so switching layout never recreates the editor or loses its cursor.
 
@@ -112,7 +114,7 @@ Hinge and posture data come from Jetpack WindowManager (`FoldingFeature`), acces
 | --- | --- |
 | Flat, unfolded | Normal expanded or medium layout. Panes never straddle a separating hinge |
 | Book (vertical hinge, half open) | Document on the left, linked note on the right, split exactly at the hinge. For a plain note, Library on the left and note on the right |
-| Tabletop (horizontal hinge, half open) | Document or note on the top half, formatting toolbar and keyboard area on the bottom half. In viewer mode, the bottom half shows page thumbnails and zoom controls |
+| Tabletop (horizontal hinge, half open) | Document or note on the top half. The bottom half is the Act zone: formatting tools and keyboard, or page thumbnails, view switch and zoom in the viewer |
 | Folded (outer screen) | Compact layout. State is preserved across fold and unfold with no reload |
 
 `MainActivity` declares `ConfigurationChanges` for screen size, orientation, screen layout and smallest screen size so folding and rotating do not restart the activity.
@@ -128,88 +130,89 @@ Hinge and posture data come from Jetpack WindowManager (`FoldingFeature`), acces
 
 ---
 
-## 4. Visual design: Visary Glass
+## 4. Visual design
 
-### 4.1 Design intent
+The complete rationale, with sources and measurements, is in [DESIGN.md](DESIGN.md). This section lists only what the build must implement.
 
-Material 3 provides the structure (components, shapes, colour roles). MAUI 10 supports Material 3 on Android through one project property, `<UseMaterial3>true</UseMaterial3>`, with Microsoft recommending Microsoft.Maui.Controls 10.0.60 or later ([.NET Blog, Material 3 for .NET MAUI](https://devblogs.microsoft.com/dotnet/dotnet-maui-material-3/)). Visary Glass provides the surface treatment on top. The look must be clearly glass but must not imitate Apple's Liquid Glass.
+### 4.1 CMF tokens
 
-| Visary Glass | What it avoids |
-| --- | --- |
-| Frosted, matte panes with a fine film grain, like etched glass | Glossy, water like lensing and liquid morphing |
-| Colour comes from the theme ink that tints the glass from inside | Clear, colourless panes that only refract |
-| A single thin "edge glint" line along the top and leading edge, angled like light through a prism | Large specular highlights that move with device tilt |
-| Faceted corners (mixed corner radii, cut corners on primary actions) | Uniform pill and capsule shapes everywhere |
-| A slow "aurora" backdrop of two or three soft blobs generated from the theme seed colour | Wallpaper see through effects |
+| Material | Finish | Implementation |
+| --- | --- | --- |
+| Desk | Matte | `Desk` colour token. Background behind panes and behind pages in Original view |
+| Paper | Matte, no texture | `Paper` token. Every content surface. Fully opaque |
+| Glass | Satin etched: blur 24dp, tint 90 percent, grain 2 percent, 1dp light top edge, 1dp dark bottom edge | `GlassView` control (4.3). Tools only. Text on glass is limited to labels of about four words |
+| Ink | Flat | `Ink` and `InkSecondary` tokens. Never semi transparent |
+| Accent light | Flat, chamfered | `Accent`, `OnAccent`, `AccentText` tokens. One primary action per screen |
 
-### 4.2 Glass layers
+### 4.2 Shape tokens
 
-Every glass surface is composed of five layers, top to bottom.
+| Token | Value | Used for |
+| --- | --- | --- |
+| `Shape.None` | 0dp | Full width paper and bars |
+| `Shape.Control` | 2dp | Buttons, segments, inputs, badges, checkboxes |
+| `Shape.Pane` | 4dp | Panes on the desk, widgets, sheets |
+| `Shape.Chamfer` | one 8dp 45 degree cut, top trailing corner | Primary action only. Sheets use it on the top leading corner |
 
-1. **Content** (text, icons). Always drawn at full opacity.
-2. **Edge glint**. 1dp gradient stroke, 40 percent to 0 percent white (light themes use theme ink instead of white).
-3. **Grain**. A tiled 128px noise texture at 3 to 5 percent opacity, so the glass does not look like flat transparency.
-4. **Tint**. Theme surface colour at 55 to 80 percent opacity depending on elevation. Higher elevation means more opaque.
-5. **Backdrop blur**. 16 to 32dp radius of whatever sits behind the pane.
+No pills, circles or radii above 4dp anywhere in the app. In MAUI the chamfer is a `Path` or `RoundRectangle` replacement drawn with MAUI Graphics.
 
 ### 4.3 How glass is built in MAUI
 
-MAUI has no built in backdrop blur, so the glass is a custom control.
+MAUI has no built in backdrop blur, so glass is a custom control.
 
-* **`GlassView`** is a MAUI `ContentView` with bindable properties for elevation, tint, corner shape and glint. Layers 2 to 4 are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
-* **Backdrop blur (layer 5)** is done by a custom Android handler for `GlassView`. On Android 12+ it records the content behind the pane into a `RenderNode` and applies `RenderEffect.CreateBlurEffect`, which runs on the GPU. Note that `RenderEffect` set directly on a view blurs the view itself, not what is behind it, which is why the `RenderNode` capture step is needed.
-* **Shortcut for the aurora.** Most glass sits over the aurora backdrop, which the app generates itself. For those panes no capture is needed. The handler simply draws a pre softened copy of the aurora clipped to the pane, which is almost free. Real capture blur is only used for panes over scrolling content (top bar, bottom bar, formatting toolbar).
-* **Evaluate first.** The third party NuGet package VitrumMAUI describes the same RenderNode and RenderEffect approach, with a tint only fallback below Android 12 ([NuGet, VitrumMAUI](https://www.nuget.org/packages/VitrumMAUI)). Phase 0 compares it with the custom handler on performance, licence and maintenance, and picks one.
+* **`GlassView`** is a MAUI `ContentView` with bindable properties for tint and edge lines. Tint, grain and edge lines are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
+* **Backdrop blur** is a custom Android handler. On Android 12+ it records the content behind the bar into a `RenderNode` and applies `RenderEffect.CreateBlurEffect` on the GPU. `RenderEffect` set directly on a view blurs the view itself, which is why the `RenderNode` capture step is needed.
+* **Evaluate first.** The third party package VitrumMAUI describes the same approach with a tint only fallback below Android 12 ([NuGet, VitrumMAUI](https://www.nuget.org/packages/VitrumMAUI)). Phase 0 compares it with the custom handler and picks one.
+* Because tint is 90 percent opaque, contrast does not depend on the blur. Below Android 12, and with Reduce transparency on, glass becomes the solid paper colour with edge lines kept.
 
-### 4.4 Elevation levels
+### 4.4 Screen zones and one handed rules
 
-| Level | Use | Tint opacity | Blur |
-| --- | --- | --- | --- |
-| Glass 0 | Aurora backdrop | n/a | n/a |
-| Glass 1 | Library list panel (one panel holding all rows, not one card per row) | 60 percent | aurora copy only (no capture) |
-| Glass 2 | Top bar, bottom bar, rail | 65 percent | 24dp capture |
-| Glass 3 | Sheets, dialogs, menus, formatting toolbar | 80 percent | 32dp capture |
+From DESIGN.md section 5. The build must follow these rules on every screen.
+
+| Zone | Height | Content |
+| --- | --- | --- |
+| Glance | Top 44 to 52dp | Passive only: title, counts, page number, save state. Settings may live here because it is rarely used |
+| Read | Middle | Content on paper. Full width rows, 56dp minimum in Compact density |
+| Act | Bottom bar, up to 30 percent of height | Every frequent action. Primary action centred by default |
+
+* **Handedness setting** Centre (default), Left, Right. Left and Right move the primary action and the fast scroll handle to that side and put the most used paired action nearest that thumb. Implemented as a `Handedness` preference that bottom bar layouts bind to (`Grid.Column` order).
+* **No app gestures from the side edges**, because Android uses inward swipes from both edges for Back ([Android Developers, gesture navigation](https://developer.android.com/guide/navigation/gesturenav)).
+* Selection menu appears below the selection unless the selection is in the bottom third.
+* Menus, pickers and confirmations are bottom sheets with buttons at the bottom.
+* Targets 48dp minimum, 56dp for primary actions, 8dp apart ([Google, Touch target size](https://support.google.com/accessibility/android/answer/7101858)).
 
 ### 4.5 Space budget (non negotiable)
 
-Driven by prototype feedback and decision D4 in STRATEGY.md. Content gets the screen. Glass is a thin frame around it.
-
 | Element | Rule |
 | --- | --- |
-| Top bar | One floating glass bar, 52dp tall, 8dp from the edges. It holds search on the Library and the file name plus view switch in the reader. No large page titles |
-| Bottom | No permanent tab bar. Library shows a 60dp action dock. Reader and editor show nothing at the bottom except the 56dp linked note handle (reader) or the formatting bar docked to the keyboard (editor) |
-| Reading surface | Edge to edge, 20dp side padding in Reading view, 8dp around the page in Original view |
-| Immersive reading | A tap on the document hides all chrome. A second tap shows it. Scrolling down hides it automatically (setting) |
-| List density | Comfortable, Compact (default) and Dense. Compact fits about ten Library rows on a 6.1 inch phone. Dense hides the snippet line |
-| Gaps | 8dp outer margin, 6 to 8dp between chrome elements. No decorative spacing |
-| Panes on large screens | No navigation rail. Panes sit 8dp apart and use the full height |
+| Glance strip | 44dp in reader and editor, 52dp on the Library. No large page titles |
+| Bottom bar | 56dp action row plus optional 44dp segment row plus optional 52dp Continue reading row |
+| Reading surface | Edge to edge, 22dp side padding in Reading view, page fills the width in Original view |
+| Immersive reading | A tap on the document hides both bars. A second tap shows them |
+| List density | Comfortable 64dp, Compact 56dp (default), Dense 48dp without snippet |
 
 ### 4.6 Readability rules (non negotiable)
 
-* Text is never placed directly on blur alone. There is always a tint layer whose opacity guarantees the contrast targets in section 5.3 against the worst case backdrop.
-* The editor and document viewer body area is **solid**, not glass. Glass is used for chrome (bars, cards, sheets, toolbars) only. Long form reading happens on an opaque "paper" surface.
-* A "Reduce transparency" setting replaces all glass with solid tinted surfaces. It is turned on automatically when the system high contrast text setting is on, and when battery saver is active.
-* A "Reduce motion" setting stops the aurora animation and shortens transitions. It follows the system animation scale by default.
+* Body text 7 to 1 or more, secondary text 4.5 to 1 or more, icons and borders 3 to 1 or more, all measured against the worst case backdrop for glass.
+* Text never sits on blur alone, and long text never sits on glass.
+* No texture under text. Grain only on glass.
+* No UI text below 13sp and no weight below 500 under 15sp.
+* Reduce transparency turns glass into solid paper. It turns on automatically with system high contrast text and battery saver.
 
 ### 4.7 Motion
 
-Container transitions use MAUI animation APIs with spring like easing. Glass panes fade their blur in over 150ms when they appear so the screen does not flash. The aurora drifts very slowly (one full cycle per 60 seconds) and pauses when the app is in the background.
+Short and functional. Sheets slide 200ms, bars fade 150ms. No ambient animation on content screens. Respects the system animation scale.
 
-### 4.8 Fallbacks by Android version
+### 4.8 Typography
 
-| Android version | Glass treatment |
-| --- | --- |
-| 12 and newer (API 31+) | Full five layer glass with GPU backdrop blur |
-| 8 to 11 (API 26 to 30) | Tint, grain, edge glint and the pre softened aurora. No capture blur |
-| Any, with Reduce transparency on | Solid surfaces, edge glint kept as a subtle border |
+| Use | Font | Size and weight |
+| --- | --- | --- |
+| Reading | Literata | 17sp regular, line height 1.6, about 70 characters per line maximum, user adjustable 14 to 28sp |
+| UI | Figtree | 15 to 16sp, 600 for titles, 500 for secondary |
+| Data | Figtree, tabular figures | 12 to 13sp, 700 |
+| Markdown marks, code | JetBrains Mono | 0.85em |
+| Hyperlegible option | Atkinson Hyperlegible | Replaces UI and reading fonts |
 
-### 4.9 Typography
-
-* Fonts are bundled in `Resources/Fonts` and registered with `ConfigureFonts` in `MauiProgram`.
-* UI font proposal: Inter (SIL Open Font Licence), fallback Roboto.
-* Reading font options for notes and documents: Sans (Inter), Serif (Literata), Mono (JetBrains Mono), and Hyperlegible (Atkinson Hyperlegible) for readers who need it. All are under the SIL Open Font Licence, which allows bundling.
-* Default body size 17 in the editor and reflow viewer, line height 1.5, user adjustable from 14 to 28. Respects system font scale up to 200 percent without clipping.
-* Maximum line length in reflow mode about 70 characters on tablets. Extra width becomes margin, not longer lines.
+All fonts are under the SIL Open Font Licence, bundled in `Resources/Fonts` and registered with `ConfigureFonts`.
 
 ---
 
@@ -217,38 +220,30 @@ Container transitions use MAUI animation APIs with spring like easing. Glass pan
 
 ### 5.1 Theme list
 
-Each theme defines a seed colour, a backdrop (aurora palette), light and dark variants where it makes sense, and a reading surface colour.
+Token values live in `tools/design/themes.json`, the single source used by the contrast checker and, at build time, by the generator that writes the MAUI `ResourceDictionary` files.
 
-| Theme | Mood | Variants | Notes |
-| --- | --- | --- | --- |
-| Dynamic | Follows the wallpaper via Material You dynamic colour | Light, Dark | Default on Android 12+. Colours read through the Android `system_accent` resources in a platform service |
-| Emerald Mist | Deep green glass, soft mint ink | Light, Dark | Brand theme and default below Android 12 |
-| Paper | Warm off white, very low glare, minimal glass | Light | For long reading sessions |
-| Midnight Ink | Navy and slate, low blue | Dark | Night writing |
-| Sepia Study | Warm brown on cream | Light, Dark | Reading documents |
-| Graphite | Neutral greys, no hue | Light, Dark | Distraction free |
-| True Black | Pure black for OLED, glass reduced to outlines | Dark | Battery saving |
-| High Contrast | Maximum contrast, glass off | Light, Dark | Accessibility |
+| Theme | Polarity | Purpose | Ink on paper | Secondary on paper |
+| --- | --- | --- | --- | --- |
+| Daylight (default) | Light | Everyday reading and writing | 17.1 to 1 | 8.2 to 1 |
+| Sepia | Light | Long reading, warmer | 14.1 to 1 | 7.8 to 1 |
+| Dusk | Dark grey | Low light, elevation still visible | 14.3 to 1 | 8.9 to 1 |
+| Night | Warm dark, amber accent | Very low light | 14.2 to 1 | 8.4 to 1 |
+| OLED | True black | Battery, off white text | 16.5 to 1 | 8.9 to 1 |
+| High Contrast Light | Light | Accessibility, glass off | 21 to 1 | 15.1 to 1 |
+| High Contrast Dark | Dark | Accessibility, glass off | 21 to 1 | 16.8 to 1 |
+
+Daylight is the default because dark text on light backgrounds supported better proofreading performance across age groups (see DESIGN.md 4.3.1).
 
 ### 5.2 Theme behaviour
 
-* Themes are MAUI `ResourceDictionary` files generated from JSON theme definitions in `VisaryNotes.Core`, swapped at runtime by replacing the merged dictionary. All colours in XAML use `DynamicResource` so a theme switch is instant with no restart.
-* Theme mode can follow the system (`Application.RequestedThemeChanged`), or be forced light or dark.
-* Optional scheduled dark mode (sunset to sunrise using local time only, no location permission).
-* Per note accent colour that tints the note card glass and the widget, without changing text colours.
-* The same theme tokens are emitted as CSS variables for the document viewer (section 7.3) and as Android colour resources for widgets, so all three surfaces match.
+* Themes are MAUI `ResourceDictionary` files generated from `themes.json`, swapped at runtime. All XAML colours use `DynamicResource`.
+* Theme mode can follow the system (light follows Daylight, dark follows Dusk), or be fixed.
+* **Material You dynamic colour** is offered only as an accent override, and only if the system colour passes the 3 to 1 UI and 4.5 to 1 label checks at runtime. Text colours always come from the theme, because wallpaper colours cannot guarantee contrast.
+* The same tokens are emitted as CSS variables for the document viewer and as Android colour resources for widgets.
 
-### 5.3 Contrast targets
+### 5.3 Contrast checks
 
-Every theme must pass automated checks in unit tests.
-
-| Element | Minimum contrast | Reference |
-| --- | --- | --- |
-| Body text and editor text | 4.5 to 1 (target 7 to 1 for Paper, Sepia, High Contrast) | WCAG 2.2 SC 1.4.3 and 1.4.6 ([W3C](https://www.w3.org/TR/WCAG22/)) |
-| Large text (24sp+, or 19sp+ bold) | 3 to 1 | WCAG 2.2 SC 1.4.3 |
-| Icons, focus rings, input borders | 3 to 1 | WCAG 2.2 SC 1.4.11 |
-
-Glass contrast is tested against the worst case backdrop (the lightest and darkest aurora blob of the theme), not the average.
+`python3 tools/design/contrast.py` checks every pair listed in DESIGN.md 4.3.3 and exits with an error if one falls short. It runs locally and in the CI job. The generated `ResourceDictionary` files are also checked by an xUnit test that reuses the same formula.
 
 ---
 
@@ -272,7 +267,7 @@ Glass contrast is tested against the worst case backdrop (the lightest and darke
 * Markdown first editor with live styling. Headings, bold, italic, code, links and lists are styled in place while the raw syntax stays editable.
 * **Implementation.** A MAUI `Editor` with a custom Android handler. The handler attaches a `TextWatcher` to the native `EditText` and applies Android spans (`StyleSpan`, `RelativeSizeSpan`, `ForegroundColorSpan`, `TypefaceSpan`) to the changed region only, using the Markdig parser for positions. This keeps typing smooth on long notes.
 * Toggle between Edit, Split (on medium and expanded widths) and Preview. Preview uses the document viewer (section 7.3).
-* Formatting toolbar on a Glass 3 surface, docked above the keyboard on phones and in the bottom half in tabletop posture.
+* Formatting toolbar on glass, docked above the keyboard on phones and in the bottom half in tabletop posture. Buttons use the 2dp control shape on a neutral fill.
 * Insert image from gallery (Android photo picker through `MediaPicker`, no storage permission needed), camera, or clipboard. Images are copied into app storage and referenced with relative paths so the note stays portable.
 * Insert table, link, code block, quote, horizontal rule, checklist.
 * Undo and redo with deep history, find and replace, word, character and reading time counter.
@@ -452,7 +447,7 @@ Each configurable widget has a small configuration activity (chosen note, theme)
 
 ### 9.3 Widget styling
 
-Home screen widgets cannot blur the wallpaper behind them, so they use the "glass without blur" treatment. Theme tint at 70 to 85 percent opacity, grain, edge glint and rounded corners, all drawn with Android shape and layer list drawables in XML. Widgets follow the app theme or the system dynamic colours, chosen in the configuration screen. Preview layouts are provided for the widget picker.
+Home screen widgets cannot blur the wallpaper behind them, so they use paper at 94 percent opacity with the cut edge lines, drawn with Android shape and layer list drawables in XML. Inner controls use the 2dp control shape and the chamfered primary action. The launcher may apply its own corner radius to the widget's outer background on Android 12 and newer, which is accepted. Widgets follow the app theme, chosen in the configuration screen. Users are encouraged (in the widget picker preview) to place widgets in the lower half of the home screen, inside thumb reach.
 
 ### 9.4 Other system integration
 
@@ -487,7 +482,7 @@ Home screen widgets cannot blur the wallpaper behind them, so they use the "glas
 * TalkBack support with `SemanticProperties.Description` and `SemanticProperties.HeadingLevel` on all controls. The WebView viewer uses real HTML headings and table markup so TalkBack reads structure correctly.
 * All touch targets at least 48dp.
 * Font scale up to 200 percent without clipping or overlapping.
-* Reduce transparency and Reduce motion settings (section 4.6).
+* Reduce transparency setting and respect for the system animation scale (sections 4.6 and 4.7).
 * Never use colour alone to show state (tags also show a name, checked items are also struck through).
 * Switch Access and keyboard navigation with visible focus rings on glass.
 
@@ -504,7 +499,7 @@ VisaryNotes.sln
       App.xaml, MauiProgram.cs       Startup, DI, fonts, UseMaterial3
       Views/                         XAML pages (Shell, NoteList, Editor, Viewer, Settings)
       ViewModels/                    CommunityToolkit.Mvvm view models
-      Controls/                      GlassView, AuroraBackground, AdaptiveShell
+      Controls/                      GlassView, ChamferButton, BottomBar, AdaptiveShell
       Resources/
         Fonts/  Images/  Raw/        Bundled fonts, icons, viewer CSS and JS
         Styles/Themes/               Generated theme ResourceDictionaries
@@ -575,7 +570,8 @@ Only what is strictly needed. No storage permissions (Storage Access Framework a
 | Layer | Tool | Where it runs |
 | --- | --- | --- |
 | Format readers and writers (round trip and golden files) | xUnit in `VisaryNotes.Core.Tests` | Visual Studio Test Explorer, and CI |
-| Theme contrast checks | xUnit | Test Explorer, and CI |
+| Theme contrast checks | `tools/design/contrast.py` plus an xUnit test on generated resources | Locally, Test Explorer, and CI |
+| One handed reach and legibility | Study with left and right handed participants, DESIGN.md section 9 | Real phones, before beta |
 | Repositories and FTS search | xUnit with an in memory or temp file SQLite database | Test Explorer, and CI |
 | UI on phone, foldable and tablet | Manual run on Android Device Manager emulators and real devices | Visual Studio, local only |
 | Widgets, fold postures, TalkBack | Manual checklist before each release | Real devices or emulators |
@@ -622,7 +618,7 @@ Release builds use trimming and the .NET for Android AOT defaults to keep startu
 
 | Phase | Scope | Exit criteria |
 | --- | --- | --- |
-| 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), 3 themes (Dynamic, Emerald Mist, Paper), adaptive shell, CI workflow | App runs from Visual Studio on phone, foldable and tablet emulators with glass chrome and correct pane layouts |
+| 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), themes generated from themes.json (Daylight, Dusk, High Contrast), handedness setting, bottom bar layouts, adaptive shell, CI workflow running the contrast check | App runs from Visual Studio on phone, foldable and tablet emulators with glass bars, correct pane layouts and passing contrast checks |
 | 1. Library core | SQLite storage, unified Library with density setting, folders, tags, Markdown editor with live spans and images, search, trash, autosave, Markdown folder import | Daily usable as a notes app, existing Markdown notes imported |
 | 2. Reader and loop | TXT, MD, RTF, ODT readers, document model, Reading and Original views, immersive mode, zero setup open with, highlights, Quote to note, linked notes, test corpus in the repo | Corpus of 50 real world files opens without crash. A quote round trip (select, quote, tap source) works on phone, foldable and tablet |
 | 3. Reply and widgets | All export formats and Save back, five widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |
@@ -649,6 +645,8 @@ iOS and Windows builds from the same solution, optional sync through user chosen
 ---
 
 ## Appendix A. References
+
+* VisaryNotes design rationale (CMF, colour theory, UX laws, ergonomics). [DESIGN.md](DESIGN.md)
 
 * VisaryNotes strategy analysis (VRIO, TPB, IDT). [STRATEGY.md](STRATEGY.md)
 
