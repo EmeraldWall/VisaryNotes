@@ -1,8 +1,10 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.1 (draft) | Status: for review | Date: 2026-10-17
+Version 0.2 (draft) | Status: for review | Date: 2026-10-17
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
+
+**Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain. The product scope and design are unchanged.
 
 ---
 
@@ -14,56 +16,90 @@ VisaryNotes is a note taking app and document reader for Android phones, foldabl
 2. Open documents people receive (Markdown, plain text, RTF, ODF) and show them in two ways. A reflowed reading view that is comfortable on a phone, and a faithful view that respects the layout the author intended.
 3. Save and share notes in the formats people actually use.
 
-The visual identity is a distinct glass style called **Visary Glass**, built on top of current Material 3 guidance so the app still feels native to Android.
+The visual identity is a distinct glass style called **Visary Glass**, built on top of Material 3 so the app still feels native to Android.
 
 ### 1.1 Goals
 
 | ID | Goal |
 | --- | --- |
-| G1 | Feels native on Android 17 while having its own recognizable glass look |
+| G1 | Feels native on current Android while having its own recognizable glass look |
 | G2 | One codebase that adapts cleanly to phone, foldable (folded, unfolded, tabletop, book) and tablet |
 | G3 | Opens .md, .markdown, .txt, .rtf, .odt with readable and faithful view modes |
 | G4 | Exports to Markdown, plain text, RTF, ODT, DOCX, HTML and PDF |
 | G5 | Interactive home screen widgets |
 | G6 | Several themes that all pass WCAG 2.2 AA contrast for text |
 | G7 | Works fully offline, no account, no tracking |
-| G8 | Very low GitHub Actions usage during development |
+| G8 | Developed, built, debugged and published from Visual Studio on Windows, with very low GitHub Actions usage |
 
 ### 1.2 Non goals for v1
 
-Cloud sync, collaboration, handwriting recognition, encrypted vaults, full spreadsheet or presentation editing, Wear OS and Android Auto. These are listed in section 14 as future work.
+Cloud sync, collaboration, handwriting recognition, encrypted vaults, full spreadsheet or presentation editing, iOS and Windows builds, Wear OS and Android Auto. These are listed in section 15 as future work. The code is structured so an iOS or Windows build is possible later, because MAUI supports them, but v1 targets Android only.
 
 ### 1.3 Assumptions (please confirm or correct)
 
 | ID | Assumption |
 | --- | --- |
-| A1 | Package name `com.visary.notes`, app name "VisaryNotes" |
-| A2 | Kotlin and Jetpack Compose only, no XML layouts except where the platform demands it |
-| A3 | minSdk 26 (Android 8.0). Glass effects degrade gracefully below Android 12 |
-| A4 | compileSdk and targetSdk set to the newest stable platform at scaffold time (Android 17, API 37) |
-| A5 | "ODF" in v1 means ODF Text (.odt and flat .fodt). Spreadsheets (.ods) and presentations (.odp) are view only and come in a later phase |
-| A6 | Opening .docx is not required for v1, only saving to it. Viewing .docx is a phase 4 stretch goal |
-| A7 | Distribution starts as a sideloaded APK built locally, Play Store later |
+| A1 | IDE is **Visual Studio 2026 on Windows** (Community edition is enough) with the ".NET Multi-platform App UI development" workload. Not Visual Studio Code |
+| A2 | Language C#, UI framework **.NET MAUI on .NET 10** (the current long term support release), Android only target framework `net10.0-android` |
+| A3 | Package name `com.visary.notes`, app name "VisaryNotes" |
+| A4 | Minimum Android version 8.0 (API 26). Glass blur needs Android 12 (API 31) and degrades gracefully below that |
+| A5 | Target Android API 36, the default for .NET 10 ([Microsoft Learn, target frameworks](https://learn.microsoft.com/dotnet/standard/frameworks)). Move to API 37 (Android 17) once the .NET for Android release in use supports it as stable |
+| A6 | "ODF" in v1 means ODF Text (.odt and flat .fodt). Spreadsheets (.ods) and presentations (.odp) are view only and come in a later phase |
+| A7 | Opening .docx is not required for v1, only saving to it. Viewing .docx is a phase 4 stretch goal |
+| A8 | Distribution starts as a signed APK built in Visual Studio and sideloaded, Play Store (AAB) later |
 
 ---
 
-## 2. Target devices and adaptive layout
+## 2. Development environment (Visual Studio only)
 
-### 2.1 Device classes
+### 2.1 Required setup
 
-Layouts are chosen by window size class, never by device type, so the same rules work for split screen, freeform windows, Chromebooks and external displays.
+| Item | Detail |
+| --- | --- |
+| IDE | Visual Studio 2026 (Windows), workload ".NET Multi-platform App UI development". The MAUI tutorial pairs it with the .NET 10 SDK ([Microsoft, .NET MAUI first app tutorial](https://dotnet.microsoft.com/learn/maui/first-app-tutorial/intro)) |
+| Android SDK and JDK | Installed and managed by the Visual Studio installer and **Tools, Android, Android SDK Manager**. Android Studio is not installed or needed |
+| Emulators | Created in **Tools, Android, Android Device Manager**. Required profiles are one phone, one foldable and one tablet. Hardware acceleration through Windows Hypervisor Platform |
+| Physical devices | USB or wireless debugging, selected from the Visual Studio run target dropdown |
+| Hot reload | XAML Hot Reload and .NET Hot Reload for fast UI iteration |
+| Tests | Test Explorer runs the xUnit test project, no emulator needed (section 12) |
+| Publishing | **Right click project, Publish** in Visual Studio produces a signed APK or AAB with a keystore managed by Visual Studio. No CI needed for a release build |
+
+### 2.2 What this choice means for the design
+
+Everything Android specific that MAUI does not wrap is written in C# under `Platforms/Android`, using the .NET for Android bindings of the Android SDK and AndroidX libraries (NuGet packages named `Xamarin.AndroidX.*`). Android resource XML files (widget layouts, shortcuts, tile icons) live under `Platforms/Android/Resources` and are edited as text in Visual Studio. No Kotlin or Java code is written.
+
+| Concern | Android Studio world | Visual Studio world (what we use) |
+| --- | --- | --- |
+| UI | Jetpack Compose | .NET MAUI XAML pages and controls, Material 3 enabled |
+| Platform code | Kotlin | C# in `Platforms/Android` |
+| Widgets | Jetpack Glance | Native `AppWidgetProvider` plus `RemoteViews` in C# |
+| Database | Room | sqlite-net with SQLite FTS5 |
+| Dependency injection | Hilt | Built in `Microsoft.Extensions.DependencyInjection` |
+| Architecture helpers | ViewModel, Flow | CommunityToolkit.Mvvm (`ObservableObject`, `RelayCommand`, messenger) |
+| Build | Gradle | MSBuild (`.csproj`), NuGet central package management |
+
+---
+
+## 3. Target devices and adaptive layout
+
+### 3.1 Device classes
+
+Layouts are chosen by window width, never by device type, so the same rules work for split screen, freeform windows, Chromebooks and external displays. The breakpoints follow Android's window size classes.
 
 | Width class | Typical device | Layout |
 | --- | --- | --- |
 | Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. Note list, tap opens editor full screen. Bottom glass navigation bar |
 | Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | List and detail side by side when the hinge allows, otherwise single pane. Navigation rail |
-| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three panes. Folders, note list, editor or viewer. Navigation rail or permanent drawer |
+| Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three panes. Folders, note list, editor or viewer. Navigation rail or permanent side panel |
 
-Implementation uses `NavigableListDetailPaneScaffold` from `androidx.compose.material3.adaptive`, which shows list and detail side by side on large windows and one pane at a time on small ones, with predictive back built in ([Android Developers, Build a list detail layout](https://developer.android.com/develop/adaptive-apps/guides/list-detail)).
+**Implementation.** A single `AdaptiveShellPage` hosts the panes. It listens to the window size (`Window.SizeChanged`) and switches between layouts through `VisualStateManager` states driven by MAUI's built in `AdaptiveTrigger` (MinWindowWidth 600 and 840). Pane content is reused across states, so switching layout never recreates the editor or loses its cursor.
 
-### 2.2 Foldable postures
+### 3.2 Foldable postures
 
-Posture and hinge data come from the low level `adaptive` artifact (`Posture`, `HingeInfo`) and Jetpack WindowManager `FoldingFeature`.
+Hinge and posture data come from Jetpack WindowManager (`FoldingFeature`), accessed from C# in one of two ways, decided in phase 0 with a spike.
+
+1. **Preferred.** The `Microsoft.Maui.Controls.Foldable` NuGet package, which provides a `TwoPaneView` and a `UseFoldable()` startup call that hooks into the Android lifecycle to detect hinges ([Microsoft Learn, TwoPaneView](https://learn.microsoft.com/dotnet/maui/user-interface/controls/twopaneview)). Its documentation was last written for older MAUI versions, so it must be verified on .NET 10 first.
+2. **Fallback.** A small `FoldService` in `Platforms/Android` that uses the `Xamarin.AndroidX.Window` binding directly and publishes posture and hinge bounds to the shared code.
 
 | Posture | Behaviour |
 | --- | --- |
@@ -72,32 +108,34 @@ Posture and hinge data come from the low level `adaptive` artifact (`Posture`, `
 | Tabletop (horizontal hinge, half open) | Document or note on the top half, formatting toolbar and keyboard area on the bottom half. In viewer mode, the bottom half shows page thumbnails and zoom controls |
 | Folded (outer screen) | Compact layout. State is preserved across fold and unfold with no reload |
 
-### 2.3 Large screen quality checklist
+`MainActivity` declares `ConfigurationChanges` for screen size, orientation, screen layout and smallest screen size so folding and rotating do not restart the activity.
+
+### 3.3 Large screen quality checklist
 
 * Continuity across fold, unfold, rotation and resize with no lost text, cursor or scroll position.
-* No locked orientation, no fixed aspect ratio. The app must stay correct when the platform ignores orientation and resizability requests on large screens.
-* Full keyboard and mouse support. Shortcuts listed in section 8.4. Right click context menus. Hover states on glass surfaces.
-* Drag and drop of text, images and files in and out of the app, including between split screen apps.
-* Stylus input in the editor (basic ink sketches are a phase 4 item, plain stylus typing via handwriting to text is handled by the system IME).
-* Multi instance. Two notes can be open in two windows side by side on tablets.
+* No locked orientation, no fixed aspect ratio. `MainActivity` is resizeable.
+* Full keyboard and mouse support. Shortcuts listed in section 9.4, handled by overriding `DispatchKeyEvent` in `MainActivity`. Long press and right click open context menus. Hover states on glass surfaces through `PointerGestureRecognizer`.
+* Drag and drop of text and images within the app using MAUI `DragGestureRecognizer` and `DropGestureRecognizer`. Drag and drop of files from other apps through a native `View.IOnDragListener` in phase 3.
+* Stylus typing via the system handwriting IME. Ink sketches are future work.
+* Multiple windows of the app side by side is a phase 4 stretch item, to be verified against MAUI's Android multi window support.
 
 ---
 
-## 3. Visual design: Visary Glass
+## 4. Visual design: Visary Glass
 
-### 3.1 Design intent
+### 4.1 Design intent
 
-Material 3 provides the structure (components, motion, shape scale, dynamic color). Visary Glass provides the surface treatment. The look must be clearly glass but must not imitate Apple's Liquid Glass. The differences are deliberate.
+Material 3 provides the structure (components, shapes, colour roles). MAUI 10 supports Material 3 on Android through one project property, `<UseMaterial3>true</UseMaterial3>`, with Microsoft recommending Microsoft.Maui.Controls 10.0.60 or later ([.NET Blog, Material 3 for .NET MAUI](https://devblogs.microsoft.com/dotnet/dotnet-maui-material-3/)). Visary Glass provides the surface treatment on top. The look must be clearly glass but must not imitate Apple's Liquid Glass.
 
 | Visary Glass | What it avoids |
 | --- | --- |
 | Frosted, matte panes with a fine film grain, like etched glass | Glossy, water like lensing and liquid morphing |
 | Colour comes from the theme ink that tints the glass from inside | Clear, colourless panes that only refract |
 | A single thin "edge glint" line along the top and leading edge, angled like light through a prism | Large specular highlights that move with device tilt |
-| Faceted corners using Material 3 Expressive shapes (mixed corner radii, cut corners on primary actions) | Uniform pill and capsule shapes everywhere |
+| Faceted corners (mixed corner radii, cut corners on primary actions) | Uniform pill and capsule shapes everywhere |
 | A slow "aurora" backdrop of two or three soft blobs generated from the theme seed colour | Wallpaper see through effects |
 
-### 3.2 Glass layers
+### 4.2 Glass layers
 
 Every glass surface is composed of five layers, top to bottom.
 
@@ -107,54 +145,62 @@ Every glass surface is composed of five layers, top to bottom.
 4. **Tint**. Theme surface colour at 55 to 80 percent opacity depending on elevation. Higher elevation means more opaque.
 5. **Backdrop blur**. 16 to 32dp radius of whatever sits behind the pane.
 
-Backdrop blur is implemented with Haze (`dev.chrisbanes.haze`), a hardware accelerated blur and tint library for Compose ([Haze docs](https://chrisbanes.github.io/haze/), [source](https://github.com/chrisbanes/haze)). Haze 2.x was still in alpha when this spec was written, so v1 pins the latest stable 1.x line and revisits 2.x once it is stable. Haze cannot blur content drawn in a `SurfaceView` (for example video), so glass over such content falls back to the tinted layer only.
+### 4.3 How glass is built in MAUI
 
-### 3.3 Elevation levels
+MAUI has no built in backdrop blur, so the glass is a custom control.
+
+* **`GlassView`** is a MAUI `ContentView` with bindable properties for elevation, tint, corner shape and glint. Layers 2 to 4 are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
+* **Backdrop blur (layer 5)** is done by a custom Android handler for `GlassView`. On Android 12+ it records the content behind the pane into a `RenderNode` and applies `RenderEffect.CreateBlurEffect`, which runs on the GPU. Note that `RenderEffect` set directly on a view blurs the view itself, not what is behind it, which is why the `RenderNode` capture step is needed.
+* **Shortcut for the aurora.** Most glass sits over the aurora backdrop, which the app generates itself. For those panes no capture is needed. The handler simply draws a pre softened copy of the aurora clipped to the pane, which is almost free. Real capture blur is only used for panes over scrolling content (top bar, bottom bar, formatting toolbar).
+* **Evaluate first.** The third party NuGet package VitrumMAUI describes the same RenderNode and RenderEffect approach, with a tint only fallback below Android 12 ([NuGet, VitrumMAUI](https://www.nuget.org/packages/VitrumMAUI)). Phase 0 compares it with the custom handler on performance, licence and maintenance, and picks one.
+
+### 4.4 Elevation levels
 
 | Level | Use | Tint opacity | Blur |
 | --- | --- | --- | --- |
 | Glass 0 | Aurora backdrop | n/a | n/a |
-| Glass 1 | Note cards, list items | 55 percent | 16dp |
-| Glass 2 | Top bar, bottom bar, rail | 65 percent | 24dp |
-| Glass 3 | Sheets, dialogs, menus, formatting toolbar | 80 percent | 32dp |
+| Glass 1 | Note cards, list items | 55 percent | aurora copy only (no capture) |
+| Glass 2 | Top bar, bottom bar, rail | 65 percent | 24dp capture |
+| Glass 3 | Sheets, dialogs, menus, formatting toolbar | 80 percent | 32dp capture |
 
-### 3.4 Readability rules (non negotiable)
+### 4.5 Readability rules (non negotiable)
 
-* Text is never placed directly on blur alone. There is always a tint layer whose opacity guarantees the contrast targets in section 4.3 against the worst case backdrop.
+* Text is never placed directly on blur alone. There is always a tint layer whose opacity guarantees the contrast targets in section 5.3 against the worst case backdrop.
 * The editor and document viewer body area is **solid**, not glass. Glass is used for chrome (bars, cards, sheets, toolbars) only. Long form reading happens on an opaque "paper" surface.
 * A "Reduce transparency" setting replaces all glass with solid tinted surfaces. It is turned on automatically when the system high contrast text setting is on, and when battery saver is active.
 * A "Reduce motion" setting stops the aurora animation and shortens transitions. It follows the system animation scale by default.
 
-### 3.5 Motion
+### 4.6 Motion
 
-Material 3 Expressive spring motion for containers. Glass panes fade their blur radius in over 150ms when they appear so the screen does not flash. The aurora drifts very slowly (one full cycle per 60 seconds) and pauses when the app is in the background.
+Container transitions use MAUI animation APIs with spring like easing. Glass panes fade their blur in over 150ms when they appear so the screen does not flash. The aurora drifts very slowly (one full cycle per 60 seconds) and pauses when the app is in the background.
 
-### 3.6 Fallbacks by Android version
+### 4.7 Fallbacks by Android version
 
 | Android version | Glass treatment |
 | --- | --- |
-| 12 and newer (API 31+) | Full five layer glass with real backdrop blur |
-| 8 to 11 (API 26 to 30) | Tint, grain and edge glint, no live blur (or Haze's fallback path if it performs well in testing) |
+| 12 and newer (API 31+) | Full five layer glass with GPU backdrop blur |
+| 8 to 11 (API 26 to 30) | Tint, grain, edge glint and the pre softened aurora. No capture blur |
 | Any, with Reduce transparency on | Solid surfaces, edge glint kept as a subtle border |
 
-### 3.7 Typography
+### 4.8 Typography
 
-* UI font: a variable sans with good small size legibility (proposal: Inter or Google Sans Flex if licensing allows, otherwise Roboto Flex). Bundled, not downloaded.
-* Reading font options for notes and documents: Sans, Serif (proposal: Literata), Mono (proposal: JetBrains Mono), and "Hyperlegible" (Atkinson Hyperlegible) for readers who need it.
-* Default body size 17sp in the editor and reflow viewer, line height 1.5, user adjustable from 14sp to 28sp. Respects system font scale up to 200 percent without clipping.
+* Fonts are bundled in `Resources/Fonts` and registered with `ConfigureFonts` in `MauiProgram`.
+* UI font proposal: Inter (SIL Open Font Licence), fallback Roboto.
+* Reading font options for notes and documents: Sans (Inter), Serif (Literata), Mono (JetBrains Mono), and Hyperlegible (Atkinson Hyperlegible) for readers who need it. All are under the SIL Open Font Licence, which allows bundling.
+* Default body size 17 in the editor and reflow viewer, line height 1.5, user adjustable from 14 to 28. Respects system font scale up to 200 percent without clipping.
 * Maximum line length in reflow mode about 70 characters on tablets. Extra width becomes margin, not longer lines.
 
 ---
 
-## 4. Themes
+## 5. Themes
 
-### 4.1 Theme list
+### 5.1 Theme list
 
 Each theme defines a seed colour, a backdrop (aurora palette), light and dark variants where it makes sense, and a reading surface colour.
 
 | Theme | Mood | Variants | Notes |
 | --- | --- | --- | --- |
-| Dynamic | Follows the wallpaper via Material You dynamic colour | Light, Dark | Default on Android 12+ |
+| Dynamic | Follows the wallpaper via Material You dynamic colour | Light, Dark | Default on Android 12+. Colours read through the Android `system_accent` resources in a platform service |
 | Emerald Mist | Deep green glass, soft mint ink | Light, Dark | Brand theme and default below Android 12 |
 | Paper | Warm off white, very low glare, minimal glass | Light | For long reading sessions |
 | Midnight Ink | Navy and slate, low blue | Dark | Night writing |
@@ -163,14 +209,15 @@ Each theme defines a seed colour, a backdrop (aurora palette), light and dark va
 | True Black | Pure black for OLED, glass reduced to outlines | Dark | Battery saving |
 | High Contrast | Maximum contrast, glass off | Light, Dark | Accessibility |
 
-### 4.2 Theme behaviour
+### 5.2 Theme behaviour
 
-* Theme mode can follow the system, or be forced light or dark.
+* Themes are MAUI `ResourceDictionary` files generated from JSON theme definitions in `VisaryNotes.Core`, swapped at runtime by replacing the merged dictionary. All colours in XAML use `DynamicResource` so a theme switch is instant with no restart.
+* Theme mode can follow the system (`Application.RequestedThemeChanged`), or be forced light or dark.
 * Optional scheduled dark mode (sunset to sunrise using local time only, no location permission).
 * Per note accent colour that tints the note card glass and the widget, without changing text colours.
-* Themes are defined as data (JSON in assets) so new themes can be added without code changes.
+* The same theme tokens are emitted as CSS variables for the document viewer (section 7.3) and as Android colour resources for widgets, so all three surfaces match.
 
-### 4.3 Contrast targets
+### 5.3 Contrast targets
 
 Every theme must pass automated checks in unit tests.
 
@@ -184,61 +231,62 @@ Glass contrast is tested against the worst case backdrop (the lightest and darke
 
 ---
 
-## 5. Features
+## 6. Notes and editor
 
-### 5.1 Notes and organization
+### 6.1 Notes and organization
 
 * Create, edit, duplicate, delete (with a 30 day recycle bin), pin, archive.
 * Folders (nested two levels) and tags (unlimited, colour coded).
 * Sort by edited, created, title, or manual drag order.
-* Full text search across titles, bodies and imported documents, with highlighted results. Search runs locally using SQLite FTS.
+* Full text search across titles, bodies and imported documents, with highlighted results, using SQLite FTS5.
 * Checklists inside notes (Markdown task list syntax).
 * Note templates (meeting, journal, to do, blank).
 * Version history. The last 20 saves of each note are kept and can be restored.
 * Autosave on every pause in typing and on app background. No save button needed for notes.
 
-### 5.2 Editor
+### 6.2 Editor
 
-* Markdown first editor with live styling (headings, bold, italic, code, links, lists render in place while the raw syntax stays editable).
-* Toggle between Edit, Split (on medium and expanded widths) and Preview.
+* Markdown first editor with live styling. Headings, bold, italic, code, links and lists are styled in place while the raw syntax stays editable.
+* **Implementation.** A MAUI `Editor` with a custom Android handler. The handler attaches a `TextWatcher` to the native `EditText` and applies Android spans (`StyleSpan`, `RelativeSizeSpan`, `ForegroundColorSpan`, `TypefaceSpan`) to the changed region only, using the Markdig parser for positions. This keeps typing smooth on long notes.
+* Toggle between Edit, Split (on medium and expanded widths) and Preview. Preview uses the document viewer (section 7.3).
 * Formatting toolbar on a Glass 3 surface, docked above the keyboard on phones and in the bottom half in tabletop posture.
-* Insert image from gallery (Android photo picker, no storage permission needed), camera, or clipboard. Images are copied into app storage and referenced with relative paths so the note stays portable.
+* Insert image from gallery (Android photo picker through `MediaPicker`, no storage permission needed), camera, or clipboard. Images are copied into app storage and referenced with relative paths so the note stays portable.
 * Insert table, link, code block, quote, horizontal rule, checklist.
-* Undo and redo with deep history.
-* Find and replace.
-* Word, character and reading time counter.
+* Undo and redo with deep history, find and replace, word, character and reading time counter.
 
-### 5.3 Markdown support
+### 6.3 Markdown support
+
+Parsing uses **Markdig**, a fast CommonMark compliant Markdown processor for .NET with many extensions ([GitHub, xoofx/markdig](https://github.com/xoofx/markdig)).
 
 | Feature | Supported |
 | --- | --- |
 | CommonMark core | Yes |
-| GitHub Flavored Markdown (tables, task lists, strikethrough, autolinks) | Yes |
+| GitHub Flavored Markdown (tables, task lists, strikethrough, autolinks) | Yes (Markdig advanced extensions) |
 | Images, local relative paths, content URIs and https URLs | Yes |
 | Footnotes | Yes |
 | Heading anchors and table of contents | Yes |
-| Syntax highlighted code blocks | Yes |
+| Syntax highlighted code blocks | Yes (bundled highlight.js in the viewer) |
 | YAML front matter | Parsed and shown as a metadata card, not as text |
-| Math (LaTeX) | Phase 4 |
+| Math (LaTeX) | Phase 4 (bundled KaTeX in the viewer) |
 | Mermaid diagrams | Phase 4, shown as code until then |
-| Raw HTML | Safe subset only (no scripts, no iframes) |
+| Raw HTML | Sanitized safe subset only (no scripts, no iframes, no event handlers) |
 
-Rendering uses `multiplatform-markdown-renderer` for Compose with its Coil 3 image module ([source](https://github.com/mikepenz/multiplatform-markdown-renderer)). Remote images are loaded only after the user taps "Load remote images" for that document, so opening a file never contacts a server by surprise.
+Remote images are loaded only after the user taps "Load remote images" for that document, so opening a file never contacts a server by surprise.
 
 ---
 
-## 6. Opening documents
+## 7. Opening documents
 
-### 6.1 Entry points
+### 7.1 Entry points
 
-* "Open" inside the app using the Storage Access Framework document picker.
-* Android "Open with" and "Share to" from file managers, email, browsers and chat apps (intent filters for `ACTION_VIEW` and `ACTION_SEND`).
-* Drag and drop onto the app on tablets.
-* Recent files list with persisted URI permissions.
+* "Open" inside the app using `FilePicker` (Storage Access Framework underneath).
+* Android "Open with" and "Share to" from file managers, email, browsers and chat apps. Declared with `[IntentFilter]` attributes on `MainActivity` for `ActionView` and `ActionSend`, handled in `OnNewIntent`.
+* Drag and drop onto the app on tablets (phase 3).
+* Recent files list with persisted URI permissions (`TakePersistableUriPermission`).
 
 Opened files can be read in place, or imported as a note (a copy the user can edit).
 
-### 6.2 Supported input formats
+### 7.2 Supported input formats
 
 | Format | Extensions | MIME types handled |
 | --- | --- | --- |
@@ -249,117 +297,134 @@ Opened files can be read in place, or imported as a note (a copy the user can ed
 | OpenDocument Spreadsheet (later) | .ods | application/vnd.oasis.opendocument.spreadsheet |
 | OpenDocument Presentation (later) | .odp | application/vnd.oasis.opendocument.presentation |
 
-### 6.3 Two view modes
+### 7.3 The document viewer
 
-Every document opens in a viewer with a two way switch at the top.
+All formats are rendered by one viewer. Each reader converts its file into the shared document model (section 7.6), and an `HtmlRenderer` turns that model into HTML that is displayed in a MAUI `WebView` (Android `WebView`, kept up to date by the Play Store on all supported devices). This gives mature text layout, tables, images, zoom and printing with one code path.
 
-**Reading view (reflow).** Content is converted into the app's internal document model (section 6.5) and laid out to fit the screen. Fixed page widths, absolute positions and tiny fonts are dropped. Text size, theme and reading font follow the user's settings. This is the default on compact width.
+* The viewer is offline and locked down. JavaScript is limited to bundled scripts (highlighting, math), file and network access are disabled, and images are served through a custom `WebViewClient.ShouldInterceptRequest` in the Android handler that resolves note attachments, `content://` URIs and relative paths safely.
+* Theme colours and the reading font are injected as CSS variables, so the viewer always matches the app theme.
 
-**Original view (fidelity).** Content is laid out as the author designed it. Page size, margins, fonts (or closest available), colours, alignment, tables, columns, headers and footers are preserved. The page is shown on a paper surface with pinch to zoom, fit width and fit page. This is the default on expanded width.
+### 7.4 Two view modes
+
+Every document opens in the viewer with a two way switch at the top.
+
+**Reading view (reflow).** The document model is rendered with the app's reading stylesheet. Fixed page widths, absolute positions and tiny fonts are dropped. Text size, theme and reading font follow the user's settings. This is the default on compact width.
+
+**Original view (fidelity).** The document model is rendered with the author's styles turned into CSS. Page size, margins, fonts (or closest available), colours, alignment, tables, columns, headers and footers are preserved. Pages are laid out as paper sheets on a neutral background with pinch to zoom, fit width and fit page. This is the default on expanded width.
 
 The user's last choice is remembered per format.
 
-### 6.4 Per format rules
+### 7.5 Per format rules
 
-**Markdown.** Reading and Original are the same render, Original simply uses the fonts and widths the author's front matter requests if any. Relative image paths resolve against the folder of the file when the app has access to it (using the document tree permission if the user grants it, otherwise a one time prompt "Allow access to this folder to show images").
+**Markdown.** Reading and Original are the same render, Original simply uses the fonts and widths the author's front matter requests if any. Relative image paths resolve against the folder of the file when the app has access to it (using a folder permission if the user grants it, otherwise a one time prompt "Allow access to this folder to show images").
 
 **Plain text.**
-* Encoding detection (BOM, then UTF 8 validation, then a fallback detector for legacy encodings such as Windows 1252 and Shift JIS), with a manual encoding picker.
+* Encoding detection (BOM, then UTF 8 validation, then a fallback for legacy encodings such as Windows 1252 and Shift JIS using `System.Text.Encoding.CodePages`), with a manual encoding picker.
 * Line ending detection (LF, CRLF, CR) and preserve on save.
 * Reading view wraps lines and uses the reading font. Original view uses a monospace font, no wrapping, horizontal scroll, so ASCII tables and art stay intact.
 * Files over 5 MB open in a paged, read only viewer to stay responsive.
 
-**RTF.** Android has no built in RTF parser, so VisaryNotes includes its own streaming RTF reader based on the Microsoft RTF 1.9.1 specification.
-* Supported. Character formatting (font, size, bold, italic, underline, strike, colour, highlight, super and subscript), paragraph formatting (alignment, indents, spacing, tabs), lists, tables (`\trowd`, `\cell`), embedded PNG and JPEG pictures (`\pict` with `\pngblip` or `\jpegblip`), Unicode (`\uN`), code pages (`\ansicpg`), hyperlinks (`HYPERLINK` field), page size and margins, headers and footers.
-* Converted with a warning. WMF and EMF pictures (rasterized if possible, otherwise shown as a placeholder).
+**RTF.** Android has no built in RTF support, so VisaryNotes includes its own streaming RTF reader that outputs the document model, based on the Microsoft RTF 1.9.1 specification. The open source RtfPipe library (RTF to HTML for .NET) is used as a reference and test oracle, and may be adopted directly if its licence and Android compatibility check out. Its README warns that complex documents may not match Word exactly ([GitHub, RtfPipe](https://github.com/erdomke/RtfPipe)), which is one reason for owning the reader.
+* Supported. Character formatting (font, size, bold, italic, underline, strike, colour, highlight, super and subscript), paragraph formatting (alignment, indents, spacing, tabs), lists, tables (`\trowd`, `\cell`), embedded PNG and JPEG pictures (`\pngblip`, `\jpegblip`), Unicode (`\uN`), code pages (`\ansicpg`), hyperlinks (`HYPERLINK` field), page size and margins, headers and footers.
+* Converted with a warning. WMF and EMF pictures (shown as a placeholder in v1).
 * Ignored safely. OLE objects and unknown destinations (`\*` groups).
 
-**ODT.** An ODT file is a ZIP package containing `content.xml`, `styles.xml`, `meta.xml` and a `Pictures/` folder, defined by the OASIS OpenDocument 1.3 standard ([OASIS ODF 1.3](https://docs.oasis-open.org/office/OpenDocument/v1.3/)). VisaryNotes parses it with Android's streaming `XmlPullParser` rather than the large ODF Toolkit, to keep the APK small.
+**ODT.** An ODT file is a ZIP package containing `content.xml`, `styles.xml`, `meta.xml` and a `Pictures/` folder, defined by the OASIS OpenDocument 1.3 standard ([OASIS ODF 1.3](https://docs.oasis-open.org/office/OpenDocument/v1.3/)). VisaryNotes reads it with `System.IO.Compression.ZipArchive` and a streaming `XmlReader`, both part of .NET, so no third party dependency is needed.
 * Supported. Paragraph and character styles with inheritance, headings, lists, tables (including merged cells), images, hyperlinks, footnotes, page layout (size, margins, orientation), headers and footers, sections with columns, document metadata.
-* Fonts. If the requested font is not on the device, a metric compatible substitute is used (for example Liberation or Carlito style mapping), and Original view shows a small "Font substituted" notice.
+* Fonts. If the requested font is not bundled, a metric compatible substitute is used (for example Carlito for Calibri, Liberation Serif for Times New Roman), and Original view shows a small "Font substituted" notice.
 * Flat ODT (.fodt) uses the same parser without the ZIP step.
 
-### 6.5 Internal document model
+### 7.6 Internal document model
 
-All readers produce one common tree so every viewer and exporter works with every input.
+All readers produce one common tree in `VisaryNotes.Core`, so every viewer and exporter works with every input.
 
 ```
 Document
-  metadata (title, author, created, modified, page setup)
-  styles (named paragraph and character styles)
-  blocks
+  Metadata (title, author, created, modified, page setup)
+  Styles (named paragraph and character styles)
+  Blocks
     Heading, Paragraph (runs of styled text), ListBlock, Table,
     Image, CodeBlock, Quote, PageBreak, HorizontalRule, Footnote
 ```
 
-This model is also what the note editor saves to when the user chooses a rich export format.
+### 7.7 Safety and robustness
 
-### 6.6 Safety and robustness
-
-* All parsing runs off the main thread with size and time limits. A malformed file shows a friendly error and a "Show as plain text" fallback, never a crash.
+* All parsing runs on background threads (`Task.Run`) with size and time limits and a `CancellationToken`. A malformed file shows a friendly error and a "Show as plain text" fallback, never a crash.
 * ZIP reading guards against zip bombs (maximum uncompressed size, maximum entry count) and path traversal in entry names.
-* XML parsing has external entities and DTD loading disabled.
+* `XmlReaderSettings` with `DtdProcessing.Prohibit` and no `XmlResolver`, so external entities are never loaded.
+* HTML produced for the viewer is built from the model, never by passing file HTML through, and raw HTML in Markdown is sanitized.
 * No document content ever leaves the device unless the user shares or exports it.
 
 ---
 
-## 7. Saving and exporting
+## 8. Saving and exporting
 
-### 7.1 Native note storage
+### 8.1 Native note storage
 
-Notes are stored in a Room (SQLite) database with an FTS index. Each note body is stored as Markdown. Images and attachments live in app private storage, one folder per note.
+Notes are stored in SQLite through **sqlite-net-pcl** with the `SQLitePCLRaw.bundle_e_sqlite3` bundle, which includes FTS5 for search. Each note body is stored as Markdown. Images and attachments live in app private storage (`FileSystem.AppDataDirectory`), one folder per note. Settings use MAUI `Preferences`.
 
-### 7.2 Export formats
+### 8.2 Export formats
 
 | Format | Extension | How it is produced | Fidelity |
 | --- | --- | --- | --- |
 | Markdown | .md | Direct | Full |
-| Markdown bundle | .zip | .md plus an `assets/` folder for images | Full, portable |
+| Markdown bundle | .zip | .md plus an `assets/` folder for images, via `ZipArchive` | Full, portable |
 | Plain text | .txt | Markdown stripped to text | Text only |
 | Rich Text | .rtf | Own RTF writer from the document model, images embedded as `\pngblip` | High |
 | OpenDocument Text | .odt | Own ODT writer. ZIP with `mimetype` stored first and uncompressed, then manifest, content, styles, pictures | High |
-| Word | .docx | Own minimal OOXML writer (document, styles, numbering, relationships, media) | High |
-| HTML | .html | Single self contained file with inline CSS and base64 images | Full |
-| PDF | .pdf | Android `PdfDocument` API, paged with the chosen theme or print friendly style | Full, fixed layout |
+| Word | .docx | Microsoft's **Open XML SDK** (`DocumentFormat.OpenXml`, MIT licence) ([GitHub, Open XML SDK](https://github.com/dotnet/Open-XML-SDK)) | High |
+| HTML | .html | Single self contained file from `HtmlRenderer`, inline CSS and base64 images | Full |
+| PDF | .pdf | The viewer's Android `WebView` printed through `CreatePrintDocumentAdapter` and `PrintManager`, which also lets the user print directly | Full, fixed layout |
 
 All writers are covered by round trip tests (write, read back with our own reader, compare the document model) and by golden files checked once by opening them in LibreOffice and Microsoft Word.
 
-### 7.3 Save locations
+### 8.3 Save locations
 
-* "Save as" opens the system file picker (`ACTION_CREATE_DOCUMENT`), so the user chooses any location including cloud drives that provide a document provider.
-* "Share" sends the exported file through the Android share sheet.
+* "Save as" uses the system file picker (`ACTION_CREATE_DOCUMENT` through a small platform service, or CommunityToolkit.Maui `FileSaver`), so the user chooses any location including cloud drives that provide a document provider.
+* "Share" sends the exported file through the Android share sheet (`Share.RequestAsync`).
 * Optional "Auto export folder". The user picks a folder once and VisaryNotes keeps a Markdown copy of every note there, which also acts as a simple backup that any sync app can pick up.
 * Opened RTF, ODT and TXT files can be saved back to their original location in their original format when the user edits an imported copy and chooses "Save back".
 
 ---
 
-## 8. Home screen widgets and system integration
+## 9. Home screen widgets and system integration
 
-Widgets are built with Jetpack Glance. Glance offers action types such as `actionRunCallback` and `actionStartActivity`, and on Android 12+ interactive controls such as `CheckBox` ([Android Developers, Glance user interaction](https://developer.android.com/develop/ui/compose/glance/user-interaction)). Callbacks run in the background, so any action that opens the app must use `actionStartActivity` rather than starting an activity from a callback.
+### 9.1 How widgets are built
 
-### 8.1 Widgets
+MAUI has no widget framework, so widgets are written as native Android widgets in C#. A widget is an `AppWidgetProvider` class in `Platforms/Android` that supplies `RemoteViews` built from XML layouts in `Platforms/Android/Resources/layout`. No `.csproj` changes are needed. Microsoft published a guide and a working sample for exactly this in January 2026 ([.NET Blog, How to build Android widgets with .NET MAUI](https://devblogs.microsoft.com/dotnet/how-to-build-android-widgets-with-dotnet-maui/)).
+
+* Only views supported by `RemoteViews` can be used (text, image, buttons, lists via `RemoteViewsService`, and on Android 12+ checkboxes).
+* Taps use `PendingIntent`. Ticking a checklist item sends a broadcast to the provider, which updates SQLite and refreshes the widget without opening the app.
+* Widgets read data through the same `VisaryNotes.Core` repository as the app, so there is one source of truth.
+* When notes change in the app, it calls `AppWidgetManager.NotifyAppWidgetViewDataChanged` so widgets stay current.
+
+### 9.2 Widgets
 
 | Widget | Sizes | Interaction |
 | --- | --- | --- |
 | Quick Capture | 2x1, 4x1 | Buttons for new text note, new checklist, new photo note, voice to text note. Opens straight into the editor |
-| Pinned Note | 2x2 up to 4x4, resizable | Shows a chosen note with Markdown styling. Tap to open. Scrollable list content |
-| Checklist | 2x2 up to 4x5, resizable | Tick and untick items directly on the home screen without opening the app. Add item button |
+| Pinned Note | 2x2 up to 4x4, resizable | Shows a chosen note (simple Markdown styling via spans). Tap to open. Scrollable |
+| Checklist | 2x2 up to 4x5, resizable | Tick and untick items on the home screen without opening the app. Add item button |
 | Recent Notes | 4x2 up to 4x4 | List of latest notes, tap to open, plus a new note button |
 
-### 8.2 Widget styling
+Each configurable widget has a small configuration activity (chosen note, theme).
 
-Home screen widgets cannot blur the wallpaper behind them, so they use the "glass without blur" treatment. Theme tint at 70 to 85 percent opacity, grain, edge glint and Material 3 widget corner radius. Widgets follow the app theme or the system dynamic colours, chosen in the widget configuration screen. Generated previews are provided for the widget picker.
+### 9.3 Widget styling
 
-### 8.3 Other system integration
+Home screen widgets cannot blur the wallpaper behind them, so they use the "glass without blur" treatment. Theme tint at 70 to 85 percent opacity, grain, edge glint and rounded corners, all drawn with Android shape and layer list drawables in XML. Widgets follow the app theme or the system dynamic colours, chosen in the configuration screen. Preview layouts are provided for the widget picker.
 
-* Quick Settings tile for "New note".
-* App shortcuts (long press icon) for New note, New checklist, Search, Last opened note.
-* Share target so text, links and images shared from other apps become new notes.
-* Lock screen and notification quick capture via a persistent notification (optional, off by default).
-* Predictive back on all screens.
-* Per app language support.
+### 9.4 Other system integration
 
-### 8.4 Keyboard shortcuts (tablets and Chromebooks)
+| Feature | How in .NET for Android |
+| --- | --- |
+| Quick Settings tile "New note" | `TileService` subclass with `[Service]` attribute |
+| App shortcuts (long press icon) | Static shortcuts XML plus `ShortcutManagerCompat` for dynamic "last opened note" |
+| Share target (text, links, images become notes) | `[IntentFilter]` for `ActionSend` and `ActionSendMultiple` |
+| Optional quick capture notification | Notification channel, off by default |
+| Predictive back | Enabled in the manifest, back handled through MAUI navigation |
+| Per app language | `locales_config.xml` resource |
+
+### 9.5 Keyboard shortcuts (tablets and Chromebooks)
 
 | Shortcut | Action |
 | --- | --- |
@@ -376,151 +441,178 @@ Home screen widgets cannot blur the wallpaper behind them, so they use the "glas
 
 ---
 
-## 9. Accessibility
+## 10. Accessibility
 
-* Full TalkBack support with meaningful content descriptions, headings exposed as headings in the viewer, and tables announced with row and column positions.
+* TalkBack support with `SemanticProperties.Description` and `SemanticProperties.HeadingLevel` on all controls. The WebView viewer uses real HTML headings and table markup so TalkBack reads structure correctly.
 * All touch targets at least 48dp.
 * Font scale up to 200 percent without clipping or overlapping.
-* Reduce transparency and Reduce motion settings (section 3.4).
+* Reduce transparency and Reduce motion settings (section 4.5).
 * Never use colour alone to show state (tags also show a name, checked items are also struck through).
 * Switch Access and keyboard navigation with visible focus rings on glass.
 
 ---
 
-## 10. Architecture
+## 11. Architecture
 
-### 10.1 Stack
-
-| Area | Choice |
-| --- | --- |
-| Language | Kotlin |
-| UI | Jetpack Compose, Material 3 (Expressive components where stable), material3-adaptive |
-| Glass | Haze |
-| Navigation | Navigation Compose with type safe routes, adaptive scaffold for panes |
-| DI | Hilt |
-| Persistence | Room with FTS, DataStore for settings |
-| Images | Coil 3 |
-| Markdown | commonmark parsing plus multiplatform-markdown-renderer for display |
-| Widgets | Jetpack Glance |
-| Background work | WorkManager (auto export, trash cleanup) |
-| Build | Gradle Kotlin DSL with a version catalog |
-
-Library versions are pinned in `gradle/libs.versions.toml` to the latest stable releases on the day the project is scaffolded, and updated deliberately, not automatically.
-
-### 10.2 Module layout
+### 11.1 Solution layout (open `VisaryNotes.sln` in Visual Studio)
 
 ```
-app                      Application, navigation, adaptive shell
-core/designsystem        Visary Glass, themes, typography, shapes
-core/model               Note and Document model
-core/data                Room, repositories, DataStore
-core/formats             Readers and writers (md, txt, rtf, odt, docx, html, pdf)
-feature/notes            Note list, folders, tags, search
-feature/editor           Markdown editor
-feature/viewer           Reading view and Original view
-feature/settings         Settings and theme picker
-widget                   Glance widgets, Quick Settings tile
+VisaryNotes.sln
+  src/
+    VisaryNotes.App/                 .NET MAUI app, net10.0-android
+      App.xaml, MauiProgram.cs       Startup, DI, fonts, UseMaterial3
+      Views/                         XAML pages (Shell, NoteList, Editor, Viewer, Settings)
+      ViewModels/                    CommunityToolkit.Mvvm view models
+      Controls/                      GlassView, AuroraBackground, AdaptiveShell
+      Resources/
+        Fonts/  Images/  Raw/        Bundled fonts, icons, viewer CSS and JS
+        Styles/Themes/               Generated theme ResourceDictionaries
+      Platforms/Android/
+        MainActivity.cs              Intents, keyboard shortcuts, config changes
+        Handlers/                    Glass blur, Markdown editor spans, WebView client
+        Widgets/                     AppWidgetProviders, RemoteViewsServices
+        Services/                    Fold posture, file save, dynamic colour, tile
+        Resources/                   Widget layouts, drawables, shortcuts, xml
+    VisaryNotes.Core/                net10.0 class library, no UI, no Android
+      Model/                         Note, Folder, Tag, Document model
+      Data/                          sqlite-net repositories, FTS
+      Formats/                       Readers and writers (md, txt, rtf, odt, docx, html)
+      Theming/                       Theme definitions and contrast maths
+  tests/
+    VisaryNotes.Core.Tests/          xUnit, net10.0, runs in Test Explorer
+      TestFiles/                     Sample md, txt, rtf, odt corpus and golden outputs
+  Directory.Packages.props           Central NuGet versions
+  .editorconfig
 ```
 
-`core/formats` is plain Kotlin with no Android UI dependencies where possible, so its tests run fast on the JVM without an emulator.
+Keeping formats, data and theming in a plain `net10.0` library means most logic is tested in seconds on Windows without any emulator, and stays reusable if an iOS or Windows build is added later.
 
-### 10.3 Data model (v1)
+### 11.2 Packages
+
+| Area | Package | Licence |
+| --- | --- | --- |
+| UI framework | Microsoft.Maui.Controls (10.0.60 or later for full Material 3) | MIT |
+| MVVM | CommunityToolkit.Mvvm | MIT |
+| MAUI helpers (FileSaver, popups) | CommunityToolkit.Maui | MIT |
+| Database | sqlite-net-pcl, SQLitePCLRaw.bundle_e_sqlite3 | MIT, Apache 2.0 |
+| Markdown | Markdig | BSD 2 clause |
+| DOCX export | DocumentFormat.OpenXml | MIT |
+| Legacy encodings | System.Text.Encoding.CodePages | MIT |
+| Foldables | Microsoft.Maui.Controls.Foldable or Xamarin.AndroidX.Window | MIT |
+| Glass (if adopted) | VitrumMAUI | to verify |
+| RTF reference (if adopted) | RtfPipe | to verify |
+
+Versions are pinned in `Directory.Packages.props` to the latest stable releases on the day the solution is created, and updated deliberately through the Visual Studio NuGet manager, not automatically. One known issue to watch. A third party write up reports Android status bar icons becoming hard to read with Material 3 on Microsoft.Maui.Controls 10.0.100 ([startdebugging.net](https://startdebugging.net/ja/2026/09/fix-android-status-bar-icons-unreadable-after-enabling-usematerial3-in-maui-10/)), so the chosen version is checked for that before pinning.
+
+### 11.3 Data model (v1)
 
 ```
-Note        id, title, body (markdown), folderId, color, pinned, archived,
-            createdAt, updatedAt, deletedAt
-Folder      id, name, parentId, sortOrder
-Tag         id, name, color
-NoteTag     noteId, tagId
-Attachment  id, noteId, fileName, mimeType, size
-NoteVersion id, noteId, body, savedAt
-RecentFile  uri, displayName, mimeType, lastOpenedAt, viewMode
+Note        Id, Title, Body (markdown), FolderId, Color, Pinned, Archived,
+            CreatedAt, UpdatedAt, DeletedAt
+Folder      Id, Name, ParentId, SortOrder
+Tag         Id, Name, Color
+NoteTag     NoteId, TagId
+Attachment  Id, NoteId, FileName, MimeType, Size
+NoteVersion Id, NoteId, Body, SavedAt
+RecentFile  Uri, DisplayName, MimeType, LastOpenedAt, ViewMode
+NoteSearch  FTS5 virtual table over Title and Body
 ```
 
-### 10.4 Permissions
+### 11.4 Permissions
 
-Only what is strictly needed. No internet permission is required for the core app. If remote Markdown images are kept as a feature, `INTERNET` is added and remote loading stays opt in per document. No storage permissions (Storage Access Framework and the photo picker are used instead). `POST_NOTIFICATIONS` only if the user enables the quick capture notification. Camera access goes through the system camera intent, so no camera permission either.
+Only what is strictly needed. No storage permissions (Storage Access Framework and the photo picker are used instead). Camera capture goes through `MediaPicker`, which uses the system camera app. `POST_NOTIFICATIONS` only if the user enables the quick capture notification. `INTERNET` is only added if remote Markdown images stay in scope (open question 2), and remote loading is opt in per document.
 
 ---
 
-## 11. Performance targets
+## 12. Testing
+
+| Layer | Tool | Where it runs |
+| --- | --- | --- |
+| Format readers and writers (round trip and golden files) | xUnit in `VisaryNotes.Core.Tests` | Visual Studio Test Explorer, and CI |
+| Theme contrast checks | xUnit | Test Explorer, and CI |
+| Repositories and FTS search | xUnit with an in memory or temp file SQLite database | Test Explorer, and CI |
+| UI on phone, foldable and tablet | Manual run on Android Device Manager emulators and real devices | Visual Studio, local only |
+| Widgets, fold postures, TalkBack | Manual checklist before each release | Real devices or emulators |
+
+A UI automation suite (Appium with the .NET client) is optional in phase 4 and runs locally only.
+
+---
+
+## 13. Performance targets
 
 | Metric | Target on a mid range phone |
 | --- | --- |
-| Cold start to note list | under 800ms |
-| Open a 1 MB Markdown file | first screen under 500ms |
-| Open a 5 MB ODT with images | first page under 1.5s, rest streamed |
-| Typing latency in editor | no dropped frames at 60Hz on 10,000 word notes |
+| Cold start to note list (release build) | under 1.5s |
+| Open a 1 MB Markdown file | first screen under 700ms |
+| Open a 5 MB ODT with images | first page under 2s |
+| Typing latency in editor | no visible lag on 10,000 word notes |
 | Search across 5,000 notes | under 150ms |
-| APK size (release, minified) | under 15 MB |
+| APK size (release, trimmed, single ABI) | under 40 MB, measured and tracked from phase 0 |
 
-Glass blur is the main rendering cost. Blur is limited to chrome surfaces, never applied to scrolling list items on Android 11 and below, and automatically reduced when the device reports thermal throttling.
+Release builds use trimming and the .NET for Android AOT defaults to keep startup fast. Startup is measured from phase 0 so regressions are caught early. Glass capture blur is the main rendering cost, so it is limited to chrome surfaces and reduced automatically on thermal throttling.
 
 ---
 
-## 12. Development workflow with minimal GitHub Actions usage
+## 14. Low cost CI and delivery
 
-### 12.1 Key fact
+### 14.1 Key facts
 
-The repository `EmeraldWall/VisaryNotes` is currently **public**. GitHub does not charge Actions minutes for standard GitHub hosted runners on public repositories ([GitHub Docs, GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). As long as the repo stays public and workflows use standard runners, builds should not consume the account's limited minutes. If the repo is made private later, Linux runners count at 1x while Windows counts at 2x and macOS at 10x (same source), so only Linux runners are used.
+* The repository `EmeraldWall/VisaryNotes` is currently **public**. GitHub does not charge Actions minutes for standard GitHub hosted runners on public repositories ([GitHub Docs, Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). If the repo becomes private, Linux runners count at 1x while Windows counts at 2x and macOS at 10x (same source).
+* .NET MAUI Android apps can be built on Linux by installing the `maui-android` workload ([Microsoft Learn, MAUI installation](https://learn.microsoft.com/dotnet/maui/get-started/installation)). So CI does not need a Windows runner, even though development happens in Visual Studio on Windows.
 
-### 12.2 Rules, so builds stay cheap either way
+### 14.2 Rules
 
-1. **Build locally first.** All tests in `core/formats` are plain JVM tests and run in seconds with `./gradlew test`. Developers (and Claude Code sessions) run lint and tests locally before pushing.
-2. **One workflow, one Linux job.** `ubuntu-latest` only. No matrix builds, no emulator tests in CI.
-3. **Manual or tag triggered only.** The workflow runs on `workflow_dispatch` and on version tags (`v*`), not on every push. Optionally on pull requests to `main` with path filters so documentation changes never trigger a build.
+1. **Visual Studio is the primary build machine.** Debug, tests and signed release APKs all come from Visual Studio on the developer's PC. CI is a safety net, not a requirement.
+2. **One workflow, one Linux job.** `ubuntu-latest`, `actions/setup-dotnet` for .NET 10, `dotnet workload install maui-android`, run `VisaryNotes.Core.Tests`, then `dotnet build -f net10.0-android`. No matrix, no emulator. The workload install step is verified on the first run.
+3. **Manual or tag triggered only.** `workflow_dispatch` and version tags (`v*`), not every push. Optionally pull requests to `main` with path filters so documentation changes never trigger a build.
 4. **Cancel superseded runs** with a `concurrency` group and `cancel-in-progress: true`.
-5. **Gradle caching** via the official Gradle setup action, plus configuration cache, so repeat builds take a few minutes.
-6. **Short timeout** (`timeout-minutes: 20`) so a hung build cannot burn minutes.
-7. **Artifacts.** Only the debug or release APK is uploaded, with a short retention period.
-
-### 12.3 Testing strategy
-
-| Layer | Where it runs |
-| --- | --- |
-| Format readers and writers (round trip and golden files) | JVM unit tests, local and CI |
-| Theme contrast checks | JVM unit tests, local and CI |
-| Repositories and Room | Robolectric tests, local and CI |
-| UI screenshots for phone, foldable and tablet sizes | Compose screenshot tests, local only |
-| Real device checks (fold, widgets, TalkBack) | Manual checklist on a phone, a foldable or emulator, and a tablet before each release |
+5. **Caching** of NuGet packages and the .NET workload.
+6. **Short timeout** (`timeout-minutes: 25`) so a hung build cannot burn minutes.
+7. **Artifacts.** Only the APK is uploaded, with a short retention period. The release keystore never goes into the repo. Signed releases are produced in Visual Studio.
 
 ---
 
-## 13. Delivery phases
+## 15. Delivery phases
 
 | Phase | Scope | Exit criteria |
 | --- | --- | --- |
-| 0. Foundation | Project scaffold, modules, design system, Visary Glass, 3 themes (Dynamic, Emerald Mist, Paper), adaptive shell, CI workflow | App runs on phone, foldable and tablet emulators with glass chrome and correct pane layouts |
-| 1. Notes core | Room storage, note list, folders, tags, Markdown editor with images, search, trash, autosave | Daily usable as a notes app |
-| 2. Open documents | TXT, MD, RTF, ODT readers, Reading and Original views, open with and share intents, recent files | Sample corpus of 50 real world files opens without crash and passes visual review |
-| 3. Export and widgets | All export formats, Glance widgets, Quick Settings tile, shortcuts, remaining themes | Round trip tests green, widgets interactive on Android 12+ |
-| 4. Polish and stretch | Accessibility audit, performance pass, version history UI, .ods and .odp viewing, .docx viewing, math and Mermaid | Release candidate |
+| 0. Foundation | Solution in Visual Studio, Core library and tests, Material 3 on, GlassView with blur spike (custom handler vs VitrumMAUI), fold spike (Foldable package vs AndroidX Window), 3 themes (Dynamic, Emerald Mist, Paper), adaptive shell, CI workflow | App runs from Visual Studio on phone, foldable and tablet emulators with glass chrome and correct pane layouts |
+| 1. Notes core | SQLite storage, note list, folders, tags, Markdown editor with live spans and images, search, trash, autosave | Daily usable as a notes app |
+| 2. Open documents | TXT, MD, RTF, ODT readers, document model, WebView viewer with Reading and Original views, open with and share intents, recent files | Sample corpus of 50 real world files opens without crash and passes visual review |
+| 3. Export and widgets | All export formats, four widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |
+| 4. Polish and stretch | Accessibility audit, performance pass, version history UI, .ods and .odp viewing, .docx viewing, math and Mermaid, multi window | Release candidate |
 
 ---
 
-## 14. Future work (not in v1)
+## 16. Future work (not in v1)
 
-Optional sync through user chosen folders or WebDAV, end to end encrypted notes, handwriting and sketch layer, Wear OS quick capture, desktop companion, collaborative editing, on device AI summaries.
+iOS and Windows builds from the same solution, optional sync through user chosen folders or WebDAV, end to end encrypted notes, handwriting and sketch layer, Wear OS quick capture, collaborative editing, on device AI summaries.
 
 ---
 
-## 15. Open questions
+## 17. Open questions
 
 1. Is the package name `com.visary.notes` acceptable, and is there a logo or brand colour beyond the emerald theme suggested by the organisation name?
 2. Should remote images in Markdown be supported at all (requires the internet permission), or should the app be fully offline by design?
 3. Is .docx viewing needed earlier than phase 4?
-4. Which fonts are you happy to bundle (licensing and APK size)?
+4. Are the proposed open licence fonts (Inter, Literata, JetBrains Mono, Atkinson Hyperlegible) acceptable?
 5. Will the repository stay public? This decides whether CI cost is a concern at all.
+6. Which Visual Studio edition and version is installed, and do you have a physical Android phone, foldable or tablet for testing, or emulators only?
 
 ---
 
 ## Appendix A. References
 
-* Android Developers, Build a list detail layout. https://developer.android.com/develop/adaptive-apps/guides/list-detail
-* Android Developers, Glance user interaction. https://developer.android.com/develop/ui/compose/glance/user-interaction
-* Android Developers, API levels. https://developer.android.com/about/versions/api-levels
-* Haze (Compose backdrop blur). https://chrisbanes.github.io/haze/ and https://github.com/chrisbanes/haze
-* multiplatform-markdown-renderer. https://github.com/mikepenz/multiplatform-markdown-renderer
+* Microsoft Learn, .NET target frameworks (default Android API per .NET version). https://learn.microsoft.com/dotnet/standard/frameworks
+* Microsoft, .NET MAUI first app tutorial (Visual Studio setup). https://dotnet.microsoft.com/learn/maui/first-app-tutorial/intro
+* Microsoft Learn, .NET MAUI installation (Linux `maui-android` workload). https://learn.microsoft.com/dotnet/maui/get-started/installation
+* .NET Blog, Material 3 for .NET MAUI. https://devblogs.microsoft.com/dotnet/dotnet-maui-material-3/
+* .NET Blog, How to build Android widgets with .NET MAUI. https://devblogs.microsoft.com/dotnet/how-to-build-android-widgets-with-dotnet-maui/
+* Microsoft Learn, .NET MAUI TwoPaneView. https://learn.microsoft.com/dotnet/maui/user-interface/controls/twopaneview
+* NuGet, VitrumMAUI. https://www.nuget.org/packages/VitrumMAUI
+* Markdig. https://github.com/xoofx/markdig
+* RtfPipe. https://github.com/erdomke/RtfPipe
+* Open XML SDK. https://github.com/dotnet/Open-XML-SDK
 * OASIS OpenDocument 1.3. https://docs.oasis-open.org/office/OpenDocument/v1.3/
 * W3C WCAG 2.2. https://www.w3.org/TR/WCAG22/
-* GitHub Docs, GitHub Actions billing. https://docs.github.com/en/billing/concepts/product-billing/github-actions
+* GitHub Docs, Actions billing. https://docs.github.com/en/billing/concepts/product-billing/github-actions
