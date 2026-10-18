@@ -20,10 +20,8 @@ a{color:inherit}a:hover{color:inherit}
 .app button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 .app button:focus-visible,.app input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .app input::placeholder{color:var(--soft)}
-.glass{position:relative;isolation:isolate;background:var(--glassBase);-webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);border-top:1px solid var(--edgeHi);border-bottom:1px solid var(--edgeLo)}
-.glass.adaptive{background:var(--glassMax)}
-.glass::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--sheen) 0,rgba(255,255,255,0) 55%);pointer-events:none;z-index:-1}
-.glass::after{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--grainDot) 0.6px,transparent 0.8px);background-size:3px 3px;opacity:.5;pointer-events:none;z-index:-1}
+.glass{position:relative;background:radial-gradient(140% 180% at 50% 50%,var(--glassCore) 55%,var(--glassRim) 100%);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi)}
+.glass.adaptive{background:radial-gradient(140% 180% at 50% 50%,var(--glassMax) 55%,var(--glassMaxRim) 100%)}
 .solid .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--paper)}
 .chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
 .chamfer-l{clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px)}
@@ -302,15 +300,15 @@ a{color:inherit}a:hover{color:inherit}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["Daylight","Sepia","Dusk","Night","OLED","High Contrast Light","High Contrast Dark"],"default":"Daylight"},"hand":{"editor":"enum","options":["Centre","Left","Right"],"default":"Centre"},"density":{"editor":"enum","options":["Comfortable","Compact","Dense"],"default":"Compact"},"$preview":{"width":390,"height":844}}'>
-const GLASS = {base: 0.62, max: 0.85};
+const GLASS = {light: {base: 0.35, max: 0.8}, dark: {base: 0.45, max: 0.85}, rim: 0.2};
 const THEMES = {
-  'Daylight': {note:'Default, light paper, emerald', paper:'#FBFAF7', desk:'#E6E9E5', ink:'#15181A', soft:'#474D52', glass:'#F7F7F4', accent:'#0A6249', accentText:'#08573F', onAccent:'#FFFFFF', hl:'#FFE680', sel:'#C7DBFF', line:'#7E8780', fill:'#ECEEEA', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.22)', sheen:'rgba(255,255,255,0.55)', grainDot:'rgba(0,0,0,0.10)', bevel:'rgba(255,255,255,0.45)'},
-  'Sepia': {note:'Warm paper for long reading', paper:'#F3EBD9', desk:'#E3D7BE', ink:'#251C12', soft:'#54452F', glass:'#F1E8D4', accent:'#7A3B10', accentText:'#6E340D', onAccent:'#FFFFFF', hl:'#F6D27A', sel:'#C9D7F2', line:'#8C7B60', fill:'#E8DDC6', edgeHi:'rgba(255,255,255,0.8)', edgeLo:'rgba(60,40,10,0.28)', sheen:'rgba(255,255,255,0.45)', grainDot:'rgba(60,40,10,0.12)', bevel:'rgba(255,255,255,0.4)'},
-  'Dusk': {note:'Dark grey, not black', paper:'#1C1E20', desk:'#131415', ink:'#ECEDEE', soft:'#B9BEC3', glass:'#232628', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#06261C', hl:'#5B4A12', sel:'#24406E', line:'#7B8288', fill:'#2A2D30', edgeHi:'rgba(255,255,255,0.22)', edgeLo:'rgba(0,0,0,0.6)', sheen:'rgba(255,255,255,0.08)', grainDot:'rgba(255,255,255,0.07)', bevel:'rgba(255,255,255,0.5)'},
-  'Night': {note:'Warm and dim, amber accent', paper:'#17140F', desk:'#0E0C09', ink:'#ECE1CE', soft:'#BCAE96', glass:'#1E1A14', accent:'#E2A658', accentText:'#EBB673', onAccent:'#2A1A05', hl:'#5A4313', sel:'#3A3550', line:'#857A68', fill:'#26211A', edgeHi:'rgba(255,240,210,0.2)', edgeLo:'rgba(0,0,0,0.6)', sheen:'rgba(255,240,210,0.07)', grainDot:'rgba(255,240,210,0.07)', bevel:'rgba(255,255,255,0.5)'},
-  'OLED': {note:'True black, off white text', paper:'#000000', desk:'#000000', ink:'#E4E4E4', soft:'#A9A9A9', glass:'#101010', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#00180F', hl:'#4A3C0E', sel:'#1E3560', line:'#6E6E6E', fill:'#1A1A1A', edgeHi:'rgba(255,255,255,0.24)', edgeLo:'rgba(255,255,255,0.06)', sheen:'rgba(255,255,255,0.06)', grainDot:'rgba(255,255,255,0.06)', bevel:'rgba(255,255,255,0.5)'},
-  'High Contrast Light': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#FFFFFF', desk:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', accent:'#002FA7', accentText:'#002FA7', onAccent:'#FFFFFF', hl:'#FFE94D', sel:'#BFD3FF', line:'#000000', fill:'#FFFFFF', edgeHi:'#000000', edgeLo:'#000000', sheen:'rgba(255,255,255,0)', grainDot:'rgba(0,0,0,0)', bevel:'rgba(255,255,255,0)'},
-  'High Contrast Dark': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#000000', desk:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', accent:'#FFD60A', accentText:'#FFD60A', onAccent:'#000000', hl:'#5C4A00', sel:'#1F3A80', line:'#FFFFFF', fill:'#000000', edgeHi:'#FFFFFF', edgeLo:'#FFFFFF', sheen:'rgba(255,255,255,0)', grainDot:'rgba(0,0,0,0)', bevel:'rgba(0,0,0,0)'}
+  'Daylight': {note:'Default, light paper, emerald', paper:'#FBFAF7', desk:'#E6E9E5', ink:'#15181A', soft:'#474D52', glass:'#F7F7F4', accent:'#0A6249', accentText:'#08573F', onAccent:'#FFFFFF', hl:'#FFE680', sel:'#C7DBFF', line:'#7E8780', fill:'#ECEEEA', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.22)', bevel:'rgba(255,255,255,0.45)'},
+  'Sepia': {note:'Warm paper for long reading', paper:'#F3EBD9', desk:'#E3D7BE', ink:'#251C12', soft:'#54452F', glass:'#F1E8D4', accent:'#7A3B10', accentText:'#6E340D', onAccent:'#FFFFFF', hl:'#F6D27A', sel:'#C9D7F2', line:'#8C7B60', fill:'#E8DDC6', edgeHi:'rgba(255,255,255,0.8)', edgeLo:'rgba(60,40,10,0.28)', bevel:'rgba(255,255,255,0.4)'},
+  'Dusk': {note:'Dark grey, not black', paper:'#1C1E20', desk:'#131415', ink:'#ECEDEE', soft:'#B9BEC3', glass:'#232628', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#06261C', hl:'#5B4A12', sel:'#24406E', line:'#7B8288', fill:'#2A2D30', edgeHi:'rgba(255,255,255,0.22)', edgeLo:'rgba(0,0,0,0.6)', bevel:'rgba(255,255,255,0.5)'},
+  'Night': {note:'Warm and dim, amber accent', paper:'#17140F', desk:'#0E0C09', ink:'#ECE1CE', soft:'#BCAE96', glass:'#1E1A14', accent:'#E2A658', accentText:'#EBB673', onAccent:'#2A1A05', hl:'#5A4313', sel:'#3A3550', line:'#857A68', fill:'#26211A', edgeHi:'rgba(255,240,210,0.2)', edgeLo:'rgba(0,0,0,0.6)', bevel:'rgba(255,255,255,0.5)'},
+  'OLED': {note:'True black, off white text', paper:'#000000', desk:'#000000', ink:'#E4E4E4', soft:'#A9A9A9', glass:'#101010', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#00180F', hl:'#4A3C0E', sel:'#1E3560', line:'#6E6E6E', fill:'#1A1A1A', edgeHi:'rgba(255,255,255,0.24)', edgeLo:'rgba(255,255,255,0.06)', bevel:'rgba(255,255,255,0.5)'},
+  'High Contrast Light': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#FFFFFF', desk:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', accent:'#002FA7', accentText:'#002FA7', onAccent:'#FFFFFF', hl:'#FFE94D', sel:'#BFD3FF', line:'#000000', fill:'#FFFFFF', edgeHi:'#000000', edgeLo:'#000000', bevel:'rgba(255,255,255,0)'},
+  'High Contrast Dark': {note:'Maximum contrast, glass off', solidGlass:true, paper:'#000000', desk:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', accent:'#FFD60A', accentText:'#FFD60A', onAccent:'#000000', hl:'#5C4A00', sel:'#1F3A80', line:'#FFFFFF', fill:'#000000', edgeHi:'#FFFFFF', edgeLo:'#FFFFFF', bevel:'rgba(0,0,0,0)'}
 };
 const LIB = [
   {kind:'doc',badge:'ODT',title:'Autumn Newsletter.odt',snippet:'3 pages, 2 highlights, linked note',date:'Today',linked:true},
@@ -330,6 +328,10 @@ const LIB = [
 const FILTERS = ['All','Notes','Docs','Linked'];
 const CHECKS = ['Tomatoes, San Marzano','Basil, two rows','Climbing beans on the trellis','Order compost'];
 const DENS = {Comfortable:{h:'var(--h-row-comfortable)',snip:true},Compact:{h:'var(--h-row)',snip:true},Dense:{h:'var(--h-row-dense)',snip:false}};
+function isDark(hex) {
+  const h = hex.replace('#', '');
+  return parseInt(h.slice(0, 2), 16) + parseInt(h.slice(2, 4), 16) + parseInt(h.slice(4, 6), 16) < 240;
+}
 function rgba(hex, a) {
   const h = hex.replace('#', '');
   return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
@@ -349,9 +351,12 @@ class Component extends DCLogic {
     const go = (screen) => () => this.setState({screen, chrome: true, sheet: false, search: false});
     const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
     const list = LIB.filter((x) => s.filter === 'All' || (s.filter === 'Notes' && x.kind === 'note') || (s.filter === 'Docs' && x.kind === 'doc') || (s.filter === 'Linked' && x.linked));
-    const glassBase = t.solidGlass ? t.glass : rgba(t.glass, GLASS.base);
-    const glassMax = t.solidGlass ? t.glass : rgba(t.glass, GLASS.max);
-    const vars = Object.keys(t).filter((k) => k !== 'note' && k !== 'solidGlass').map((k) => '--' + k + ':' + t[k]).join(';') + ';--glassBase:' + glassBase + ';--glassMax:' + glassMax;
+    const g = GLASS[isDark(t.paper) ? 'dark' : 'light'];
+    const glassBase = t.solidGlass ? t.glass : rgba(t.glass, g.base);
+    const glassRim = t.solidGlass ? t.glass : rgba(t.glass, Math.min(1, g.base + GLASS.rim));
+    const glassMax = t.solidGlass ? t.glass : rgba(t.glass, g.max);
+    const glassMaxRim = t.solidGlass ? t.glass : rgba(t.glass, Math.min(1, g.max + GLASS.rim));
+    const vars = Object.keys(t).filter((k) => k !== 'note' && k !== 'solidGlass').map((k) => '--' + k + ':' + t[k]).join(';') + ';--glassCore:' + glassBase + ';--glassRim:' + glassRim + ';--glassMax:' + glassMax + ';--glassMaxRim:' + glassMaxRim;
     const left = hand === 'Left', right = hand === 'Right';
     return {
       vars,

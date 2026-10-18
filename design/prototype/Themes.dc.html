@@ -24,7 +24,8 @@ a{color:inherit}a:hover{color:inherit}
 .num{font-variant-numeric:tabular-nums;font-weight:700}
 .mat{display:flex;gap:var(--sp-3);align-items:center;padding:var(--sp-2) var(--sp-0);border-bottom:1px solid #7E8780}
 .sw{width:64px;height:40px;flex:none;position:relative;overflow:hidden;border:1px solid #7E8780}
-.glassdemo{position:absolute;inset:0;background:rgba(247,247,244,0.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-top:1px solid #ffffff}
+.glassdemo{position:absolute;inset:0;background:radial-gradient(140% 180% at 50% 50%,rgba(247,247,244,0.35) 55%,rgba(247,247,244,0.55) 100%);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:inset 0 1px 0 rgba(0,0,0,0.22),inset 0 8px 10px -8px rgba(0,0,0,0.22),inset 0 -1px 0 #ffffff,inset 0 -6px 8px -8px #ffffff}
+.concave{box-shadow:inset 0 1px 0 var(--lo),inset 0 8px 10px -8px var(--lo),inset 0 -1px 0 var(--hi),inset 0 -6px 8px -8px var(--hi)}
 .sp{display:flex;align-items:center;gap:var(--sp-2)}
 .sp i{display:block;height:12px;background:#0A6249}
 .tile{display:flex;flex-direction:column;border:1px solid #7E8780}
@@ -38,7 +39,7 @@ a{color:inherit}a:hover{color:inherit}
 <div style="border-top: 1px solid #7E8780">
 <div class="mat"><span class="sw" style="background: #E6E9E5"></span><span><span class="t1">Desk, matte</span><br><span class="t2">Behind panes and pages</span></span></div>
 <div class="mat"><span class="sw" style="background: #FBFAF7"></span><span><span class="t1">Paper, matte</span><br><span class="t2">All content, opaque</span></span></div>
-<div class="mat"><span class="sw" style="background: repeating-linear-gradient(90deg, #15181A 0 6px, #FBFAF7 6px 14px)"><span class="glassdemo"></span></span><span><span class="t1">Cut glass, 62% to 85%</span><br><span class="t2">Tools only. Rises over images</span></span></div>
+<div class="mat"><span class="sw" style="background: repeating-linear-gradient(90deg, #15181A 0 6px, #FBFAF7 6px 14px)"><span class="glassdemo"></span></span><span><span class="t1">Clear concave glass</span><br><span class="t2">35% light, 45% dark, no texture</span></span></div>
 <div class="mat"><span class="sw" style="background: #15181A"></span><span><span class="t1">Ink, flat</span><br><span class="t2">Text and icons</span></span></div>
 <div class="mat"><span class="sw chamfer" style="background: #0A6249"></span><span><span class="t1">Accent light</span><br><span class="t2">One main action per screen</span></span></div>
 </div>
@@ -70,7 +71,7 @@ a{color:inherit}a:hover{color:inherit}
 <span style="font-family: 'Literata', Georgia, serif; font-size: var(--fs-ui); line-height: var(--lh-ui)">Water in the early morning, not at night.</span>
 <span style="font-size: var(--fs-label); line-height: var(--lh-label); font-weight: 600; {{t.softColor}}">Secondary text</span>
 </div>
-<div style="padding: var(--sp-2); display: flex; gap: var(--sp-2); align-items: center; {{t.glassBg}}">
+<div class="concave" style="padding: var(--sp-2); display: flex; gap: var(--sp-2); align-items: center; {{t.glassBg}}">
 <span style="flex: 1; font-size: var(--fs-label); font-weight: 600; {{t.inkColor}}">Glass bar</span>
 <span class="chamfer" style="height: 32px; padding: var(--sp-0) var(--sp-3); display: grid; place-items: center; font-size: var(--fs-label); font-weight: 700; {{t.accentBtn}}">New note</span>
 </div>
@@ -84,8 +85,8 @@ a{color:inherit}a:hover{color:inherit}
 <div style="border: 1px dashed #7E8780; padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-1)">
 <span class="t1">Targets</span>
 <span class="t2">Body text 7:1, secondary 4.5:1, icons and borders 3:1</span>
-<span class="t2">On glass is secondary text at 62% over typical content</span>
-<span class="t2">Widget is secondary text over a pure white or black wallpaper</span>
+<span class="t2">On glass is secondary text in the clear centre over typical content</span>
+<span class="t2">Widget is secondary text at 55% over a matching wallpaper</span>
 </div>
 </div>
 </div>
@@ -93,13 +94,13 @@ a{color:inherit}a:hover{color:inherit}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":844}}'>
 const T = [
-  {name:'Daylight', paper:'#FBFAF7', ink:'#15181A', soft:'#474D52', glass:'rgba(247,247,244,0.62)', edge:'rgba(0,0,0,0.22)', accent:'#0A6249', on:'#FFFFFF', r:['17.1','6.0','5.0']},
-  {name:'Sepia', paper:'#F3EBD9', ink:'#251C12', soft:'#54452F', glass:'rgba(241,232,212,0.62)', edge:'rgba(60,40,10,0.28)', accent:'#7A3B10', on:'#FFFFFF', r:['14.1','5.7','4.8']},
-  {name:'Dusk', paper:'#1C1E20', ink:'#ECEDEE', soft:'#B9BEC3', glass:'rgba(35,38,40,0.62)', edge:'rgba(255,255,255,0.22)', accent:'#5ACBA4', on:'#06261C', r:['14.3','5.6','5.0']},
-  {name:'Night', paper:'#17140F', ink:'#ECE1CE', soft:'#BCAE96', glass:'rgba(30,26,20,0.62)', edge:'rgba(255,240,210,0.2)', accent:'#E2A658', on:'#2A1A05', r:['14.2','5.6','5.0']},
-  {name:'OLED', paper:'#000000', ink:'#E4E4E4', soft:'#A9A9A9', glass:'rgba(16,16,16,0.62)', edge:'rgba(255,255,255,0.24)', accent:'#5ACBA4', on:'#00180F', r:['16.5','5.9','5.3']},
-  {name:'High Contrast Light', paper:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', edge:'#000000', accent:'#002FA7', on:'#FFFFFF', r:['21.0','15.1','15.1']},
-  {name:'High Contrast Dark', paper:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', edge:'#FFFFFF', accent:'#FFD60A', on:'#000000', r:['21.0','16.8','16.8']}
+  {name:'Daylight', paper:'#FBFAF7', ink:'#15181A', soft:'#474D52', glass:'rgba(247,247,244,0.35)', edge:'rgba(0,0,0,0.22)', hi:'rgba(255,255,255,0.95)', accent:'#0A6249', on:'#FFFFFF', r:['17.1','4.8','4.5']},
+  {name:'Sepia', paper:'#F3EBD9', ink:'#251C12', soft:'#54452F', glass:'rgba(241,232,212,0.35)', edge:'rgba(60,40,10,0.28)', hi:'rgba(255,255,255,0.8)', accent:'#7A3B10', on:'#FFFFFF', r:['14.1','4.5','4.5']},
+  {name:'Dusk', paper:'#1C1E20', ink:'#ECEDEE', soft:'#B9BEC3', glass:'rgba(35,38,40,0.45)', edge:'rgba(0,0,0,0.6)', hi:'rgba(255,255,255,0.22)', accent:'#5ACBA4', on:'#06261C', r:['14.3','4.7','4.8']},
+  {name:'Night', paper:'#17140F', ink:'#ECE1CE', soft:'#BCAE96', glass:'rgba(30,26,20,0.45)', edge:'rgba(0,0,0,0.6)', hi:'rgba(255,240,210,0.2)', accent:'#E2A658', on:'#2A1A05', r:['14.2','4.6','4.5']},
+  {name:'OLED', paper:'#000000', ink:'#E4E4E4', soft:'#A9A9A9', glass:'rgba(16,16,16,0.45)', edge:'rgba(255,255,255,0.06)', hi:'rgba(255,255,255,0.24)', accent:'#5ACBA4', on:'#00180F', r:['16.5','4.9','4.6']},
+  {name:'High Contrast Light', paper:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', edge:'#000000', hi:'#000000', accent:'#002FA7', on:'#FFFFFF', r:['21.0','15.1','15.1']},
+  {name:'High Contrast Dark', paper:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', edge:'#FFFFFF', hi:'#FFFFFF', accent:'#FFD60A', on:'#000000', r:['21.0','16.8','16.8']}
 ];
 class Component extends DCLogic {
   renderVals() {
@@ -109,7 +110,7 @@ class Component extends DCLogic {
         paperBg: 'background:' + x.paper,
         inkColor: 'color:' + x.ink,
         softColor: 'color:' + x.soft,
-        glassBg: 'background:' + x.glass + ';border-top:1px solid ' + x.edge,
+        glassBg: 'background:' + x.glass + ';--lo:' + x.edge + ';--hi:' + x.hi,
         accentBtn: 'background:' + x.accent + ';color:' + x.on,
         r1: x.r[0] + ':1', r2: x.r[1] + ':1', r3: x.r[2] + ':1'
       }))

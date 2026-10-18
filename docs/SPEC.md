@@ -1,12 +1,14 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.5 (draft) | Status: for review | Date: 2026-10-17
+Version 0.6 (draft) | Status: for review | Date: 2026-10-17
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
 
 **Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain.
 
 **Change in 0.3.** Applies the decisions D1 to D10 from [STRATEGY.md](STRATEGY.md) (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory) and the prototype feedback that the layout wasted space. Reading is now an equal first class job. New sections 4.5 (space budget) and 7.8 (read, extract, write). Layouts, widgets, data model and phases updated.
+
+**Change in 0.6.** Clear concave glass: more transparent (35 percent light, 45 percent dark), grain and sheen removed, widgets at 55 percent when matched to the wallpaper. See DESIGN.md 4.2.1 and 4.2.2.
 
 **Change in 0.5.** Visible glass (62 percent tint, adaptive to 85 percent over images), frosted glass on home screen widgets, and a token system with an automated layout check that owns spacing and padding. See DESIGN.md sections 4.2.1, 4.2.2, 4.7 and 4.8.
 
@@ -142,7 +144,7 @@ The complete rationale, with sources and measurements, is in [DESIGN.md](DESIGN.
 | --- | --- | --- |
 | Desk | Matte | `Desk` colour token. Background behind panes and behind pages in Original view |
 | Paper | Matte, no texture | `Paper` token. Every content surface. Fully opaque |
-| Glass | Satin etched: blur 24dp at 150 percent saturation, tint 62 percent rising to 85 percent over images, grain 3 percent, top sheen, 1dp light top edge, 1dp dark bottom edge | `GlassView` control (4.3). Tools only. Content always scrolls under it. Text on glass is limited to labels of about four words |
+| Glass | Clear concave: blur 20dp at 140 percent saturation, clear centre at 35 percent (light) or 45 percent (dark), rim 20 points denser, inner shadow under the top edge, light catch along the bottom edge, rising to 80 or 85 percent over images. No texture | `GlassView` control (4.3). Tools only. Content always scrolls under it. Text on glass is limited to labels of about four words |
 | Ink | Flat | `Ink` and `InkSecondary` tokens. Never semi transparent |
 | Accent light | Flat, chamfered | `Accent`, `OnAccent`, `AccentText` tokens. One primary action per screen |
 
@@ -165,10 +167,10 @@ No pills, circles or radii above 4dp anywhere in the app. In MAUI the chamfer is
 
 MAUI has no built in backdrop blur, so glass is a custom control.
 
-* **`GlassView`** is a MAUI `ContentView` with bindable properties for tint and edge lines. Tint, grain and edge lines are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
+* **`GlassView`** is a MAUI `ContentView` with bindable properties for tint and edge lines. The concave tint gradient, inner shadow and light catch are drawn with MAUI Graphics (`GraphicsView` with an `IDrawable`), which works on every Android version.
 * **Backdrop blur** is a custom Android handler. On Android 12+ it records the content behind the bar into a `RenderNode` and applies `RenderEffect.CreateBlurEffect` on the GPU. `RenderEffect` set directly on a view blurs the view itself, which is why the `RenderNode` capture step is needed.
 * **Evaluate first.** The third party package VitrumMAUI describes the same approach with a tint only fallback below Android 12 ([NuGet, VitrumMAUI](https://www.nuget.org/packages/VitrumMAUI)). Phase 0 compares it with the custom handler and picks one.
-* **Adaptive tint.** The handler samples the blurred backdrop under each bar at low resolution when scrolling settles and a few times a second while it moves. Over typical content the tint stays at 62 percent. Over images it eases to 85 percent within 150ms. Both levels are proven by `tools/design/contrast.py`.
+* **Adaptive tint.** The handler samples the blurred backdrop under each bar at low resolution when scrolling settles and a few times a second while it moves. Over typical content the clear centre stays at 35 percent (light) or 45 percent (dark). Over images it eases to 80 or 85 percent within 150ms. Both levels are proven by `tools/design/contrast.py`.
 * Below Android 12, and with Reduce transparency on, glass becomes the solid paper colour with edge lines kept. High Contrast themes switch glass off.
 
 ### 4.4 Screen zones and one handed rules
@@ -201,7 +203,7 @@ From DESIGN.md section 5. The build must follow these rules on every screen.
 
 * Body text 7 to 1 or more, secondary text 4.5 to 1 or more, icons and borders 3 to 1 or more, all measured against the worst case backdrop for glass.
 * Text never sits on blur alone, and long text never sits on glass.
-* No texture under text. Grain only on glass.
+* No texture anywhere. Paper and glass are both plain.
 * No UI text below 13sp and no weight below 500 under 15sp.
 * Reduce transparency turns glass into solid paper. It turns on automatically with system high contrast text and battery saver.
 
@@ -454,7 +456,7 @@ Each configurable widget has a small configuration activity (chosen note, theme)
 
 ### 9.3 Widget styling
 
-Home screen widgets use **frosted glass**: light frost at 80 percent or dark frost at 85 percent, so the wallpaper shows through, plus a 4 percent grain tile, a top sheen and the cut edge lines. Everything is a `layer-list` drawable, which `RemoteViews` supports. A widget cannot blur the wallpaper behind it and cannot read the wallpaper image (DESIGN.md 4.2.2), so translucency plus grain is how glass is expressed. Polarity is Auto (from wallpaper colour hints where available), Light or Dark, set in the widget configuration screen. The 80 and 85 percent levels are the lowest that keep ink at 7 to 1 and labels at 4.5 to 1 over a pure white or pure black wallpaper. The outer corner radius is the launcher's (`system_app_widget_background_radius`). Inner controls use the 2dp control shape and the chamfered primary action, with sizes from the generated `dimens.xml`.
+Home screen widgets use **clear concave frost**: 55 percent tint when the frost matches the wallpaper's polarity, so the wallpaper shows through clearly, with the same concave rim, inner shadow and light catch as the app and no texture. When the wallpaper polarity is unknown or mixed, the tint is 80 percent (light) or 85 percent (dark). Everything is a `layer-list` drawable, which `RemoteViews` supports. A widget cannot blur the wallpaper behind it and cannot read the wallpaper image (DESIGN.md 4.2.2). Polarity is Auto (from wallpaper colour hints where available), Light or Dark, set in the widget configuration screen. All tint levels are proven by `tools/design/contrast.py`. The outer corner radius is the launcher's (`system_app_widget_background_radius`). Inner controls use the 2dp control shape and the chamfered primary action, with sizes from the generated `dimens.xml`.
 
 ### 9.4 Other system integration
 

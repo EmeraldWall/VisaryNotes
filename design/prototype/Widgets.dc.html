@@ -20,9 +20,7 @@ a{color:inherit}a:hover{color:inherit}
 .home *{box-sizing:border-box}
 .home button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 .home button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.wg{position:relative;isolation:isolate;overflow:hidden;background:var(--frost);color:var(--ink);border-top:1px solid var(--edgeHi);border-bottom:1px solid var(--edgeLo)}
-.wg::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--sheen) 0,rgba(255,255,255,0) 50%);pointer-events:none;z-index:-1}
-.wg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--grainDot) 0.6px,transparent 0.8px);background-size:3px 3px;pointer-events:none;z-index:-1}
+.wg{position:relative;overflow:hidden;color:var(--ink);background:radial-gradient(140% 160% at 50% 50%,var(--frost) 55%,var(--frostRim) 100%);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi)}
 .pad{padding:var(--sp-4)}
 .chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
 .cap{font-size:var(--fs-caption);line-height:var(--lh-caption);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
@@ -98,10 +96,10 @@ a{color:inherit}a:hover{color:inherit}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"wallpaper":{"editor":"enum","options":["Dark landscape","Bright beach","Busy stripes"],"default":"Dark landscape"},"frost":{"editor":"enum","options":["Auto","Light frost","Dark frost"],"default":"Auto"},"$preview":{"width":390,"height":844}}'>
-const ALPHA = {light: 0.8, dark: 0.85};
+const ALPHA = {matched: 0.55, light: 0.8, dark: 0.85, rim: 0.2};
 const FROST = {
-  light: {glass:'#F7F7F4', solid:'#FBFAF7', ink:'#15181A', soft:'#474D52', accent:'#0A6249', onAccent:'#FFFFFF', line:'rgba(21,24,26,0.25)', fill:'rgba(21,24,26,0.07)', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.25)', sheen:'rgba(255,255,255,0.5)', grainDot:'rgba(0,0,0,0.12)', bevel:'rgba(255,255,255,0.45)'},
-  dark: {glass:'#1C1E20', solid:'#1C1E20', ink:'#ECEDEE', soft:'#B9BEC3', accent:'#5ACBA4', onAccent:'#06261C', line:'rgba(236,237,238,0.25)', fill:'rgba(236,237,238,0.09)', edgeHi:'rgba(255,255,255,0.25)', edgeLo:'rgba(0,0,0,0.6)', sheen:'rgba(255,255,255,0.1)', grainDot:'rgba(255,255,255,0.08)', bevel:'rgba(255,255,255,0.5)'}
+  light: {glass:'#F7F7F4', solid:'#FBFAF7', ink:'#15181A', soft:'#474D52', accent:'#0A6249', onAccent:'#FFFFFF', line:'rgba(21,24,26,0.25)', fill:'rgba(21,24,26,0.07)', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.25)', bevel:'rgba(255,255,255,0.45)'},
+  dark: {glass:'#1C1E20', solid:'#1C1E20', ink:'#ECEDEE', soft:'#B9BEC3', accent:'#5ACBA4', onAccent:'#06261C', line:'rgba(236,237,238,0.25)', fill:'rgba(236,237,238,0.09)', edgeHi:'rgba(255,255,255,0.25)', edgeLo:'rgba(0,0,0,0.6)', bevel:'rgba(255,255,255,0.5)'}
 };
 const ITEMS = ['Oat milk','Lemons','Sourdough','Coffee beans'];
 function rgba(hex, a) {
@@ -118,7 +116,11 @@ class Component extends DCLogic {
     const frost = this.props.frost ?? 'Auto';
     const polarity = frost === 'Light frost' ? 'light' : frost === 'Dark frost' ? 'dark' : (wp === 'Bright beach' ? 'light' : 'dark');
     const f = FROST[polarity];
-    const vars = Object.keys(f).map((k) => '--' + k + ':' + f[k]).join(';') + ';--frost:' + rgba(f.glass, ALPHA[polarity]);
+    // Matched: the frost has the same polarity as the wallpaper, which Auto picks from wallpaper colour hints.
+    // A busy wallpaper has no reliable hint, so it gets the any wallpaper tint.
+    const matched = (polarity === 'light' && wp === 'Bright beach') || (polarity === 'dark' && wp === 'Dark landscape');
+    const a = matched ? ALPHA.matched : ALPHA[polarity];
+    const vars = Object.keys(f).map((k) => '--' + k + ':' + f[k]).join(';') + ';--frost:' + rgba(f.glass, a) + ';--frostRim:' + rgba(f.glass, Math.min(1, a + ALPHA.rim));
     const d = this.state.done;
     return {
       vars,

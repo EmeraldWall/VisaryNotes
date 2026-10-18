@@ -37,12 +37,14 @@
   --lh-h3: 28px;
   --fs-h2: 26px;
   --lh-h2: 32px;
-  --glass-blur: 24;
-  --glass-saturate: 1.5;
-  --glass-alpha-base: 0.62;
-  --glass-alpha-max: 0.85;
-  --glass-grain: 0.03;
-  --glass-widget-grain: 0.04;
-  --glass-widget-alpha-light: 0.8;
-  --glass-widget-alpha-dark: 0.85;
+  --glass-blur: 20;
+  --glass-saturate: 1.4;
+  --glass-alpha-base-light: 0.35;
+  --glass-alpha-base-dark: 0.45;
+  --glass-alpha-rim-extra: 0.2;
+  --glass-alpha-max-light: 0.8;
+  --glass-alpha-max-dark: 0.85;
+  --glass-widget-alpha-matched: 0.55;
+  --glass-widget-alpha-any-light: 0.8;
+  --glass-widget-alpha-any-dark: 0.85;
 }

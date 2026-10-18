@@ -1,6 +1,6 @@
 # VisaryNotes Design Rationale
 
-Version 1.1 | Date: 2026-10-17 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
+Version 1.2 | Date: 2026-10-18 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
 
 Every visual and interaction decision in VisaryNotes is listed here with the reason behind it. If a decision cannot be justified by a principle, a measurement or a cited source, it does not ship. Where a reason is the design team's own judgement, it is labelled **Rationale**. Where it rests on research, it carries a citation.
 
@@ -15,6 +15,10 @@ Version 1.1 responds to feedback on prototype v3.
 4. Nobody owned consistency and padding. Section 4.7 adds a token system and an automated check, and section 4.8 names who owns it.
 5. The glass effect had disappeared. Section 4.2.1 explains why and how glass is now visible without losing legibility.
 6. Glass must also apply to Android home screen widgets. Section 4.2.2 sets out what the platform allows and the frosted widget design.
+
+Version 1.2 responds to feedback on prototype v4.
+
+7. More transparency, no texture, and a plain concave glass look. Section 4.2.1 now specifies clear concave glass at 35 percent (light) and 45 percent (dark), with grain and sheen removed everywhere, including widgets.
 
 ---
 
@@ -84,7 +88,7 @@ CMF is used here the way industrial designers use it on physical products. Every
 | Finish | Applies to | Specification | Why |
 | --- | --- | --- | --- |
 | **Matte** | Paper, desk | Flat colour. No grain, no gradient, no texture | Texture under text lowers effective contrast and adds visual noise. Paper must be calm |
-| **Satin etched** | Glass | Backdrop blur 24dp at 150 percent saturation, tint at 62 percent that rises to 85 percent over images (adaptive), 3 percent grain, a soft sheen on the top half | Low enough for content to be clearly visible through the glass, high enough to keep every contrast target (section 4.2.1). The grain stops glass looking like flat plastic. It is the only texture in the app |
+| **Clear concave** | Glass | Backdrop blur 20dp at 140 percent saturation. Clear centre at 35 percent tint in light themes and 45 percent in dark themes, rim 20 points denser. Inner shadow under the top edge, light catch along the bottom edge. Rises to 80 or 85 percent over images (adaptive). No grain, no sheen, no texture | A concave pane is thin in the middle and thick at the edges, so the middle is the clearest part and the rim gathers tint and light. That reads as glass without any texture. These are the lowest tints that keep every contrast target (section 4.2.1) |
 | **Bevel glint** | Primary action | A 6dp light triangle in the chamfered corner | The cut corner catches light like the edge of cut glass, tying the accent button to the glass material |
 | **Cut edge** | Glass | 1dp light line on the top edge (the cut catching light), 1dp darker line on the bottom edge | This is how real cut glass shows its thickness. It separates the bar from the paper without a drop shadow |
 | **Polished** | Pressed and selected states | Glass opacity rises to 100 percent and a 2dp accent edge appears on the leading side | Feedback by change of finish rather than by colour alone, so the state is visible to colour blind users too |
@@ -96,19 +100,28 @@ In v3 the glass tint was 90 percent opaque and there was nothing behind the bars
 
 The checker now tests glass the way it is actually seen.
 
-| Situation | Backdrop after blur | Tint needed for every target | Tint used |
+| Situation | Backdrop after blur | Tint needed for every target | Tint used in v1.1 (superseded below) |
 | --- | --- | --- | --- |
 | Normal scrolling (text, paper, highlights, selection, accent controls, desk) | Paper with text averaged in at 15 percent, plus each of those colours | 50 percent in every theme | **62 percent** |
 | A photo or large dark or bright block under a bar | Pure white or pure black | 77 to 83 percent depending on theme | **85 percent** |
 
-**Adaptive glass.** The glass handler samples the blurred backdrop under each bar at low resolution, once when scrolling settles and at most a few times a second while it moves. If the sample is far from the paper colour (an image), the tint eases from 62 to 85 percent over 150ms and back. So glass is clearly transparent over text and stays legible over images.
+**Version 1.2, more transparent.** Measuring again with the clear centre as the worst case shows the tint can go lower than 62 percent.
 
-**What makes the glass visible.**
+| Theme group | Lowest tint that keeps ink 7 to 1 and secondary 4.5 to 1 over typical content | Tint used for the clear centre | Over any image (adaptive) |
+| --- | --- | --- | --- |
+| Light (Daylight, Sepia) | 29 and 35 percent | **35 percent** | 80 percent |
+| Dark (Dusk, Night, OLED) | 42, 44 and 38 percent | **45 percent** | 85 percent |
 
-* Content always continues under the bars. Lists, document text and images scroll beneath the top strip and the bottom bar.
-* The 24dp blur at 150 percent saturation makes colours behind the glass glow softly, which is what reads as glass.
-* A sheen on the top half (light themes 55 percent white, dark themes 6 to 8 percent) and the cut edge lines give the pane thickness.
-* A fine grain makes it read as etched glass, not tinted plastic.
+**Adaptive glass.** The glass handler samples the blurred backdrop under each bar at low resolution, once when scrolling settles and at most a few times a second while it moves. If the sample is far from the paper colour (an image), the tint eases up to 80 or 85 percent over 150ms and back. So glass is clearly transparent over text and stays legible over images.
+
+**The concave look, without texture.** Light is assumed to come from above, as on a phone held normally.
+
+* **Clear centre.** The thinnest part of a concave pane, so it has the lowest tint. Content behind is easy to see.
+* **Denser rim.** A radial gradient adds 20 points of tint towards the edges, because the glass is thicker there.
+* **Inner shadow under the top edge.** On a concave surface the upper inner wall faces away from the light.
+* **Light catch along the bottom edge.** The lower inner wall faces the light.
+* **Blur and saturation.** A 20dp blur at 140 percent saturation lets colours behind glow softly through the glass.
+* **Nothing else.** No grain, no sheen, no noise. Content always continues under the bars, which is what makes the transparency visible.
 
 High Contrast themes keep glass switched off, because they exist for people who need maximum contrast.
 
@@ -124,10 +137,9 @@ What the platform allows.
 
 | Layer | Specification | Why |
 | --- | --- | --- |
-| Frost tint | Light frost 80 percent, dark frost 85 percent | The lowest tints that keep ink at 7 to 1 and labels at 4.5 to 1 over a pure white or pure black wallpaper (section 4.3.4). The wallpaper shows through, unblurred |
-| Grain | A tiled 64px noise PNG at 4 percent | Makes the translucency read as frosted glass rather than a faded panel |
-| Sheen | Top half gradient, as in the app | Thickness |
-| Cut edges | 1dp light top edge, 1dp dark bottom edge | Same material language as in the app |
+| Frost tint, matched | 55 percent when the frost has the same polarity as the wallpaper (light frost on a light wallpaper, dark on dark) | The lowest tint that keeps ink at 7 to 1 and labels at 4.5 to 1 over any wallpaper of that polarity (luminance 0.18 is the boundary) |
+| Frost tint, unknown | 80 percent light, 85 percent dark, when the wallpaper polarity is unknown or mixed, or the user forces the opposite polarity | Keeps every target over a pure white or pure black wallpaper |
+| Concave rim | Radial gradient 20 points denser at the edges, inner shadow under the top edge, light catch along the bottom edge | Same concave glass as in the app. No grain, no sheen |
 | Polarity | Auto (default), Light, Dark. Auto uses the wallpaper colour hints from `WallpaperManager.getWallpaperColors` where available, otherwise follows the app theme | Light frost on light wallpapers and dark frost on dark ones looks most like glass. Permission requirements for `getWallpaperColors` are to be confirmed in phase 3 |
 | Fallback | Solid paper when the app is in a High Contrast theme | Accessibility first |
 
@@ -151,7 +163,7 @@ Measured with the WCAG 2 formula, most text pairs in prototype v2 technically pa
 
 1. **Contrast moved.** Glass was 58 to 64 percent opaque over a drifting, colourful aurora. Local contrast changed as the aurora moved, so the same label looked sharp in one place and faint in another.
 2. **Same hue text on same hue background.** Mint text on dark green glass has almost no hue contrast, only lightness contrast, which reads as murky.
-3. **Grain under text.** The 5 to 7 percent grain overlay sat under text too.
+3. **Grain under text.** The 5 to 7 percent grain overlay sat under text too. Grain has now been removed entirely.
 4. **Thin weights at small sizes.** Secondary text was 12 to 13px at regular weight.
 
 #### 4.3.3 New rules
@@ -170,17 +182,17 @@ Measured with the WCAG 2 formula, most text pairs in prototype v2 technically pa
 
 All values below come from `tools/design/contrast.py`, which runs against `tools/design/themes.json` and fails if any pair is under its minimum.
 
-| Theme | Paper | Ink | Secondary | Accent | Ink on paper | Secondary on paper | Secondary on glass 62%, typical | Secondary on glass 85%, any image | Widget label, any wallpaper | Label on accent |
+| Theme | Paper | Ink | Secondary | Accent | Ink on paper | Secondary on paper | Secondary on clear glass, typical | Secondary on glass, any image (adaptive) | Widget label at 55%, matched wallpaper | Label on accent |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Daylight (default) | #FBFAF7 | #15181A | #474D52 | #0A6249 | 17.1 | 8.2 | 6.0 | 5.7 | 5.0 | 7.4 |
-| Sepia | #F3EBD9 | #251C12 | #54452F | #7A3B10 | 14.1 | 7.8 | 5.7 | 5.4 | 4.8 | 8.5 |
-| Dusk (dark grey) | #1C1E20 | #ECEDEE | #B9BEC3 | #5ACBA4 | 14.3 | 8.9 | 5.6 | 5.0 | 5.0 | 8.1 |
-| Night (warm, low light) | #17140F | #ECE1CE | #BCAE96 | #E2A658 | 14.2 | 8.4 | 5.6 | 5.0 | 5.0 | 7.9 |
-| OLED | #000000 | #E4E4E4 | #A9A9A9 | #5ACBA4 | 16.5 | 8.9 | 5.9 | 5.3 | 5.3 | 9.2 |
+| Daylight (default) | #FBFAF7 | #15181A | #474D52 | #0A6249 | 17.1 | 8.2 | 4.8 | 5.0 | 4.5 | 7.4 |
+| Sepia | #F3EBD9 | #251C12 | #54452F | #7A3B10 | 14.1 | 7.8 | 4.5 | 4.8 | 4.5 | 8.5 |
+| Dusk (dark grey) | #1C1E20 | #ECEDEE | #B9BEC3 | #5ACBA4 | 14.3 | 8.9 | 4.7 | 5.0 | 4.8 | 8.1 |
+| Night (warm, low light) | #17140F | #ECE1CE | #BCAE96 | #E2A658 | 14.2 | 8.4 | 4.6 | 5.0 | 4.5 | 7.9 |
+| OLED | #000000 | #E4E4E4 | #A9A9A9 | #5ACBA4 | 16.5 | 8.9 | 4.9 | 5.3 | 4.6 | 9.2 |
 | High Contrast Light | #FFFFFF | #000000 | #262626 | #002FA7 | 21.0 | 15.1 | 15.1 (glass off) | 15.1 | 15.1 | 10.7 |
 | High Contrast Dark | #000000 | #FFFFFF | #E6E6E6 | #FFD60A | 21.0 | 16.8 | 16.8 (glass off) | 16.8 | 16.8 | 14.9 |
 
-Ink (body text) on glass is 8.0 to 1 or more in every case, including widgets. Highlight and selection colours in every theme keep ink at 7.2 to 1 or more. Dividers measure 3.5 to 1 or more against paper. Night uses an amber accent instead of emerald (**Rationale**: warm hues sit more comfortably in a warm, low light palette, and amber keeps saturation contrast against brown neutrals).
+Ink on glass is 7.4 to 1 or more in every case, including widgets. Secondary text on the clearest glass sits just above the 4.5 to 1 minimum by design, because that is the most transparency the targets allow. Highlight and selection colours in every theme keep ink at 7.2 to 1 or more. Dividers measure 3.5 to 1 or more against paper. Night uses an amber accent instead of emerald (**Rationale**: warm hues sit more comfortably in a warm, low light palette, and amber keeps saturation contrast against brown neutrals).
 
 **Why emerald as the brand accent.** It is the organisation's name colour (EmeraldWall). It is rare among note apps that lean on yellow, blue and purple (**Rationale**, based on the apps listed in STRATEGY.md). At #0A6249 it reaches 7.0 to 1 on paper, so it can carry text, not only fills.
 
@@ -324,7 +336,9 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 | Colours | Translucent glass over a moving aurora | Opaque paper for content, glass for tools, aurora removed from content screens | 4.3.2, P1 |
 | Glass (v4) | 90 percent tint over plain paper, effect invisible | 62 percent tint, content scrolls under bars, sheen and grain, adaptive 85 percent over images | 4.2.1 |
 | Spacing (v4) | 483 hand written values | Tokens only, checked automatically | 4.7, 4.8 |
-| Home screen widgets (v4) | 94 percent paper | Frosted glass, 80 percent light or 85 percent dark, grain, sheen, cut edges, launcher radius | 4.2.2 |
+| Home screen widgets (v4) | 94 percent paper | Frosted glass, 80 percent light or 85 percent dark, cut edges, launcher radius | 4.2.2 |
+| Glass (v5) | 62 percent tint with grain and sheen | Clear concave glass, 35 percent light and 45 percent dark, no texture | 4.2.1 |
+| Widgets (v5) | 80 or 85 percent with grain | 55 percent when matched to the wallpaper, concave rim, no texture | 4.2.2 |
 | Text | 12 to 13px regular secondary text | 13sp minimum at weight 500 or more | 4.6 |
 | Default theme | Emerald Mist Dark | Daylight (light) | Positive polarity research |
 | Themes | 8, several with tinted text | 7, neutral text, all AAA for body text | 4.3.4 |

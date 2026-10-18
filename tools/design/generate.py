@@ -46,7 +46,8 @@ for k, t in tokens['type'].items():
     x.append(f'    <x:Double x:Key="Font{pascal(k)}">{t["size"]}</x:Double>')
     x.append(f'    <x:Double x:Key="Line{pascal(k)}">{t["line"]}</x:Double>')
 for k, v in tokens['glass'].items():
-    x.append(f'    <x:Double x:Key="Glass{pascal(k)}">{v}</x:Double>')
+    if isinstance(v, (int, float)):
+        x.append(f'    <x:Double x:Key="Glass{pascal(k)}">{v}</x:Double>')
 x.append('</ResourceDictionary>')
 open(os.path.join(out, 'Tokens.xaml'), 'w').write('\n'.join(x) + '\n')
 
@@ -67,7 +68,8 @@ for k, t in tokens['type'].items():
     c.append(f'  --fs-{k}: {t["size"]}px;')
     c.append(f'  --lh-{k}: {t["line"]}px;')
 for k, v in tokens['glass'].items():
-    c.append(f'  --glass-{k}: {v};')
+    if isinstance(v, (int, float)):
+        c.append(f'  --glass-{k}: {v};')
 c.append('}')
 open(os.path.join(out, 'tokens.css'), 'w').write('\n'.join(c) + '\n')
 

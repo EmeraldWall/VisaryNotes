@@ -3,12 +3,16 @@
 Usage: python3 tools/design/contrast.py [themes.json] [tokens.json]
 Exits with status 1 if any pair is below its minimum.
 
-Glass is checked three ways, matching DESIGN.md section 4.2:
-* at the base tint over what normally scrolls under a bar once blurred
-  (paper, text averaged into paper, highlight, selection, accent, desk),
+Glass is checked the way it is seen (docs/DESIGN.md section 4.2):
+* at the base tint of the clear centre over what normally scrolls under a bar
+  once blurred (paper, text averaged into paper, highlight, selection,
+  accent, desk),
 * at the maximum tint over any image (pure white and pure black), which is
   what the adaptive glass handler raises the tint to,
-* for home screen widgets, at the widget tint over any wallpaper.
+* for home screen widgets, at the matched tint over wallpapers of the same
+  polarity, and at the fallback tint over any wallpaper.
+The rim of the concave glass is denser than the centre, so the centre is the
+worst case and is the one checked.
 """
 import json
 import os
@@ -53,10 +57,14 @@ def check(name, t, glass):
         return min(ratio(col, over(c['glass'], alpha, b)) for b in backs)
 
     dark = luminance(c['paper']) < 0.2
-    base, top = glass['alpha-base'], glass['alpha-max']
-    widget = glass['widget-alpha-dark'] if dark else glass['widget-alpha-light']
+    pol = 'dark' if dark else 'light'
+    base, top = glass['alpha-base-' + pol], glass['alpha-max-' + pol]
+    matched, widget = glass['widget-alpha-matched'], glass['widget-alpha-any-' + pol]
+    # A wallpaper of the same polarity: luminance at least 0.18 for light frost, at most 0.18 for dark frost.
+    g = 0.18 * 12.92 if 0.18 <= 0.0031308 else 1.055 * 0.18 ** (1 / 2.4) - 0.055
+    same = [BLACK if dark else WHITE, [g, g, g]]
     if c['glass'] == c['paper'] and name.startswith('High Contrast'):
-        base = top = widget = 1.0  # glass is switched off in high contrast themes
+        base = top = matched = widget = 1.0  # glass is switched off in high contrast themes
     rows = [
         ('ink on paper', ratio(c['ink'], c['paper']), 7),
         ('soft on paper', ratio(c['soft'], c['paper']), 4.5),
@@ -66,6 +74,8 @@ def check(name, t, glass):
         (f'soft on glass {base:.2f}, typical', worst(c['soft'], base, typical), 4.5),
         (f'ink on glass {top:.2f}, any image', worst(c['ink'], top, [WHITE, BLACK]), 7),
         (f'soft on glass {top:.2f}, any image', worst(c['soft'], top, [WHITE, BLACK]), 4.5),
+        (f'widget ink {matched:.2f}, matched wallpaper', worst(c['ink'], matched, same), 7),
+        (f'widget label {matched:.2f}, matched wallpaper', worst(c['soft'], matched, same), 4.5),
         (f'widget ink {widget:.2f}, any wallpaper', worst(c['ink'], widget, [WHITE, BLACK]), 7),
         (f'widget label {widget:.2f}, any wallpaper', worst(c['soft'], widget, [WHITE, BLACK]), 4.5),
         ('link text on paper', ratio(c['accentText'], c['paper']), 4.5),
