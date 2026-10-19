@@ -117,6 +117,8 @@ The checker now tests glass the way it is actually seen.
 | Light (Daylight, Sepia) | 29 and 35 percent | **35 percent** | 80 percent |
 | Dark (Dusk, Night, OLED) | 42, 44 and 38 percent | **45 percent** | 85 percent |
 
+**How glass is drawn in v0.1.** Over a document or a Markdown preview, the page in the WebView draws the frost itself (CSS backdrop blur at 20px and 140 percent saturation, then the clear centre and denser rim tint) under the exact shape of each bar and the pill. The app reports those shapes and the bar heights to the page, which pads its text so nothing sits under a bar at rest. Over native lists and the editor there is no backdrop blur yet, so the glass uses the adaptive maximum tint (80 or 85 percent), never the clear centre tint, because a clear tint without blur leaves text under the bar unreadable.
+
 **Adaptive glass.** The glass handler samples the blurred backdrop under each bar at low resolution, once when scrolling settles and at most a few times a second while it moves. If the sample is far from the paper colour (an image), the tint eases up to 80 or 85 percent over 150ms and back. So glass is clearly transparent over text and stays legible over images.
 
 **The concave look, without texture.** Light is assumed to come from above, as on a phone held normally.

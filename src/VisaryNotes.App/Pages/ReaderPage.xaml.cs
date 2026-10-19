@@ -21,6 +21,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
     private double _progress;
     private bool _chrome = true;
     private int _highlightCount;
+    private readonly WebChrome _chromeSync;
 
     public ReaderPage(LibraryRepository repo, DocumentService docs, SettingsService settings, ThemeService themes)
     {
@@ -29,6 +30,9 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         _settings = settings;
         _themes = themes;
         InitializeComponent();
+
+        _chromeSync = new WebChrome(Web, () => Top, () => Dock, () => [Strip, Pill, ModeBar]);
+        _chromeSync.Track(Top, Dock, Pill, ModeBar);
 
         Modes.SetItems(["Reading", "Original"], 0);
         Modes.SelectedChanged += async (_, i) =>
@@ -98,7 +102,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         if (_opened is null)
             return;
         var highlights = await _repo.GetHighlightsAsync(_opened.Entry.Id);
-        var settings = new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages);
+        var settings = new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid);
         var html = await Task.Run(() => _opened.Document.Html(_mode, settings, highlights));
         Web.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Progress.Text = $"{Math.Round(_progress * 100)}%";
@@ -179,7 +183,8 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
     private void SetChrome(bool on)
     {
         _chrome = on;
-        Strip.IsVisible = on;
+        _chromeSync.Immersive = !on;
+        Top.IsVisible = on;
         Dock.IsVisible = on;
     }
 

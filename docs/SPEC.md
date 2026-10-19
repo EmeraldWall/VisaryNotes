@@ -85,7 +85,7 @@ Everything Android specific that MAUI does not wrap is written in C# under `Plat
 
 | Concern | Android Studio world | Visual Studio world (what we use) |
 | --- | --- | --- |
-| UI | Jetpack Compose | .NET MAUI XAML pages and controls, Material 3 enabled |
+| UI | Jetpack Compose | .NET MAUI XAML pages and controls. Material 3 controls are off, because in MAUI 10 they draw Entry as an outlined field with a floating label and a purple default outline that clashes with the app's own fields |
 | Platform code | Kotlin | C# in `Platforms/Android` |
 | Widgets | Jetpack Glance | Native `AppWidgetProvider` plus `RemoteViews` in C# |
 | Database | Room | sqlite-net with SQLite FTS5 |

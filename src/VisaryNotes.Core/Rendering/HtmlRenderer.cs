@@ -12,7 +12,8 @@ public enum ViewMode
     Original
 }
 
-public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false);
+/// <param name="Solid">Reduce transparency or a High Contrast theme: bars become solid paper, no blur.</param>
+public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false, bool Solid = false);
 
 /// <summary>
 /// Turns the document model into a self contained HTML page for the in app WebView (docs/SPEC.md 7.3 and 7.4).
@@ -52,6 +53,13 @@ public static class HtmlRenderer
                 RenderBlock(b, body, mode, notes, 0);
             body.Append("</main>");
         }
+        else if (doc.Format == DocumentFormat.PlainText)
+        {
+            // A text file has no page. Its original form is its own characters and line breaks in a fixed
+            // width font, wrapped at the screen edge rather than shrunk onto a paper page.
+            foreach (var block in doc.Blocks)
+                RenderBlock(block, body, mode, notes, 0);
+        }
         else
         {
             RenderPages(doc, body, notes);
@@ -70,13 +78,17 @@ public static class HtmlRenderer
         foreach (var (k, v) in t.Colors)
             css.Append("--").Append(k).Append(':').Append(v).Append(';');
         css.Append("--read-size:").Append(Num(settings.FontSizePx)).Append("px;");
-        css.Append("--read-font:'").Append(settings.ReadingFont).Append("',Georgia,serif;}");
+        css.Append("--read-font:'").Append(settings.ReadingFont).Append("',Georgia,serif;");
+        // Glass drawn by the page under the app's bars: the WebView can blur its own content, the app cannot.
+        css.Append("--glass-core:").Append(Rgba(t.Glass, t.GlassAlpha)).Append(';');
+        css.Append("--glass-rim:").Append(Rgba(t.Glass, Math.Min(1, t.GlassAlpha + t.GlassRimExtra))).Append(';');
+        css.Append("--vn-top:0px;--vn-bottom:0px}");
         css.Append(BaseCss);
 
         var sb = new StringBuilder();
         sb.Append("<!doctype html><html><head><meta charset=\"utf-8\">");
         sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5\">");
-        sb.Append("<style>").Append(css).Append("</style></head><body class=\"").Append(mode == ViewMode.Reading ? "mode-reading" : "mode-original").Append("\">");
+        sb.Append("<style>").Append(css).Append("</style></head><body class=\"").Append(mode == ViewMode.Reading ? "mode-reading" : "mode-original").Append(settings.Solid ? " solid" : "").Append("\">");
         sb.Append(bodyHtml);
         var noteList = notes?.ToList() ?? [];
         if (noteList.Count > 0)
@@ -305,6 +317,12 @@ public static class HtmlRenderer
 
     private static string Num(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 
+    private static string Rgba(string hex, double alpha)
+    {
+        var c = Contrast.Parse(hex);
+        return $"rgba({Math.Round(c[0] * 255)},{Math.Round(c[1] * 255)},{Math.Round(c[2] * 255)},{Num(alpha)})";
+    }
+
     private static string JsonArray(IEnumerable<string> items) =>
         System.Text.Json.JsonSerializer.Serialize(items.ToArray());
 
@@ -318,12 +336,15 @@ public static class HtmlRenderer
         @font-face{font-family:'Figtree';font-weight:600;src:url('Figtree-SemiBold.ttf')}
         @font-face{font-family:'Figtree';font-weight:700;src:url('Figtree-Bold.ttf')}
         *{box-sizing:border-box}
-        html{-webkit-text-size-adjust:100%}
-        body{margin:0;background:var(--paper);color:var(--ink);font-family:'Figtree',sans-serif;-webkit-tap-highlight-color:transparent}
+        html{-webkit-text-size-adjust:100%;background:var(--paper)}
+        body{margin:0;padding:var(--vn-top) 0 calc(var(--vn-bottom) + 24px);background:var(--paper);color:var(--ink);font-family:'Figtree',sans-serif;-webkit-tap-highlight-color:transparent}
+        .mode-reading{overflow-x:hidden}
+        .vn-frost{position:fixed;z-index:5;pointer-events:none;background:radial-gradient(ellipse at center,var(--glass-core) 55%,var(--glass-rim) 100%);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4)}
+        .solid .vn-frost{background:var(--paper);-webkit-backdrop-filter:none;backdrop-filter:none}
         a{color:var(--accentText)}
         mark.hl{background:var(--hl);color:inherit;box-shadow:inset 0 -2px 0 var(--accent)}
         ::selection{background:var(--sel)}
-        .reading{max-width:70ch;margin:0 auto;padding:64px 24px 200px;font-family:var(--read-font);font-size:var(--read-size);line-height:1.65}
+        .reading{max-width:70ch;margin:0 auto;padding:24px 24px 0;font-family:var(--read-font);font-size:var(--read-size);line-height:1.65}
         .reading p,.reading li{margin:0 0 16px}
         .reading h1,.reading h2,.reading h3,.reading h4{font-weight:600;line-height:1.25;margin:24px 0 8px}
         .reading h1{font-size:1.55em}.reading h2{font-size:1.3em}.reading h3{font-size:1.15em}
@@ -342,8 +363,8 @@ public static class HtmlRenderer
         .reading dl.pairs dd{margin:0;font-weight:600;text-align:right}
         .reading .plain{white-space:normal}
         .doc-title{margin-top:0}
-        .mode-original{background:var(--desk)}
-        .desk{padding:56px 8px 200px;display:flex;flex-direction:column;align-items:center;gap:12px;transform-origin:top center}
+        html:has(.desk),.mode-original:has(.desk){background:var(--desk)}
+        .desk{padding:12px 8px 0;display:flex;flex-direction:column;align-items:center;gap:12px;transform-origin:top center}
         .page{background:#fff;color:#1a1a1a;font-family:'Tinos','Times New Roman',serif;font-size:11pt;line-height:1.35;border:1px solid var(--line);position:relative;display:flex;flex-direction:column}
         .page-body{flex:1}
         .page p{margin:0 0 6pt}
@@ -356,9 +377,8 @@ public static class HtmlRenderer
         .page-header,.page-footer{font-size:8pt;color:#444}
         .page-header{border-bottom:.5pt solid #888;margin-bottom:8pt;padding-bottom:3pt}
         .page-footer{text-align:center;margin-top:8pt}
-        .original-text{margin:0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.5;white-space:pre;overflow-x:auto;padding:64px 16px 200px;color:var(--ink);background:var(--paper)}
-        .notice{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;text-align:center;color:var(--ink);margin:0 16px 200px}
-        .mode-original .notice{margin-top:-180px}
+        .original-text{margin:0;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px 16px 0;color:var(--ink)}
+        .notice{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;text-align:center;color:var(--ink);margin:16px 16px 0}
         #vn-menu{position:absolute;z-index:10;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:'Figtree',sans-serif}
         #vn-menu[hidden]{display:none}
         #vn-menu button{min-height:48px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--ink);font:600 14px 'Figtree',sans-serif}
@@ -411,19 +431,41 @@ public static class HtmlRenderer
           }
           function markAll(){ (window.vnHighlights||[]).forEach(markOne); }
           window.vnAddHighlight = function(h){ (window.vnHighlights = window.vnHighlights || []).push(h); markOne(h); };
+          // Scales the pages to the screen width. The WebView can report a width of 0 before its first
+          // layout, so fitting waits for a real width. Page width comes from the document, not the DOM.
           function fit(){
             var desk = document.querySelector('.desk'); if (!desk) return;
-            var page = desk.querySelector('.page'); if (!page) return;
-            var scale = Math.min(1, (window.innerWidth - 16) / page.offsetWidth);
-            desk.style.zoom = scale;
+            var w = document.documentElement.clientWidth || window.innerWidth;
+            if (!w) { setTimeout(fit, 100); return; }
+            var pagePx = parseFloat(desk.getAttribute('data-page-width-mm')) * 96 / 25.4;
+            if (!pagePx) return;
+            desk.style.zoom = Math.min(1, (w - 16) / pagePx);
           }
           window.vnFit = fit;
+          // The app reports how much of the page its bars cover and where its glass sits. Text is padded
+          // clear of the bars, and a blurred frost is drawn under each glass shape (docs/DESIGN.md 4.2.1).
+          window.vnChrome = function(top, bottom, rects){
+            var r = document.documentElement.style;
+            r.setProperty('--vn-top', top + 'px');
+            r.setProperty('--vn-bottom', bottom + 'px');
+            document.querySelectorAll('.vn-frost').forEach(function(e){ e.remove(); });
+            (rects || []).forEach(function(q){
+              var d = document.createElement('div');
+              d.className = 'vn-frost';
+              d.style.left = q.x + 'px'; d.style.top = q.y + 'px';
+              d.style.width = q.w + 'px'; d.style.height = q.h + 'px';
+              d.style.borderRadius = q.r + 'px';
+              document.body.appendChild(d);
+            });
+            fit();
+          };
           window.vnScrollTo = function(f){ window.scrollTo(0, f * (document.body.scrollHeight - window.innerHeight)); };
           var p; window.addEventListener('scroll', function(){ clearTimeout(p); p = setTimeout(function(){
             var max = document.body.scrollHeight - window.innerHeight;
             send('progress', {f: max > 0 ? (window.scrollY / max).toFixed(3) : '1'});
           }, 600); });
           window.addEventListener('resize', fit);
+          window.addEventListener('load', fit);
           markAll(); fit();
         })();
         """;

@@ -47,6 +47,10 @@ public sealed class ThemeService
         var glass = C(t.Glass);
         r["GlassCore"] = Solid ? C(t.Paper) : glass.WithAlpha((float)t.GlassAlpha);
         r["GlassRim"] = Solid ? C(t.Paper) : glass.WithAlpha((float)Math.Min(1, t.GlassAlpha + t.GlassRimExtra));
+        // Native glass has no backdrop blur yet, so where it covers content it uses the adaptive maximum,
+        // the tint the design already sets for busy backdrops (docs/DESIGN.md 4.2.1).
+        r["GlassDenseCore"] = Solid ? C(t.Paper) : glass.WithAlpha((float)t.GlassAlphaMax);
+        r["GlassDenseRim"] = Solid ? C(t.Paper) : glass.WithAlpha((float)Math.Min(1, t.GlassAlphaMax + 0.1));
         r["EdgeLo"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.Black.WithAlpha(0.6f) : Colors.Black.WithAlpha(0.22f);
         r["EdgeHi"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.White.WithAlpha(0.2f) : Colors.White.WithAlpha(0.95f);
 

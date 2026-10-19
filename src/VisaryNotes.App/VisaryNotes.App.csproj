@@ -8,8 +8,9 @@
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 
-		<!-- Material 3 on Android (docs/SPEC.md 4). -->
-		<UseMaterial3>true</UseMaterial3>
+		<!-- Material 3 controls stay off: MAUI 10 draws Entry as an outlined Material field with a floating label
+		     and a purple default outline, which doubles up with the app's own field (docs/SPEC.md 4). -->
+		<UseMaterial3>false</UseMaterial3>
 
 		<ApplicationTitle>VisaryNotes</ApplicationTitle>
 		<ApplicationId>com.visary.notes</ApplicationId>

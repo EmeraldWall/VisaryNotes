@@ -16,6 +16,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
     private Note _note = new() { Body = "" };
     private CancellationTokenSource? _saveDelay;
     private bool _loading;
+    private readonly WebChrome _chromeSync;
 
     public EditorPage(LibraryRepository repo, SettingsService settings, ThemeService themes)
     {
@@ -24,6 +25,8 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         _themes = themes;
         InitializeComponent();
 
+        _chromeSync = new WebChrome(Preview, () => Strip, () => Dock, () => [Strip, Pill, ToolbarGlass]);
+        _chromeSync.Track(Strip, Dock, Pill);
         BuildToolbar();
         Body.TextChanged += (_, _) => ScheduleSave();
         Preview.Navigating += async (_, e) =>
@@ -44,8 +47,9 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         };
         Dock.SizeChanged += (_, _) =>
         {
-            var inset = (Thickness)Application.Current!.Resources["InsetReading"];
-            Body.Margin = new Thickness(inset.Left, inset.Top, inset.Right, Dock.Height);
+            // The text starts below the strip and ends above the pill and toolbar, so no bar covers it at rest.
+            var side = ThemeCatalog.Token("space", "sp-6");
+            Body.Margin = new Thickness(side, ThemeCatalog.Token("size", "h-strip") + ThemeCatalog.Token("space", "sp-4"), side, Dock.Height);
         };
         BuildPill();
     }
@@ -176,14 +180,25 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         {
             Preview.IsVisible = false;
             Body.IsVisible = true;
+            SetGlassOverWeb(false);
             return;
         }
         await SaveAsync();
         var html = HtmlRenderer.Page(MarkdownRenderer.ToHtml(Body.Text ?? ""), ViewMode.Reading,
-            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages));
+            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid));
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
         Preview.IsVisible = true;
+        SetGlassOverWeb(true);
+    }
+
+    /// <summary>Over the preview the page draws the blurred frost, over the editor the bars use the dense tint.</summary>
+    private void SetGlassOverWeb(bool on)
+    {
+        Strip.OverWeb = on;
+        Pill.OverWeb = on;
+        ToolbarGlass.OverWeb = on;
+        _chromeSync.Sync();
     }
 
     /// <summary>Exports in the formats available in v0.1 and hands the file to the Android share sheet (docs/SPEC.md 8.2).</summary>

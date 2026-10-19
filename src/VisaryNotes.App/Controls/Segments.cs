@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls.Shapes;
+using VisaryNotes.App.Services;
 using VisaryNotes.Core.Theming;
 
 namespace VisaryNotes.App.Controls;
@@ -14,6 +15,12 @@ public sealed class Segments : Grid
     public Segments()
     {
         ColumnSpacing = ThemeCatalog.Token("space", "sp-1");
+        Loaded += (_, _) =>
+        {
+            if (Handler?.MauiContext?.Services.GetService<ThemeService>() is { } themes)
+                themes.Changed += (_, _) => Paint();
+            Paint();
+        };
     }
 
     public int Selected
@@ -48,7 +55,6 @@ public sealed class Segments : Grid
                 StrokeShape = new RoundRectangle { CornerRadius = ThemeCatalog.Token("radius", "r-1") },
                 Content = text
             };
-            box.SetDynamicResource(Border.StrokeProperty, "InkBrush");
             var index = i;
             var tap = new TapGestureRecognizer();
             tap.Tapped += (_, _) =>
@@ -59,7 +65,6 @@ public sealed class Segments : Grid
                 SelectedChanged?.Invoke(this, index);
             };
             box.GestureRecognizers.Add(tap);
-            SemanticProperties.SetDescription(box, labels[i]);
             this.Add(box, i);
             _items.Add((box, text));
         }
@@ -67,21 +72,22 @@ public sealed class Segments : Grid
         Paint();
     }
 
+    /// <summary>
+    /// Selected is solid ink with paper text, the rest are paper with ink text and an ink outline. Colours are
+    /// set directly, not as dynamic resources, because a local value would outrank a dynamic resource and freeze
+    /// the old state. Paper rather than clear keeps the labels legible over any content.
+    /// </summary>
     private void Paint()
     {
+        var ink = ThemeService.Res("Ink");
+        var paper = ThemeService.Res("Paper");
         for (var i = 0; i < _items.Count; i++)
         {
             var on = i == _selected;
-            if (on)
-            {
-                _items[i].Box.SetDynamicResource(BackgroundColorProperty, "Ink");
-                _items[i].Text.SetDynamicResource(Label.TextColorProperty, "Paper");
-            }
-            else
-            {
-                _items[i].Box.BackgroundColor = Colors.Transparent;
-                _items[i].Text.SetDynamicResource(Label.TextColorProperty, "Ink");
-            }
+            _items[i].Box.Stroke = new SolidColorBrush(ink);
+            _items[i].Box.Background = new SolidColorBrush(on ? ink : paper);
+            _items[i].Text.TextColor = on ? paper : ink;
+            SemanticProperties.SetDescription(_items[i].Box, on ? $"{_items[i].Text.Text}, selected" : _items[i].Text.Text);
         }
     }
 }

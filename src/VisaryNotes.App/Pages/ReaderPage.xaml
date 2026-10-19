@@ -8,27 +8,28 @@
     <Grid>
         <WebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
 
-        <!-- Glance zone: file name and progress only. -->
-        <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
-                <Label x:Name="FileName" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
-                <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
-                <controls:Pressable x:Name="SaveButton" Grid.Column="2" IsVisible="False" HeightRequest="{StaticResource HControl}"
-                                    Padding="{StaticResource InsetButtonSmall}" SemanticProperties.Description="Save to Library">
-                    <Label Text="Save to Library" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
-                </controls:Pressable>
-            </Grid>
-        </controls:GlassView>
-
-        <Label x:Name="Warning" IsVisible="False" VerticalOptions="Start" Margin="{StaticResource InsetSheet}"
-               Style="{StaticResource T2}" MaxLines="4" LineBreakMode="WordWrap" BackgroundColor="{DynamicResource Highlight}" TextColor="{DynamicResource Ink}" />
+        <!-- Glance zone: file name and progress only. The page draws the frost under the glass. -->
+        <VerticalStackLayout x:Name="Top" VerticalOptions="Start">
+            <controls:GlassView x:Name="Strip" OverWeb="True" HeightRequest="{StaticResource HStrip}">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                    <Label x:Name="FileName" Style="{StaticResource StripTitle}" />
+                    <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
+                    <controls:Pressable x:Name="SaveButton" Grid.Column="2" IsVisible="False" HeightRequest="{StaticResource HControl}"
+                                        Padding="{StaticResource InsetButtonSmall}" SemanticProperties.Description="Save to Library">
+                        <Label Text="Save to Library" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
+                    </controls:Pressable>
+                </Grid>
+            </controls:GlassView>
+            <Label x:Name="Warning" IsVisible="False" Padding="{StaticResource InsetRow}"
+                   Style="{StaticResource T2}" MaxLines="4" LineBreakMode="WordWrap" BackgroundColor="{DynamicResource Highlight}" TextColor="{DynamicResource Ink}" />
+        </VerticalStackLayout>
 
         <!-- Act zone: action pill above the view switch. -->
         <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
             <Grid Padding="{StaticResource InsetPillRow}">
-                <controls:ActionPill x:Name="Pill" />
+                <controls:ActionPill x:Name="Pill" OverWeb="True" />
             </Grid>
-            <controls:GlassView x:Name="ModeBar">
+            <controls:GlassView x:Name="ModeBar" OverWeb="True">
                 <controls:Segments x:Name="Modes" Margin="{StaticResource InsetBar}" />
             </controls:GlassView>
         </VerticalStackLayout>

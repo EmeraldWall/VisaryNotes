@@ -7,8 +7,8 @@ namespace VisaryNotes.App.Controls;
 /// Clear concave glass (docs/DESIGN.md 4.2.1): a clear centre, a rim 20 points denser, a soft shadow under
 /// the top edge and a light catch along the bottom edge. No texture. Becomes solid paper when Reduce
 /// transparency is on or a High Contrast theme is active.
-/// The backdrop blur itself is added by the Android handler in a later phase; until then glass is tint only,
-/// which is the documented fallback path.
+/// Over a WebView the page itself draws the blurred frost under this shape (WebChrome), so the view only adds
+/// its edges. Over native content there is no blur yet, so the view uses the adaptive maximum tint.
 /// </summary>
 public class GlassView : ContentView
 {
@@ -17,6 +17,9 @@ public class GlassView : ContentView
 
     public static readonly BindableProperty IsPillProperty =
         BindableProperty.Create(nameof(IsPill), typeof(bool), typeof(GlassView), false, propertyChanged: (b, _, _) => ((GlassView)b).Rebuild());
+
+    public static readonly BindableProperty OverWebProperty =
+        BindableProperty.Create(nameof(OverWeb), typeof(bool), typeof(GlassView), false, propertyChanged: (b, _, _) => ((GlassView)b).Rebuild());
 
     private readonly Border _border = new() { StrokeThickness = 0, Padding = 0 };
     private readonly Grid _layers = new() { IsClippedToBounds = true };
@@ -66,6 +69,13 @@ public class GlassView : ContentView
         set => SetValue(IsPillProperty, value);
     }
 
+    /// <summary>True when the view floats over a page that draws the frost underneath it.</summary>
+    public bool OverWeb
+    {
+        get => (bool)GetValue(OverWebProperty);
+        set => SetValue(OverWebProperty, value);
+    }
+
     public new View? Content
     {
         get => _slot.Content;
@@ -77,11 +87,16 @@ public class GlassView : ContentView
         var radius = IsPill && Height > 0 ? Height / 2 : CornerRadius;
         _border.StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(radius) };
 
-        var core = ThemeService.Res("GlassCore");
-        var rim = ThemeService.Res("GlassRim");
-        _border.Background = new RadialGradientBrush(
-            [new GradientStop(core, 0.55f), new GradientStop(rim, 1f)],
-            new Point(0.5, 0.5), 0.75);
+        if (OverWeb)
+            _border.Background = Brush.Transparent;
+        else
+        {
+            var core = ThemeService.Res("GlassDenseCore");
+            var rim = ThemeService.Res("GlassDenseRim");
+            _border.Background = new RadialGradientBrush(
+                [new GradientStop(core, 0.55f), new GradientStop(rim, 1f)],
+                new Point(0.5, 0.5), 0.75);
+        }
 
         var lo = ThemeService.Res("EdgeLo");
         var hi = ThemeService.Res("EdgeHi");

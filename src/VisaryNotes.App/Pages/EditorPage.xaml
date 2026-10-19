@@ -6,12 +6,12 @@
              Title="Note">
 
     <Grid>
-        <controls:MarkdownEditor x:Name="Body" Margin="{StaticResource InsetReading}" AutoSize="Disabled"
+        <controls:MarkdownEditor x:Name="Body" AutoSize="Disabled"
                                  Placeholder="Start with a heading, then write"
                                  SemanticProperties.Description="Note text in Markdown" />
         <WebView x:Name="Preview" IsVisible="False" BackgroundColor="{DynamicResource Paper}" />
 
-        <controls:GlassView VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+        <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
                 <Label x:Name="NoteTitle" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
                 <Label x:Name="SaveState" Grid.Column="1" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
@@ -22,7 +22,7 @@
             <Grid Padding="{StaticResource InsetPillRow}">
                 <controls:ActionPill x:Name="Pill" />
             </Grid>
-            <controls:GlassView>
+            <controls:GlassView x:Name="ToolbarGlass">
                 <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="{StaticResource InsetBar}">
                     <HorizontalStackLayout x:Name="Toolbar" Spacing="{StaticResource Sp1}" />
                 </ScrollView>

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using VisaryNotes.App.Pages;
 using VisaryNotes.App.Services;
 using VisaryNotes.Core.Data;
@@ -38,6 +38,7 @@ public static class MauiProgram
 
 #if ANDROID
         Platforms.Android.Handlers.MarkdownSpans.Register();
+        Platforms.Android.Handlers.PlainFields.Register();
 #endif
 
 #if DEBUG
