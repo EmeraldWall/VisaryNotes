@@ -31,7 +31,11 @@ public sealed class LibraryRepository
 
     // Notes
 
-    public Task<Note?> GetNoteAsync(int id) => _db.FindAsync<Note>(id)!;
+    public async Task<Note?> GetNoteAsync(int id)
+    {
+        await InitAsync().ConfigureAwait(false);
+        return await _db.FindAsync<Note>(id).ConfigureAwait(false);
+    }
 
     public async Task<Note> SaveNoteAsync(Note note)
     {
@@ -109,7 +113,11 @@ public sealed class LibraryRepository
         return entry;
     }
 
-    public Task<DocumentEntry?> GetDocumentAsync(int id) => _db.FindAsync<DocumentEntry>(id)!;
+    public async Task<DocumentEntry?> GetDocumentAsync(int id)
+    {
+        await InitAsync().ConfigureAwait(false);
+        return await _db.FindAsync<DocumentEntry>(id).ConfigureAwait(false);
+    }
 
     public async Task SaveToLibraryAsync(int documentId)
     {
@@ -181,12 +189,7 @@ public sealed class LibraryRepository
     public async Task<Note> QuoteToNoteAsync(int documentId, string documentName, string text)
     {
         var clean = Normalise(text);
-        var note = await GetLinkedNoteAsync(documentId).ConfigureAwait(false);
-        if (note is null)
-        {
-            note = await SaveNoteAsync(new Note { Body = $"# Notes on {Path.GetFileNameWithoutExtension(documentName)}\n" }).ConfigureAwait(false);
-            await _db.InsertAsync(new NoteLink { NoteId = note.Id, DocumentId = documentId, IsPrimary = true }).ConfigureAwait(false);
-        }
+        var note = await GetOrCreateLinkedNoteAsync(documentId, documentName).ConfigureAwait(false);
 
         var sb = new StringBuilder(note.Body.TrimEnd('\n'));
         sb.Append("\n\n");
@@ -196,6 +199,17 @@ public sealed class LibraryRepository
         note.Body = sb.ToString();
         await AddHighlightAsync(documentId, clean).ConfigureAwait(false);
         return await SaveNoteAsync(note).ConfigureAwait(false);
+    }
+
+    /// <summary>The document's primary linked note, created on first use.</summary>
+    public async Task<Note> GetOrCreateLinkedNoteAsync(int documentId, string documentName)
+    {
+        var note = await GetLinkedNoteAsync(documentId).ConfigureAwait(false);
+        if (note is not null)
+            return note;
+        note = await SaveNoteAsync(new Note { Body = $"# Notes on {Path.GetFileNameWithoutExtension(documentName)}\n" }).ConfigureAwait(false);
+        await _db.InsertAsync(new NoteLink { NoteId = note.Id, DocumentId = documentId, IsPrimary = true }).ConfigureAwait(false);
+        return note;
     }
 
     private static string Normalise(string text) => string.Join('\n', text.Replace("\r", "").Split('\n').Select(l => l.Trim())).Trim();

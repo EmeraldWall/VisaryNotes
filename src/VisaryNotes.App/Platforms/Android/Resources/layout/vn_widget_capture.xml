@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quick Capture widget (docs/SPEC.md 9.1). Three 48dp targets in one row. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/vn_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/vn_widget_frost"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="@dimen/vn_sp_2">
+
+    <TextView
+        android:id="@+id/vn_new_note"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/vn_h_control"
+        android:layout_weight="1"
+        android:background="@drawable/vn_widget_primary"
+        android:gravity="center"
+        android:text="New note"
+        android:textColor="@color/vn_widget_on_accent"
+        android:textSize="@dimen/vn_text_ui"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/vn_new_checklist"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/vn_h_control"
+        android:layout_marginStart="@dimen/vn_sp_2"
+        android:layout_weight="1"
+        android:background="@drawable/vn_widget_button"
+        android:gravity="center"
+        android:text="Checklist"
+        android:textColor="@color/vn_widget_ink"
+        android:textSize="@dimen/vn_text_ui"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/vn_open_doc"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/vn_h_control"
+        android:layout_marginStart="@dimen/vn_sp_2"
+        android:layout_weight="1"
+        android:background="@drawable/vn_widget_button"
+        android:gravity="center"
+        android:text="Open file"
+        android:textColor="@color/vn_widget_ink"
+        android:textSize="@dimen/vn_text_ui"
+        android:textStyle="bold" />
+</LinearLayout>

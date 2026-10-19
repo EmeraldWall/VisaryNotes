@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark widget frost: 0.85 over Dusk glass (docs/DESIGN.md 9). -->
+<resources>
+    <color name="vn_widget_frost">#D9232628</color>
+    <color name="vn_widget_ink">#ECEDEE</color>
+    <color name="vn_widget_soft">#B9BEC3</color>
+    <color name="vn_widget_line">#7B8288</color>
+    <color name="vn_widget_accent">#5ACBA4</color>
+    <color name="vn_widget_on_accent">#06261C</color>
+</resources>

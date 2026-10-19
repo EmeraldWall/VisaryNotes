@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.ReaderPage"
+             Title="Reader">
+
+    <Grid>
+        <WebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
+
+        <!-- Glance zone: file name and progress only. -->
+        <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                <Label x:Name="FileName" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
+                <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
+                <controls:Pressable x:Name="SaveButton" Grid.Column="2" IsVisible="False" HeightRequest="{StaticResource HControl}"
+                                    Padding="{StaticResource InsetButtonSmall}" SemanticProperties.Description="Save to Library">
+                    <Label Text="Save to Library" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
+                </controls:Pressable>
+            </Grid>
+        </controls:GlassView>
+
+        <Label x:Name="Warning" IsVisible="False" VerticalOptions="Start" Margin="{StaticResource InsetSheet}"
+               Style="{StaticResource T2}" MaxLines="4" LineBreakMode="WordWrap" BackgroundColor="{DynamicResource Highlight}" TextColor="{DynamicResource Ink}" />
+
+        <!-- Act zone: action pill above the view switch. -->
+        <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
+            <Grid Padding="{StaticResource InsetPillRow}">
+                <controls:ActionPill x:Name="Pill" />
+            </Grid>
+            <controls:GlassView x:Name="ModeBar">
+                <controls:Segments x:Name="Modes" Margin="{StaticResource InsetBar}" />
+            </controls:GlassView>
+        </VerticalStackLayout>
+
+        <!-- Linked note sheet: paper, because it holds long text (docs/DESIGN.md 4.1). -->
+        <Grid x:Name="Sheet" IsVisible="False" VerticalOptions="End" RowDefinitions="Auto,*,Auto" BackgroundColor="{DynamicResource Paper}">
+            <BoxView HeightRequest="2" Color="{DynamicResource Ink}" VerticalOptions="Start" />
+            <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetSheet}">
+                <Label x:Name="SheetTitle" Style="{StaticResource T1}" FontFamily="FigtreeBold" VerticalTextAlignment="Center" />
+                <controls:Pressable x:Name="OpenNote" Grid.Column="1" HeightRequest="{StaticResource HControl}" Padding="{StaticResource InsetButtonSmall}"
+                                    SemanticProperties.Description="Open the note in the editor">
+                    <Label Text="Open note" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
+                </controls:Pressable>
+            </Grid>
+            <WebView x:Name="NoteView" Grid.Row="1" BackgroundColor="{DynamicResource Paper}" />
+            <controls:GlassView Grid.Row="2">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}" Margin="{StaticResource InsetBar}">
+                    <Border Style="{StaticResource Field}">
+                        <Entry x:Name="Thought" Placeholder="Add a thought" ReturnType="Send" SemanticProperties.Description="Add a thought to the note" />
+                    </Border>
+                    <controls:GlassView Grid.Column="1" IsPill="True" WidthRequest="{StaticResource HPrimary}" HeightRequest="{StaticResource HPrimary}">
+                        <controls:Pressable x:Name="CloseSheet" SemanticProperties.Description="Close notes" />
+                    </controls:GlassView>
+                </Grid>
+            </controls:GlassView>
+        </Grid>
+    </Grid>
+</ContentPage>

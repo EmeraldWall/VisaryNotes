@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain frost: flat tint and a hairline edge. No texture.
+     The launcher clips the outer corners on Android 12 and later. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/vn_widget_frost" />
+            <stroke android:width="@dimen/vn_hairline" android:color="@color/vn_widget_line" />
+            <corners android:radius="@dimen/vn_r_2" />
+        </shape>
+    </item>
+</layer-list>

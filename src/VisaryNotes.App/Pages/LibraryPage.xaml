@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:VisaryNotes.App.Pages"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.LibraryPage"
+             x:DataType="pages:LibraryPage"
+             Title="Library">
+
+    <Grid>
+        <!-- Read zone: content scrolls under the glass strip and the dock (docs/DESIGN.md 5.2). -->
+        <CollectionView x:Name="List" SelectionMode="None">
+            <CollectionView.Header>
+                <VerticalStackLayout>
+                    <BoxView HeightRequest="{StaticResource HStrip}" Color="Transparent" />
+                    <controls:Pressable x:Name="ContinueRow" IsVisible="False" Padding="{StaticResource InsetRow}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}">
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{DynamicResource Ink}">
+                                <Label x:Name="ContinueBadge" Style="{StaticResource BadgeText}" TextColor="{DynamicResource Paper}" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource Sp1}" VerticalOptions="Center">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label x:Name="ContinueTitle" Style="{StaticResource T1}" />
+                                    <Label x:Name="ContinueProgress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" />
+                                </Grid>
+                                <Grid HeightRequest="4" BackgroundColor="{DynamicResource Line}" ColumnDefinitions="*">
+                                    <BoxView x:Name="ContinueBar" Color="{DynamicResource Accent}" HorizontalOptions="Start" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </controls:Pressable>
+                    <Label x:Name="EmptyText" IsVisible="False" Style="{StaticResource T2}" MaxLines="4" LineBreakMode="WordWrap"
+                           Margin="{StaticResource InsetSheet}"
+                           Text="Nothing here yet. Open a document you received, or start a note. Both live together in your Library." />
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="pages:LibraryRow">
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Reveal">
+                                <SwipeItem Text="{Binding PinText}" BackgroundColor="{DynamicResource Ink}" Invoked="OnPinInvoked" />
+                                <SwipeItem Text="{Binding DeleteText}" BackgroundColor="{DynamicResource Accent}" Invoked="OnDeleteInvoked" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+                        <Grid BackgroundColor="{DynamicResource Paper}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}"
+                                  Padding="{StaticResource InsetRow}" MinimumHeightRequest="{Binding RowHeight}">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRowTapped" />
+                                </Grid.GestureRecognizers>
+                                <Border Style="{StaticResource Badge}" BackgroundColor="{Binding BadgeFill}">
+                                    <Label Text="{Binding Badge}" Style="{StaticResource BadgeText}" TextColor="{Binding BadgeInk}" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}">
+                                        <Label Text="{Binding Title}" Style="{StaticResource T1}" />
+                                        <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource T2}" />
+                                    </Grid>
+                                    <Label Text="{Binding Snippet}" Style="{StaticResource T2}" IsVisible="{Binding ShowSnippet}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{DynamicResource Line}" VerticalOptions="End" />
+                        </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <BoxView HeightRequest="220" Color="Transparent" />
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <!-- Glance zone: passive information only. Settings is rarely used, so it may live here. -->
+        <controls:GlassView VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                <Label Text="Library" Style="{StaticResource StripTitle}" />
+                <Label x:Name="Counts" Grid.Column="1" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
+                <controls:Pressable x:Name="SettingsButton" Grid.Column="2" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
+                                    SemanticProperties.Description="Settings" />
+            </Grid>
+        </controls:GlassView>
+
+        <!-- Act zone: floating action pill above the filter tabs (docs/DESIGN.md 4.4, E1 to E3). -->
+        <VerticalStackLayout VerticalOptions="End">
+            <Grid Padding="{StaticResource InsetPillRow}">
+                <controls:ActionPill x:Name="Pill" />
+                <Grid x:Name="SearchRow" IsVisible="False" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}">
+                    <Border Style="{StaticResource Field}">
+                        <Entry x:Name="SearchEntry" Placeholder="Search notes and documents" ReturnType="Search"
+                               SemanticProperties.Description="Search notes and documents" />
+                    </Border>
+                    <controls:GlassView Grid.Column="1" IsPill="True" WidthRequest="{StaticResource HPrimary}" HeightRequest="{StaticResource HPrimary}">
+                        <controls:Pressable x:Name="CancelSearch" SemanticProperties.Description="Cancel search" />
+                    </controls:GlassView>
+                </Grid>
+            </Grid>
+            <controls:GlassView>
+                <controls:Segments x:Name="Filters" Margin="{StaticResource InsetBar}" />
+            </controls:GlassView>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

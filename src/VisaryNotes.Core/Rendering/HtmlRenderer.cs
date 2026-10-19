@@ -397,20 +397,20 @@ public static class HtmlRenderer
             if (window.getSelection().toString()) return;
             send('tap');
           });
-          function markAll(){
-            (window.vnHighlights||[]).forEach(function(h){
-              if (!h) return;
-              var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-              var n;
-              while ((n = w.nextNode())){
-                if (n.parentNode.closest && n.parentNode.closest('script,style,#vn-menu,mark')) continue;
-                var i = n.nodeValue.indexOf(h);
-                if (i < 0) continue;
-                var range = document.createRange(); range.setStart(n, i); range.setEnd(n, i + h.length);
-                var m = document.createElement('mark'); m.className = 'hl'; range.surroundContents(m); break;
-              }
-            });
+          function markOne(h){
+            if (!h) return;
+            var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            var n;
+            while ((n = w.nextNode())){
+              if (n.parentNode.closest && n.parentNode.closest('script,style,#vn-menu,mark')) continue;
+              var i = n.nodeValue.indexOf(h);
+              if (i < 0) continue;
+              var range = document.createRange(); range.setStart(n, i); range.setEnd(n, i + h.length);
+              var m = document.createElement('mark'); m.className = 'hl'; range.surroundContents(m); break;
+            }
           }
+          function markAll(){ (window.vnHighlights||[]).forEach(markOne); }
+          window.vnAddHighlight = function(h){ (window.vnHighlights = window.vnHighlights || []).push(h); markOne(h); };
           function fit(){
             var desk = document.querySelector('.desk'); if (!desk) return;
             var page = desk.querySelector('.page'); if (!page) return;

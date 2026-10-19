@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget frost (docs/DESIGN.md 9). Widgets cannot blur or read the wallpaper, so the frost is a
+     flat tint at the "any wallpaper" alpha: 0.8 over Daylight glass. Values from tools/design/themes.json. -->
+<resources>
+    <color name="vn_widget_frost">#CCF7F7F4</color>
+    <color name="vn_widget_ink">#15181A</color>
+    <color name="vn_widget_soft">#474D52</color>
+    <color name="vn_widget_line">#7E8780</color>
+    <color name="vn_widget_accent">#0A6249</color>
+    <color name="vn_widget_on_accent">#FFFFFF</color>
+</resources>

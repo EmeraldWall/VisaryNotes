@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one filled control on the widget, so the thumb finds New note first. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/vn_widget_accent" />
+    <corners android:radius="@dimen/vn_r_1" />
+</shape>

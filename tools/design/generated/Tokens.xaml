@@ -34,6 +34,17 @@
     <Thickness x:Key="PadSp6">24</Thickness>
     <Thickness x:Key="PadSp8">32</Thickness>
     <Thickness x:Key="PadSp12">48</Thickness>
+    <Thickness x:Key="InsetBar">8,8,8,8</Thickness>
+    <Thickness x:Key="InsetPill">4,4,4,4</Thickness>
+    <Thickness x:Key="InsetPillRow">16,0,16,12</Thickness>
+    <Thickness x:Key="InsetStrip">16,0,16,0</Thickness>
+    <Thickness x:Key="InsetRow">16,8,16,8</Thickness>
+    <Thickness x:Key="InsetSheet">24,16,24,16</Thickness>
+    <Thickness x:Key="InsetSectionLabel">16,24,16,8</Thickness>
+    <Thickness x:Key="InsetScreen">16,0,16,0</Thickness>
+    <Thickness x:Key="InsetButton">16,0,16,0</Thickness>
+    <Thickness x:Key="InsetButtonSmall">12,0,12,0</Thickness>
+    <Thickness x:Key="InsetReading">24,48,24,48</Thickness>
     <x:Double x:Key="LayoutScreenMargin">16</x:Double>
     <x:Double x:Key="LayoutReadingMargin">24</x:Double>
     <x:Double x:Key="LayoutBarPadding">8</x:Double>
