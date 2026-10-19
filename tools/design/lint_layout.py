@@ -44,11 +44,20 @@ def css_values(raw):
     return parts
 
 
+IMPLICIT_STYLE = re.compile(r'<Style\s+(?![^>]*x:Key)[^>]*TargetType="([^"]+)"')
+
+
 def lint_file(path):
     problems = []
     off = False
+    implicit = {}
     with open(path, encoding='utf-8') as f:
         for n, line in enumerate(f, 1):
+            # Two implicit styles for one type in a dictionary crash the app at startup.
+            for target in IMPLICIT_STYLE.findall(line):
+                if target in implicit:
+                    problems.append((n, f'second implicit style for {target}, first on line {implicit[target]}'))
+                implicit.setdefault(target, n)
             if 'lint:off' in line:
                 off = True
             if 'lint:on' in line:

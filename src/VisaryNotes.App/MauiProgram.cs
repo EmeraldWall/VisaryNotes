@@ -39,6 +39,7 @@ public static class MauiProgram
 #if ANDROID
         Platforms.Android.Handlers.MarkdownSpans.Register();
         Platforms.Android.Handlers.PlainFields.Register();
+        Platforms.Android.Handlers.PillElevation.Register();
 #endif
 
 #if DEBUG

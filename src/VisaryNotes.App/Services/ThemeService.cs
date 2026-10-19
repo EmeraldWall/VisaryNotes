@@ -77,6 +77,15 @@ public sealed class ThemeService
         var bars = AndroidX.Core.View.WindowCompat.GetInsetsController(window, window.DecorView!)!;
         bars.AppearanceLightStatusBars = !Current.IsDark;
         bars.AppearanceLightNavigationBars = !Current.IsDark;
+        // Before Android 15 apps are not drawn behind the system bars, so the bars take the paper colour.
+        if (!OperatingSystem.IsAndroidVersionAtLeast(35))
+        {
+            var paper = Microsoft.Maui.Platform.ColorExtensions.ToPlatform(C(Current.Paper));
+#pragma warning disable CA1422 // Only reached below Android 15.
+            window.SetStatusBarColor(paper);
+            window.SetNavigationBarColor(paper);
+#pragma warning restore CA1422
+        }
 #endif
     }
 }

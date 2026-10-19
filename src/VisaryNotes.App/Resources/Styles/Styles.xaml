@@ -10,23 +10,6 @@
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{DynamicResource Paper}" />
         <Setter Property="Shell.NavBarIsVisible" Value="False" />
-        <!-- Keep every page clear of the status bar, the navigation bar and the keyboard. -->
-        <Setter Property="SafeAreaEdges" Value="All" />
-    </Style>
-
-    <Style TargetType="Entry">
-        <Setter Property="FontFamily" Value="FigtreeMedium" />
-        <Setter Property="FontSize" Value="{StaticResource FontUi}" />
-        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
-        <Setter Property="PlaceholderColor" Value="{DynamicResource Soft}" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
-
-    <Style TargetType="Editor">
-        <Setter Property="FontFamily" Value="Literata" />
-        <Setter Property="FontSize" Value="{StaticResource FontRead}" />
-        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
-        <Setter Property="PlaceholderColor" Value="{DynamicResource Soft}" />
     </Style>
 
     <Style TargetType="Label">
@@ -107,6 +90,7 @@
         <Setter Property="TextColor" Value="{DynamicResource Ink}" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource Soft}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
     <Style TargetType="Editor">

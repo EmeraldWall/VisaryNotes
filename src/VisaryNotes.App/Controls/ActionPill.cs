@@ -23,7 +23,8 @@ public sealed class ActionPill : GlassView
         _row.Padding = new Thickness(ThemeCatalog.Token("space", "sp-1"));
         Content = _row;
         VerticalOptions = LayoutOptions.End;
-        Shadow = new Shadow { Brush = new SolidColorBrush(Colors.Black), Opacity = 0.18f, Radius = 18, Offset = new Point(0, 6) };
+        // The lift under the pill is a native elevation shadow (Platforms/Android/Handlers/PillElevation.cs).
+        // A MAUI Shadow renders through an offscreen bitmap on every draw and ran out of memory on device.
 
         var pan = new PanGestureRecognizer();
         double total = 0;
