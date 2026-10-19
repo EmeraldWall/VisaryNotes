@@ -11,12 +11,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
 <style>
 /* lint:off  token definitions, generated from tools/design/tokens.json */
-.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
+.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--r-pill:999px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
 /* lint:on */
 body{margin:0}
 a{color:inherit}a:hover{color:inherit}
 .app *{box-sizing:border-box}
-.app button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+:where(.app) button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 .app button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .glass{position:relative;background:radial-gradient(140% 180% at 50% 50%,var(--glassCore) 55%,var(--glassRim) 100%);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi)}
 .chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
@@ -25,7 +25,12 @@ a{color:inherit}a:hover{color:inherit}
 .segs{display:flex;gap:var(--sp-1)}
 .seg{flex:1;height:var(--h-control);font-size:var(--fs-ui);font-weight:600;border:1.5px solid var(--ink);border-radius:var(--r-1)}
 .seg.on{background:var(--ink);color:var(--paper)}
-.bar{position:absolute;left:0;right:0;bottom:0;padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.bar{padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.dock{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+.pillrow{display:flex;justify-content:center;padding:var(--sp-0) var(--sp-4) var(--sp-3)}
+.pill{display:flex;align-items:center;gap:var(--sp-1);padding:var(--sp-1);border-radius:var(--r-pill);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi),0 6px 18px rgba(0,0,0,0.18)}
+.pt{height:var(--h-control);padding:var(--sp-0) var(--sp-3);border-radius:var(--r-pill);display:flex;align-items:center;gap:var(--sp-1);font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;flex:none}
+.pp{height:var(--h-control);padding:var(--sp-0) var(--sp-4);border-radius:var(--r-pill);background:var(--accent);color:var(--onAccent);display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-title);line-height:var(--lh-title);font-weight:700;flex:none}
 .strip{position:absolute;top:0;left:0;right:0;height:var(--h-strip);display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-0) var(--sp-4)}
 .t1{font-size:var(--fs-title);line-height:var(--lh-title);font-weight:600}
 .t2{font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;color:var(--soft)}
@@ -59,12 +64,16 @@ a{color:inherit}a:hover{color:inherit}
 </div>
 </div>
 <div class="glass strip"><span class="t1" style="flex: 1">Autumn Newsletter.odt</span><span class="t2" style="color: var(--ink)">Page 1 / 3</span></div>
+<div class="dock">
+<div class="pillrow">
+<div class="glass pill" role="toolbar">
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Find</button>
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 4h14v16H5z"></path><path d="M9 9h6"></path></svg>Highlights</button>
+</div>
+</div>
 <div class="glass bar">
 <div class="segs"><button class="seg on">Reading</button><button class="seg">Original</button></div>
-<div style="display: flex; gap: var(--sp-2)">
-<button class="slot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
-<button class="slot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Find</button>
-<button class="slot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 4h14v16H5z"></path><path d="M9 9h6"></path></svg>Highlights</button>
 </div>
 </div>
 </div>
@@ -84,6 +93,13 @@ a{color:inherit}a:hover{color:inherit}
 </div>
 </div>
 <div class="glass strip"><span class="t1" style="flex: 1">Linked note</span><span class="t2">Saved</span></div>
+<div class="dock">
+<div class="pillrow">
+<div class="glass pill" role="toolbar">
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
+<button class="pp"><span style="font-family: 'Literata', serif; font-size: var(--fs-h2)">&#8220;</span>Quote selection</button>
+</div>
+</div>
 <div class="glass bar">
 <div role="toolbar" aria-label="Formatting" style="display: flex; gap: var(--sp-1)">
 <button class="ib" aria-label="Bold" style="font-weight: 800; font-size: var(--fs-h3)">B</button>
@@ -92,9 +108,6 @@ a{color:inherit}a:hover{color:inherit}
 <button class="ib" aria-label="Checklist"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="3" y="4" width="7" height="7"></rect><path d="M14 7h7M3 15h7v6H3zM14 18h7"></path></svg></button>
 <button class="ib" aria-label="Insert link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4M8 11l-3 3 5 5 3-3M16 13l3-3-5-5-3 3"></path></svg></button>
 </div>
-<div style="display: flex; gap: var(--sp-2)">
-<button class="slot"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
-<button class="primary chamfer"><span style="font-family: 'Literata', serif; font-size: var(--fs-h2)">&#8220;</span>Quote selection</button>
 </div>
 </div>
 </div>

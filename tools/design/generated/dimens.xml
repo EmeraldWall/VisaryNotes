@@ -21,6 +21,7 @@
     <dimen name="vn_r_1">2dp</dimen>
     <dimen name="vn_r_2">4dp</dimen>
     <dimen name="vn_chamfer">8dp</dimen>
+    <dimen name="vn_r_pill">999dp</dimen>
     <dimen name="vn_hairline">1dp</dimen>
     <dimen name="vn_strong">2dp</dimen>
     <dimen name="vn_quote_bar">4dp</dimen>

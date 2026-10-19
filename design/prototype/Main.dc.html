@@ -12,16 +12,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;family=JetBrains+Mono:wght@400&amp;family=Tinos:wght@400;700&amp;display=swap" rel="stylesheet">
 <style>
 /* lint:off  token definitions, generated from tools/design/tokens.json */
-.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--h-row-dense:48px;--h-row:56px;--h-row-comfortable:64px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--chamfer:8px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
+.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--h-row-dense:48px;--h-row:56px;--h-row-comfortable:64px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--r-pill:999px;--chamfer:8px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
 /* lint:on */
 body{margin:0}
 a{color:inherit}a:hover{color:inherit}
 .app *{box-sizing:border-box}
-.app button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+:where(.app) button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 .app button:focus-visible,.app input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .app input::placeholder{color:var(--soft)}
 .glass{position:relative;background:radial-gradient(140% 180% at 50% 50%,var(--glassCore) 55%,var(--glassRim) 100%);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi)}
-.glass.adaptive{background:radial-gradient(140% 180% at 50% 50%,var(--glassMax) 55%,var(--glassMaxRim) 100%)}
+.glass.pill.adaptive,.glass.adaptive{background:radial-gradient(140% 180% at 50% 50%,var(--glassMax) 55%,var(--glassMaxRim) 100%)}
 .solid .glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--paper)}
 .chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
 .chamfer-l{clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px)}
@@ -31,7 +31,13 @@ a{color:inherit}a:hover{color:inherit}
 .segs{display:flex;gap:var(--sp-1)}
 .seg{flex:1;height:var(--h-control);font-size:var(--fs-ui);font-weight:600;border:1.5px solid var(--ink);border-radius:var(--r-1)}
 .seg.on{background:var(--ink);color:var(--paper)}
-.bar{position:absolute;left:0;right:0;bottom:0;padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.bar{padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.dock{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+.pillrow{display:flex;padding:var(--sp-0) var(--sp-4) var(--sp-3)}
+.pill{display:flex;align-items:center;gap:var(--sp-1);padding:var(--sp-1);border-radius:var(--r-pill);touch-action:pan-y;box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi),0 6px 18px rgba(0,0,0,0.18)}
+.pb{width:var(--h-control);height:var(--h-control);border-radius:var(--r-pill);display:grid;place-items:center;flex:none}
+.pb:active{background:var(--fill)}
+.pp{height:var(--h-control);padding:var(--sp-0) var(--sp-4);border-radius:var(--r-pill);background:var(--accent);color:var(--onAccent);display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-title);line-height:var(--lh-title);font-weight:700;flex:none}
 .strip{position:absolute;top:0;left:0;right:0;height:var(--h-strip);display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-0) var(--sp-4)}
 .row{display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:left;padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line)}
 .row:active{background:var(--fill)}
@@ -73,6 +79,10 @@ a{color:inherit}a:hover{color:inherit}
 <sc-if value="{{isLibrary}}" hint-placeholder-val="{{true}}">
 <div style="position: absolute; inset: 0">
 <div class="noscroll" style="position: absolute; inset: 0; overflow-y: auto; padding: var(--h-strip) var(--sp-0) var(--sp-0)">
+<button class="row" onClick="{{goReader}}" style="min-height: var(--h-row-comfortable); background: var(--fill)">
+<span class="badge doc">ODT</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1)"><span style="display: flex; justify-content: space-between; gap: var(--sp-3)"><span class="t1">Continue: Autumn Newsletter</span><span class="t2" style="flex: none; font-weight: 700; color: var(--ink)">2 / 3</span></span><span style="height: 4px; background: var(--line); display: block"><span style="display: block; width: 58%; height: 100%; background: var(--accent)"></span></span></span>
+</button>
 <sc-for list="{{items}}" as="it" hint-placeholder-count="12">
 <button class="row" onClick="{{it.open}}" style="min-height: {{rowH}}">
 <span class="badge {{it.badgeCls}}">{{it.badge}}</span>
@@ -92,27 +102,28 @@ a{color:inherit}a:hover{color:inherit}
 <span class="t2" style="flex: 1">{{countText}}</span>
 <button class="ib" aria-label="Settings" onClick="{{goSettings}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><rect x="14" y="5" width="4" height="4"></rect><rect x="8" y="15" width="4" height="4"></rect></svg></button>
 </div>
+<div class="dock">
+<sc-if value="{{notSearching}}" hint-placeholder-val="{{true}}">
+<div class="pillrow" style="justify-content: {{pillAlign}}">
+<div class="glass pill" role="toolbar" aria-label="Library actions" onPointerDown="{{pillDown}}" onPointerUp="{{pillUp}}">
+<button class="pb" aria-label="Open file" style="order: {{oOpen}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"></path></svg></button>
+<button class="pp" style="order: {{oNew}}" onClick="{{goEditor}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New note</button>
+<button class="pb" aria-label="Search" style="order: {{oSearch}}" onClick="{{openSearch}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg></button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+<div class="pillrow" style="gap: var(--sp-2)">
+<label class="field"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg><span class="sr">Search notes and documents</span><input type="search" placeholder="Search notes and documents"></label>
+<button class="glass pill pb" aria-label="Cancel search" onClick="{{closeSearch}}" style="width: var(--h-primary); height: var(--h-primary)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+</sc-if>
 <div class="glass bar">
-<button onClick="{{goReader}}" style="display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-1) var(--sp-2); text-align: left">
-<span class="badge doc">ODT</span>
-<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--sp-1)"><span style="display: flex; justify-content: space-between"><span class="t1">Continue: Autumn Newsletter</span><span class="t2" style="font-weight: 700; color: var(--ink)">2 / 3</span></span><span style="height: 4px; background: var(--line); display: block"><span style="display: block; width: 58%; height: 100%; background: var(--accent)"></span></span></span>
-</button>
 <div class="segs" role="group" aria-label="Filter">
 <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
 <button class="seg {{f.cls}}" aria-pressed="{{f.on}}" onClick="{{f.pick}}">{{f.label}}</button>
 </sc-for>
 </div>
-<sc-if value="{{notSearching}}" hint-placeholder-val="{{true}}">
-<div style="display: flex; gap: var(--sp-2)">
-<button class="slot" style="order: {{oOpen}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"></path></svg>Open file</button>
-<button class="primary chamfer" style="order: {{oNew}}" onClick="{{goEditor}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>New note</button>
-<button class="slot" style="order: {{oSearch}}" onClick="{{openSearch}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Search</button>
-</div>
-</sc-if>
-<sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
-<div style="display: flex; gap: var(--sp-2)">
-<label class="field"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg><span class="sr">Search notes and documents</span><input type="search" placeholder="Search notes and documents"></label>
-<button class="slot" style="flex: none; width: 72px" onClick="{{closeSearch}}">Cancel</button>
 </div>
 </sc-if>
 </div>
@@ -183,15 +194,19 @@ a{color:inherit}a:hover{color:inherit}
 <span class="t2" style="font-weight: 700; color: var(--ink)">Page 1 / 3</span>
 </div>
 <sc-if value="{{sheetClosed}}" hint-placeholder-val="{{true}}">
-<div class="glass bar {{readerBarCls}}">
+<div class="dock">
+<div class="pillrow" style="justify-content: {{pillAlign}}">
+<div class="glass pill {{readerBarCls}}" role="toolbar" aria-label="Reader actions" onPointerDown="{{pillDown}}" onPointerUp="{{pillUp}}">
+<button class="pb" aria-label="Back to Library" style="order: {{rBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+<button class="pp" style="order: {{rMain}}" onClick="{{openSheet}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="4" y="3" width="16" height="18"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Notes ({{quoteCount}})</button>
+<button class="pb" aria-label="Find in document" style="order: {{rOther}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg></button>
+</div>
+</div>
+<div class="glass bar">
 <div class="segs" role="group" aria-label="View mode">
 <button class="seg {{readingCls}}" aria-pressed="{{isReading}}" onClick="{{pickReading}}">Reading</button>
 <button class="seg {{originalCls}}" aria-pressed="{{isOriginal}}" onClick="{{pickOriginal}}">Original</button>
 </div>
-<div style="display: flex; gap: var(--sp-2)">
-<button class="slot" style="order: {{oBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
-<button class="slot" style="order: 2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Find</button>
-<button class="primary chamfer" style="order: {{oNotes}}" onClick="{{openSheet}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="4" y="3" width="16" height="18"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Notes ({{quoteCount}})</button>
 </div>
 </div>
 </sc-if>
@@ -241,6 +256,14 @@ a{color:inherit}a:hover{color:inherit}
 <span class="t1" style="flex: 1">Garden plan for spring</span>
 <span class="t2">Saved</span>
 </div>
+<div class="dock">
+<div class="pillrow" style="justify-content: {{pillAlign}}">
+<div class="glass pill" role="toolbar" aria-label="Note actions" onPointerDown="{{pillDown}}" onPointerUp="{{pillUp}}">
+<button class="pb" aria-label="Back to Library" style="order: {{rBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+<button class="pp" style="order: {{rMain}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
+<button class="pb" aria-label="Preview" style="order: {{rOther}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><rect x="10" y="10" width="4" height="4"></rect></svg></button>
+</div>
+</div>
 <div class="glass bar">
 <div role="toolbar" aria-label="Formatting" class="noscroll" style="display: flex; gap: var(--sp-1); overflow-x: auto">
 <button class="ib fill" aria-label="Bold" style="font-weight: 800; font-size: var(--fs-h3)">B</button>
@@ -251,10 +274,6 @@ a{color:inherit}a:hover{color:inherit}
 <button class="ib fill" aria-label="Quote from a document" style="font-family: 'Literata', serif; font-size: var(--fs-h2); font-weight: 600">&#8220;</button>
 <button class="ib fill" aria-label="Insert link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4M8 11l-3 3 5 5 3-3M16 13l3-3-5-5-3 3"></path></svg></button>
 </div>
-<div style="display: flex; gap: var(--sp-2)">
-<button class="slot" style="order: {{oBack}}" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
-<button class="slot" style="order: 2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><rect x="10" y="10" width="4" height="4"></rect></svg>Preview</button>
-<button class="primary chamfer" style="order: {{oNotes}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
 </div>
 </div>
 </div>
@@ -269,7 +288,7 @@ a{color:inherit}a:hover{color:inherit}
 <button class="seg {{h.cls}}" aria-pressed="{{h.on}}" onClick="{{h.pick}}">{{h.label}}</button>
 </sc-for>
 </div>
-<div class="t2" style="padding: var(--sp-2) var(--sp-4) var(--sp-0); white-space: normal">Left or Right moves the main button and the scroll handle to that thumb. Centre suits both hands.</div>
+<div class="t2" style="padding: var(--sp-2) var(--sp-4) var(--sp-0); white-space: normal">Moves the action pill and the scroll handle to that thumb. You can also swipe the pill sideways and it snaps to left, centre or right. Centre suits both hands.</div>
 <div class="lbl">Density</div>
 <div class="segs" role="group" aria-label="List density" style="padding: var(--sp-0) var(--sp-4)">
 <sc-for list="{{densities}}" as="d" hint-placeholder-count="3">
@@ -292,8 +311,10 @@ a{color:inherit}a:hover{color:inherit}
 <div style="height: 120px"></div>
 </div>
 <div class="glass strip"><span class="t1" style="font-weight: 700">Settings</span></div>
-<div class="glass bar" style="flex-direction: row">
-<button class="slot" onClick="{{goLibrary}}" style="{{settingsBack}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Back to Library</button>
+<div class="dock">
+<div class="pillrow" style="justify-content: {{pillAlign}}">
+<div class="glass pill" onPointerDown="{{pillDown}}" onPointerUp="{{pillUp}}"><button class="pp" style="background: none; color: var(--ink)" onClick="{{goLibrary}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button></div>
+</div>
 </div>
 </div>
 </sc-if>
@@ -368,9 +389,18 @@ class Component extends DCLogic {
       showSnippet: dn.snip, rowH: dn.h,
       items: list.map((x) => ({...x, badgeCls: x.kind === 'doc' ? 'doc' : '', open: go(x.kind === 'doc' ? 'reader' : 'editor')})),
       oOpen: left ? 3 : 1, oNew: left ? 1 : (right ? 3 : 2), oSearch: 2,
-      oBack: left ? 3 : 1, oNotes: left ? 1 : 3,
       oInput: left ? 2 : 1, oClose: left ? 1 : 2,
-      settingsBack: left ? 'flex:none;width:50%' : (right ? 'margin-left:auto;flex:none;width:50%' : ''),
+      pillAlign: left ? 'flex-start' : (right ? 'flex-end' : 'center'),
+      rBack: left ? 3 : 1, rMain: left ? 1 : (right ? 3 : 2), rOther: 2,
+      pillDown: (e) => { this.pillX = e.clientX; },
+      pillUp: (e) => {
+        const dx = e.clientX - (this.pillX ?? e.clientX);
+        const steps = ['Left', 'Centre', 'Right'];
+        let i = steps.indexOf(hand);
+        if (dx > 40) i = Math.min(2, i + 1);
+        if (dx < -40) i = Math.max(0, i - 1);
+        if (steps[i] !== hand) this.setState({hand: steps[i]});
+      },
       showScroller: left || right,
       scrollerSide: left ? 'left:2px' : 'right:2px',
       searching: s.search, notSearching: !s.search,

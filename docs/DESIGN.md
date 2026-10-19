@@ -1,6 +1,6 @@
 # VisaryNotes Design Rationale
 
-Version 1.2 | Date: 2026-10-18 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
+Version 1.3 | Date: 2026-10-19 | Companion to [SPEC.md](SPEC.md) and [STRATEGY.md](STRATEGY.md)
 
 Every visual and interaction decision in VisaryNotes is listed here with the reason behind it. If a decision cannot be justified by a principle, a measurement or a cited source, it does not ship. Where a reason is the design team's own judgement, it is labelled **Rationale**. Where it rests on research, it carries a citation.
 
@@ -19,6 +19,11 @@ Version 1.1 responds to feedback on prototype v3.
 Version 1.2 responds to feedback on prototype v4.
 
 7. More transparency, no texture, and a plain concave glass look. Section 4.2.1 now specifies clear concave glass at 35 percent (light) and 45 percent (dark), with grain and sheen removed everywhere, including widgets.
+
+Version 1.3 responds to feedback on prototype v5.
+
+8. The action row should be a floating pill that can sit left, centre or right, above the filter tabs, with padding around it. Sections 4.4 and 5.3 now define the **action pill**.
+9. Library rows had no left and right padding. The cause was a CSS reset (`.app button{padding:0}`) that outranked the row's own padding rule. It is fixed on every board, and the layout check now catches this kind of bug (section 4.8).
 
 ---
 
@@ -207,7 +212,8 @@ All shape values are tokens (section 4.7).
 | Buttons and chips | 2dp corners | Reads as precise, like a printed label |
 | Primary action | Rectangle with one 8dp **chamfer** on the top trailing corner | The chamfer is the signature motif. It echoes a cut glass edge (CMF link) and is distinctive without being decorative. One motif, used once per screen, stays recognisable |
 | Selection and focus | 2dp outline, square | Square outlines align with text lines and table cells |
-| Avoided | Pills, circles for buttons, blob shapes | Rounded pills were the main reason v2 felt soft and generic |
+| **Action pill** (the one exception) | Fully rounded floating capsule holding the screen's 2 to 3 main actions. The primary action inside it is also a capsule | It floats free of the page, so its silhouette should say "movable, not attached" (figure and ground). A rounded end sits comfortably under the thumb pad. Being the only round object in the app makes it the easiest thing to find (Von Restorff isolation, **Rationale**). Everything else stays crisp |
+| Avoided | Pills for anything else, circles for buttons, blob shapes | Rounded shapes everywhere were the main reason v2 felt soft and generic |
 
 The radius scale is deliberately short (0, 2, 4dp plus one chamfer size, 8dp). A short scale is easier to apply consistently in MAUI styles.
 
@@ -261,6 +267,8 @@ Consistency is not left to judgement. Every spacing, size, radius and type value
 
 When the check was first run on prototype v3 it found **483** hard coded spacing, radius and font size values. Prototype v4 has **zero**.
 
+**A bug the token check could not see.** In v5 the Library rows lost their side padding although every value was a token. A reset rule, `.app button{padding:0}`, has higher CSS specificity than `.row{padding:...}` and silently won. The check now also rejects any element reset that sets padding or margin unless it is wrapped in `:where()`, which gives it zero specificity. The equivalent rule in MAUI is that implicit styles never set `Padding`, only component styles do.
+
 ## 5. One handed, ambidextrous ergonomics
 
 ### 5.1 Evidence
@@ -285,9 +293,9 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 
 | # | Rule | Theory |
 | --- | --- | --- |
-| E1 | **Bottom bar holds search, navigation and the primary action.** The top strip is passive | Fitts's law, thumb reach evidence |
+| E1 | **Main actions live in a floating action pill just above the bottom bar**, which holds the filter or view tabs. The top strip is passive | Fitts's law, thumb reach evidence |
 | E2 | **Symmetric by default.** The primary action is centred. Paired actions sit mirrored left and right | Works for both hands without setup (HMW 2) |
-| E3 | **Handedness setting** with Centre (default), Left and Right. Left or Right moves the primary action and the fast scroll handle to that side and orders paired buttons so the most used one is nearest the thumb | Fitts's law. Respects the one third left handed share |
+| E3 | **Handedness** Centre (default), Left, Right. The action pill sits centred, or against the left or right edge with 16dp margin, and the primary action inside it moves to the end nearest the thumb. The pill can also be **swiped sideways and snaps** to the three positions, so changing hands needs no trip to Settings. The fast scroll handle follows the same side | Fitts's law. Respects the one third left handed share. Direct manipulation is quicker than a setting (**Rationale**) |
 | E4 | **No app gestures from side edges.** Library and notes open from the bottom bar or by swiping up on it | Avoids conflict with Android Back from both edges |
 | E5 | **Full width list rows** at least 56dp tall in Compact density | Either thumb can tap the near end of a row |
 | E6 | **Selection menu appears below the selection** when the selection is in the upper two thirds, and above it only when it is near the bottom | Keeps the menu in or near the Act zone |
@@ -339,6 +347,9 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 | Home screen widgets (v4) | 94 percent paper | Frosted glass, 80 percent light or 85 percent dark, cut edges, launcher radius | 4.2.2 |
 | Glass (v5) | 62 percent tint with grain and sheen | Clear concave glass, 35 percent light and 45 percent dark, no texture | 4.2.1 |
 | Widgets (v5) | 80 or 85 percent with grain | 55 percent when matched to the wallpaper, concave rim, no texture | 4.2.2 |
+| Actions (v6) | Full width row of three buttons inside the bottom bar | Floating action pill above the tabs, left, centre or right, swipe to move | 4.4, E3 |
+| Row padding (v6) | Lost to a CSS reset | Restored, and the check catches the cause | 4.8 |
+| Continue reading (v6) | Inside the bottom bar | First row of the Library list, highlighted | Frees the bottom bar for the pill and tabs |
 | Text | 12 to 13px regular secondary text | 13sp minimum at weight 500 or more | 4.6 |
 | Default theme | Emerald Mist Dark | Daylight (light) | Positive polarity research |
 | Themes | 8, several with tinted text | 7, neutral text, all AAA for body text | 4.3.4 |

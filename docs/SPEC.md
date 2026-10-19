@@ -1,12 +1,14 @@
 # VisaryNotes Product and Technical Specification
 
-Version 0.6 (draft) | Status: for review | Date: 2026-10-17
+Version 0.7 (draft) | Status: for review | Date: 2026-10-19
 
 This document is the single source of truth for what VisaryNotes is, how it looks, and how it is built. Anything not written here is out of scope until it is added here first.
 
 **Change in 0.2.** The app is built entirely in **Visual Studio** (not Android Studio). That means C# and .NET MAUI instead of Kotlin and Jetpack Compose. Every technical section has been rewritten for that toolchain.
 
 **Change in 0.3.** Applies the decisions D1 to D10 from [STRATEGY.md](STRATEGY.md) (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory) and the prototype feedback that the layout wasted space. Reading is now an equal first class job. New sections 4.5 (space budget) and 7.8 (read, extract, write). Layouts, widgets, data model and phases updated.
+
+**Change in 0.7.** Main actions move into a floating action pill above the tabs that sits left, centre or right and can be swiped between them. Continue reading becomes the first Library row. See DESIGN.md 4.4 and 5.3.
 
 **Change in 0.6.** Clear concave glass: more transparent (35 percent light, 45 percent dark), grain and sheen removed, widgets at 55 percent when matched to the wallpaper. See DESIGN.md 4.2.1 and 4.2.2.
 
@@ -101,7 +103,7 @@ Layouts are chosen by window width, never by device type, so the same rules work
 
 | Width class | Typical device | Layout |
 | --- | --- | --- |
-| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. A passive glance strip at the top (title, counts, page). Every action lives in the bottom glass bar: Library has Continue reading, filters, then Open file, New note (centre) and Search. Reader has the Reading and Original switch, then Library, Find and Notes. The linked note opens as a bottom sheet |
+| Compact (under 600dp) | Phone, folded foldable outer screen | Single pane. A passive glance strip at the top (title, counts, page). Continue reading is the first row of the Library. At the bottom, a glass bar holds the filter tabs (Library) or the Reading and Original switch (reader) or the formatting tools (editor), and a floating **action pill** sits just above it with that screen's main actions: Open file, New note and Search on the Library, Library, Notes and Find in the reader. The linked note opens as a bottom sheet |
 | Medium (600 to 839dp) | Unfolded book style foldable, small tablet portrait | Two panes. Document and its linked note side by side, or Library and detail. Each pane has its own bottom bar. Library opens from the bottom bar, never from a side edge |
 | Expanded (840dp and up) | Tablet landscape, large foldable landscape | Three paper panes on the desk: Library, document, linked note. Each pane has its own bottom bar. When a note without a document is open, the middle pane is the editor and the right pane shows backlinks |
 
@@ -161,7 +163,7 @@ All values come from `tools/design/tokens.json` and are generated into `Tokens.x
 | `Shape.Pane` | 4dp | Panes on the desk, widgets, sheets |
 | `Shape.Chamfer` | one 8dp 45 degree cut, top trailing corner | Primary action only. Sheets use it on the top leading corner |
 
-No pills, circles or radii above 4dp anywhere in the app. In MAUI the chamfer is a `Path` or `RoundRectangle` replacement drawn with MAUI Graphics.
+No pills, circles or radii above 4dp anywhere in the app, with one exception: the floating action pill uses `r-pill` (fully rounded), for the reasons in DESIGN.md 4.4. In MAUI the chamfer is a `Path` or `RoundRectangle` replacement drawn with MAUI Graphics.
 
 ### 4.3 How glass is built in MAUI
 
@@ -181,9 +183,9 @@ From DESIGN.md section 5. The build must follow these rules on every screen.
 | --- | --- | --- |
 | Glance | Top 44 to 52dp | Passive only: title, counts, page number, save state. Settings may live here because it is rarely used |
 | Read | Middle | Content on paper. Full width rows, 56dp minimum in Compact density |
-| Act | Bottom bar, up to 30 percent of height | Every frequent action. Primary action centred by default |
+| Act | Bottom bar and the action pill above it, up to 30 percent of height | Every frequent action. The pill is centred by default |
 
-* **Handedness setting** Centre (default), Left, Right. Left and Right move the primary action and the fast scroll handle to that side and put the most used paired action nearest that thumb. Implemented as a `Handedness` preference that bottom bar layouts bind to (`Grid.Column` order).
+* **Handedness setting** Centre (default), Left, Right. Left and Right move the action pill to that edge (16dp margin), put the primary action at the pill's end nearest the thumb, and move the fast scroll handle to that side. Swiping the pill sideways snaps it between the three positions and saves the choice. Implemented as a `Handedness` preference that the `ActionPill` control binds to.
 * **No app gestures from the side edges**, because Android uses inward swipes from both edges for Back ([Android Developers, gesture navigation](https://developer.android.com/guide/navigation/gesturenav)).
 * Selection menu appears below the selection unless the selection is in the bottom third.
 * Menus, pickers and confirmations are bottom sheets with buttons at the bottom.
@@ -508,7 +510,7 @@ VisaryNotes.sln
       App.xaml, MauiProgram.cs       Startup, DI, fonts, UseMaterial3
       Views/                         XAML pages (Shell, NoteList, Editor, Viewer, Settings)
       ViewModels/                    CommunityToolkit.Mvvm view models
-      Controls/                      GlassView, ChamferButton, BottomBar, AdaptiveShell
+      Controls/                      GlassView, ActionPill, ChamferButton, BottomBar, AdaptiveShell
       Resources/
         Fonts/  Images/  Raw/        Bundled fonts, icons, viewer CSS and JS
         Styles/Themes/               Generated theme ResourceDictionaries
