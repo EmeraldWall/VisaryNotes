@@ -1,0 +1,290 @@
+using System.Text;
+using SQLite;
+using VisaryNotes.Core.Documents;
+using VisaryNotes.Core.Rendering;
+
+namespace VisaryNotes.Core.Data;
+
+/// <summary>All Library storage: notes, opened documents, highlights and the links between them (docs/SPEC.md 8.1, 11.3).</summary>
+public sealed class LibraryRepository
+{
+    public const string DocumentLinkScheme = "visary-doc://";
+    private static readonly TimeSpan TrashRetention = TimeSpan.FromDays(30);
+
+    private readonly SQLiteAsyncConnection _db;
+    private bool _ready;
+
+    public LibraryRepository(string databasePath)
+    {
+        _db = new SQLiteAsyncConnection(databasePath, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.SharedCache);
+    }
+
+    public async Task InitAsync()
+    {
+        if (_ready)
+            return;
+        await _db.CreateTablesAsync<Note, DocumentEntry, Highlight, NoteLink>().ConfigureAwait(false);
+        await _db.ExecuteAsync("CREATE VIRTUAL TABLE IF NOT EXISTS note_search USING fts5(title, body)").ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM notes WHERE DeletedAt IS NOT NULL AND DeletedAt < ?", DateTime.UtcNow - TrashRetention).ConfigureAwait(false);
+        _ready = true;
+    }
+
+    // Notes
+
+    public Task<Note?> GetNoteAsync(int id) => _db.FindAsync<Note>(id)!;
+
+    public async Task<Note> SaveNoteAsync(Note note)
+    {
+        await InitAsync().ConfigureAwait(false);
+        note.Title = MarkdownRenderer.TitleOf(note.Body);
+        note.UpdatedAt = DateTime.UtcNow;
+        if (note.Id == 0)
+            await _db.InsertAsync(note).ConfigureAwait(false);
+        else
+            await _db.UpdateAsync(note).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM note_search WHERE rowid = ?", note.Id).ConfigureAwait(false);
+        await _db.ExecuteAsync("INSERT INTO note_search(rowid, title, body) VALUES (?, ?, ?)", note.Id, note.Title, note.Body).ConfigureAwait(false);
+        return note;
+    }
+
+    public async Task MoveToTrashAsync(int noteId)
+    {
+        var note = await _db.FindAsync<Note>(noteId).ConfigureAwait(false);
+        if (note is null)
+            return;
+        note.DeletedAt = DateTime.UtcNow;
+        await _db.UpdateAsync(note).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM note_search WHERE rowid = ?", noteId).ConfigureAwait(false);
+    }
+
+    public async Task RestoreAsync(int noteId)
+    {
+        var note = await _db.FindAsync<Note>(noteId).ConfigureAwait(false);
+        if (note is null)
+            return;
+        note.DeletedAt = null;
+        await SaveNoteAsync(note).ConfigureAwait(false);
+    }
+
+    public async Task SetPinnedAsync(int noteId, bool pinned)
+    {
+        var note = await _db.FindAsync<Note>(noteId).ConfigureAwait(false);
+        if (note is null)
+            return;
+        note.Pinned = pinned;
+        await _db.UpdateAsync(note).ConfigureAwait(false);
+    }
+
+    /// <summary>Imports Markdown files, for example a Markor or Obsidian folder (docs/SPEC.md 6.1, STRATEGY.md D6).</summary>
+    public async Task<int> ImportMarkdownAsync(IEnumerable<(string FileName, string Text)> files)
+    {
+        var count = 0;
+        foreach (var (name, text) in files)
+        {
+            var body = text.TrimStart().StartsWith('#') ? text : $"# {Path.GetFileNameWithoutExtension(name)}\n\n{text}";
+            await SaveNoteAsync(new Note { Body = body }).ConfigureAwait(false);
+            count++;
+        }
+        return count;
+    }
+
+    // Documents
+
+    public async Task<DocumentEntry> RecordOpenAsync(string uri, string displayName, DocumentKind kind, bool addToLibrary)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var entry = await _db.Table<DocumentEntry>().Where(d => d.Uri == uri).FirstOrDefaultAsync().ConfigureAwait(false);
+        if (entry is null)
+        {
+            entry = new DocumentEntry { Uri = uri, DisplayName = displayName, Kind = kind, InLibrary = addToLibrary };
+            await _db.InsertAsync(entry).ConfigureAwait(false);
+        }
+        else
+        {
+            entry.LastOpenedAt = DateTime.UtcNow;
+            entry.DisplayName = displayName;
+            entry.InLibrary |= addToLibrary;
+            await _db.UpdateAsync(entry).ConfigureAwait(false);
+        }
+        return entry;
+    }
+
+    public Task<DocumentEntry?> GetDocumentAsync(int id) => _db.FindAsync<DocumentEntry>(id)!;
+
+    public async Task SaveToLibraryAsync(int documentId)
+    {
+        var d = await _db.FindAsync<DocumentEntry>(documentId).ConfigureAwait(false);
+        if (d is null || d.InLibrary)
+            return;
+        d.InLibrary = true;
+        await _db.UpdateAsync(d).ConfigureAwait(false);
+    }
+
+    public async Task SetProgressAsync(int documentId, double progress, int viewMode)
+    {
+        var d = await _db.FindAsync<DocumentEntry>(documentId).ConfigureAwait(false);
+        if (d is null)
+            return;
+        d.Progress = Math.Clamp(progress, 0, 1);
+        d.ViewMode = viewMode;
+        await _db.UpdateAsync(d).ConfigureAwait(false);
+    }
+
+    /// <summary>The most recently opened Library document that is not finished.</summary>
+    public async Task<DocumentEntry?> GetContinueReadingAsync()
+    {
+        await InitAsync().ConfigureAwait(false);
+        return await _db.Table<DocumentEntry>()
+            .Where(d => d.InLibrary && d.Progress < 0.98)
+            .OrderByDescending(d => d.LastOpenedAt)
+            .FirstOrDefaultAsync().ConfigureAwait(false);
+    }
+
+    public async Task RemoveDocumentAsync(int documentId)
+    {
+        await _db.DeleteAsync<DocumentEntry>(documentId).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM highlights WHERE DocumentId = ?", documentId).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM note_links WHERE DocumentId = ?", documentId).ConfigureAwait(false);
+    }
+
+    // Highlights and the read, extract, write loop (docs/SPEC.md 7.8)
+
+    public async Task<IReadOnlyList<string>> GetHighlightsAsync(int documentId)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var list = await _db.Table<Highlight>().Where(h => h.DocumentId == documentId).ToListAsync().ConfigureAwait(false);
+        return list.Select(h => h.Text).ToList();
+    }
+
+    public async Task AddHighlightAsync(int documentId, string text)
+    {
+        var clean = Normalise(text);
+        if (clean.Length == 0)
+            return;
+        await _db.InsertAsync(new Highlight { DocumentId = documentId, Text = clean }).ConfigureAwait(false);
+    }
+
+    public async Task<Note?> GetLinkedNoteAsync(int documentId)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var link = await _db.Table<NoteLink>().Where(l => l.DocumentId == documentId && l.IsPrimary).FirstOrDefaultAsync().ConfigureAwait(false);
+        if (link is null)
+            return null;
+        var note = await _db.FindAsync<Note>(link.NoteId).ConfigureAwait(false);
+        return note is { DeletedAt: null } ? note : null;
+    }
+
+    /// <summary>
+    /// Quotes a passage into the document's primary linked note, creating the note on first use.
+    /// The quote is a Markdown blockquote followed by a source line that links back to the document.
+    /// </summary>
+    public async Task<Note> QuoteToNoteAsync(int documentId, string documentName, string text)
+    {
+        var clean = Normalise(text);
+        var note = await GetLinkedNoteAsync(documentId).ConfigureAwait(false);
+        if (note is null)
+        {
+            note = await SaveNoteAsync(new Note { Body = $"# Notes on {Path.GetFileNameWithoutExtension(documentName)}\n" }).ConfigureAwait(false);
+            await _db.InsertAsync(new NoteLink { NoteId = note.Id, DocumentId = documentId, IsPrimary = true }).ConfigureAwait(false);
+        }
+
+        var sb = new StringBuilder(note.Body.TrimEnd('\n'));
+        sb.Append("\n\n");
+        foreach (var line in clean.Split('\n'))
+            sb.Append("> ").Append(line).Append('\n');
+        sb.Append("\n[").Append(documentName).Append("](").Append(DocumentLinkScheme).Append(documentId).Append(")\n");
+        note.Body = sb.ToString();
+        await AddHighlightAsync(documentId, clean).ConfigureAwait(false);
+        return await SaveNoteAsync(note).ConfigureAwait(false);
+    }
+
+    private static string Normalise(string text) => string.Join('\n', text.Replace("\r", "").Split('\n').Select(l => l.Trim())).Trim();
+
+    // Library list and search
+
+    public async Task<IReadOnlyList<LibraryItem>> GetLibraryAsync(LibraryFilter filter)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var items = new List<LibraryItem>();
+        var linkedNotes = (await _db.Table<NoteLink>().ToListAsync().ConfigureAwait(false));
+        var linkedNoteIds = linkedNotes.Select(l => l.NoteId).ToHashSet();
+        var linkedDocIds = linkedNotes.Select(l => l.DocumentId).ToHashSet();
+
+        if (filter is LibraryFilter.All or LibraryFilter.Notes or LibraryFilter.Linked)
+        {
+            var notes = await _db.Table<Note>().Where(n => n.DeletedAt == null && !n.Archived).ToListAsync().ConfigureAwait(false);
+            items.AddRange(notes
+                .Where(n => filter != LibraryFilter.Linked || linkedNoteIds.Contains(n.Id))
+                .Select(n => new LibraryItem(LibraryItemKind.Note, n.Id, n.Title, Snippet(n.Body), "MD", n.UpdatedAt, linkedNoteIds.Contains(n.Id), n.Pinned)));
+        }
+        if (filter is LibraryFilter.All or LibraryFilter.Documents or LibraryFilter.Linked)
+        {
+            var docs = await _db.Table<DocumentEntry>().Where(d => d.InLibrary).ToListAsync().ConfigureAwait(false);
+            var counts = (await _db.Table<Highlight>().ToListAsync().ConfigureAwait(false))
+                .GroupBy(h => h.DocumentId).ToDictionary(g => g.Key, g => g.Count());
+            items.AddRange(docs
+                .Where(d => filter != LibraryFilter.Linked || linkedDocIds.Contains(d.Id))
+                .Select(d => new LibraryItem(LibraryItemKind.Document, d.Id, d.DisplayName,
+                    DocSnippet(d, counts.GetValueOrDefault(d.Id), linkedDocIds.Contains(d.Id)),
+                    DocumentLoader.Badge(d.Kind), d.LastOpenedAt, linkedDocIds.Contains(d.Id), false)));
+        }
+        return items.OrderByDescending(i => i.Pinned).ThenByDescending(i => i.UpdatedAt).ToList();
+    }
+
+    public async Task<IReadOnlyList<LibraryItem>> SearchAsync(string query)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var terms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Replace("\"", ""))
+            .Where(t => t.Length > 0)
+            .ToList();
+        if (terms.Count == 0)
+            return await GetLibraryAsync(LibraryFilter.All).ConfigureAwait(false);
+
+        // Each term is quoted so user input can never be parsed as FTS syntax, and prefix matched.
+        var match = string.Join(" ", terms.Select(t => $"\"{t}\"*"));
+        var ids = await _db.QueryScalarsAsync<int>("SELECT rowid FROM note_search WHERE note_search MATCH ? ORDER BY rank LIMIT 200", match).ConfigureAwait(false);
+        var notes = new List<LibraryItem>();
+        foreach (var id in ids)
+        {
+            var n = await _db.FindAsync<Note>(id).ConfigureAwait(false);
+            if (n is { DeletedAt: null })
+                notes.Add(new LibraryItem(LibraryItemKind.Note, n.Id, n.Title, Snippet(n.Body), "MD", n.UpdatedAt, false, n.Pinned));
+        }
+        var docs = await _db.Table<DocumentEntry>().Where(d => d.InLibrary).ToListAsync().ConfigureAwait(false);
+        notes.AddRange(docs
+            .Where(d => terms.All(t => d.DisplayName.Contains(t, StringComparison.OrdinalIgnoreCase)))
+            .Select(d => new LibraryItem(LibraryItemKind.Document, d.Id, d.DisplayName, DocumentLoader.Badge(d.Kind) + " document", DocumentLoader.Badge(d.Kind), d.LastOpenedAt, false, false)));
+        return notes;
+    }
+
+    public async Task<(int Notes, int Documents)> CountsAsync()
+    {
+        await InitAsync().ConfigureAwait(false);
+        var n = await _db.Table<Note>().Where(x => x.DeletedAt == null && !x.Archived).CountAsync().ConfigureAwait(false);
+        var d = await _db.Table<DocumentEntry>().Where(x => x.InLibrary).CountAsync().ConfigureAwait(false);
+        return (n, d);
+    }
+
+    public Task CloseAsync() => _db.CloseAsync();
+
+    private static string Snippet(string body)
+    {
+        var lines = body.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Skip(1);
+        var first = lines.FirstOrDefault() ?? "";
+        first = first.TrimStart('#', '>', '-', '*', ' ').Replace("**", "").Replace("[ ]", "").Replace("[x]", "");
+        return first.Length > 120 ? first[..120] : first;
+    }
+
+    private static string DocSnippet(DocumentEntry d, int highlights, bool linked)
+    {
+        var parts = new List<string>();
+        if (d.Progress > 0.01)
+            parts.Add($"{Math.Round(d.Progress * 100)}% read");
+        if (highlights > 0)
+            parts.Add(highlights == 1 ? "1 highlight" : $"{highlights} highlights");
+        if (linked)
+            parts.Add("linked note");
+        return parts.Count > 0 ? string.Join(", ", parts) : DocumentLoader.Badge(d.Kind) + " document";
+    }
+}
