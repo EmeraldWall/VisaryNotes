@@ -25,7 +25,15 @@
                 <Label Text="Reading" Style="{StaticResource Cap}" />
                 <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
                     <Label x:Name="FontSizeLabel" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
-                    <Stepper x:Name="FontSize" Grid.Column="1" Minimum="14" Maximum="28" Increment="1" />
+                    <!-- Smaller and larger, as two outlined 48dp buttons in the app's control shape. -->
+                    <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource Sp2}" VerticalOptions="Center">
+                        <controls:Pressable x:Name="Smaller" Style="{StaticResource OutlineButton}" SemanticProperties.Description="Smaller text">
+                            <Label Text="A&#x2212;" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                        </controls:Pressable>
+                        <controls:Pressable x:Name="Larger" Style="{StaticResource OutlineButton}" SemanticProperties.Description="Larger text">
+                            <Label Text="A+" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontH3}" />
+                        </controls:Pressable>
+                    </HorizontalStackLayout>
                 </Grid>
 
                 <Label Text="Glass and privacy" Style="{StaticResource Cap}" />
@@ -34,14 +42,14 @@
                         <Label Text="Reduce transparency" Style="{StaticResource T1}" />
                         <Label Text="Bars become solid paper" Style="{StaticResource T2}" />
                     </VerticalStackLayout>
-                    <Switch x:Name="Solid" Grid.Column="1" />
+                    <controls:Toggle x:Name="Solid" Grid.Column="1" SemanticProperties.Hint="Reduce transparency" />
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
                     <VerticalStackLayout VerticalOptions="Center">
                         <Label Text="Load images from the web" Style="{StaticResource T1}" />
                         <Label Text="Off keeps every file fully offline" Style="{StaticResource T2}" />
                     </VerticalStackLayout>
-                    <Switch x:Name="Remote" Grid.Column="1" />
+                    <controls:Toggle x:Name="Remote" Grid.Column="1" SemanticProperties.Hint="Load images from the web" />
                 </Grid>
 
                 <Label Text="Bring your notes" Style="{StaticResource Cap}" />

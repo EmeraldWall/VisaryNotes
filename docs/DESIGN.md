@@ -307,6 +307,16 @@ Zones are defined so they work for **both** hands at once. The bottom centre is 
 | E10 | **Targets** are 48dp minimum, 56dp for primary actions, with 8dp spacing | Android guidance |
 | E11 | **Tablets and foldables.** Each pane has its own bottom bar, so whichever hand holds the device, the nearest pane's tools are at the bottom edge | Rationale, to be confirmed in the reach test (section 9) |
 
+**Sheet anatomy (E7).** Every popup in the app is one control, `BottomSheet`, so menus, confirmations and messages look and behave the same.
+* Surface. Paper, a 2dp ink rule on top, 4dp top corners and square bottom corners, flush with the bottom edge. Paper, not glass, because a sheet holds text to read (section 4.1).
+* Scrim. Black at 32 percent in light themes and 60 percent in dark themes. It keeps the page visible for context but clearly inactive.
+* Content. Title in Figtree Bold 16, message in Figtree Medium 15 in ink (never secondary grey, it is the thing to read), options as 56dp rows with hairline dividers, inset 24dp sides and 16dp top and bottom.
+* Buttons. 56dp tall, 2dp radius. The primary is filled with the accent; the secondary is a 2dp ink outline. The primary sits on the side of the chosen hand (right for Centre, as Android does), so the likely answer is under the thumb.
+* Dismissal. Tap the scrim, press Back, or choose Cancel. Back closes the sheet before it leaves the page.
+* Motion. Slides up in 200ms and fades the scrim in 160ms; closes faster (160ms) because closing needs no attention.
+
+The same shapes replace two Android widgets in Settings: switches become a square cornered `Toggle` (2dp ink track, square knob, accent fill when on), and the text size stepper becomes two 48dp outlined buttons, A minus and A plus.
+
 ---
 
 ## 6. UX laws applied, component by component

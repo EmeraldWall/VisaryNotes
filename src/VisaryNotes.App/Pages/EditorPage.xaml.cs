@@ -195,7 +195,9 @@ public partial class EditorPage : ContentPage, IQueryAttributable
     private async Task ShareAsync()
     {
         await SaveAsync();
-        var choice = await DisplayActionSheetAsync("Share as", "Cancel", null, "Markdown (.md)", "Plain text (.txt)", "Web page (.html)");
+        // The sheet rises from the bottom edge, so the keyboard goes away first.
+        Body.Unfocus();
+        var choice = await BottomSheet.ChooseAsync(this, "Share as", ["Markdown (.md)", "Plain text (.txt)", "Web page (.html)"]);
         if (choice is null or "Cancel")
             return;
         var name = string.Concat((_note.Title.Length > 0 ? _note.Title : "Note").Where(c => !System.IO.Path.GetInvalidFileNameChars().Contains(c)));
@@ -209,4 +211,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         await File.WriteAllTextAsync(path, content);
         await Share.Default.RequestAsync(new ShareFileRequest(name, new ShareFile(path)));
     }
+
+    /// <summary>Back closes an open sheet before it leaves the page.</summary>
+    protected override bool OnBackButtonPressed() => BottomSheet.Dismiss(this) || base.OnBackButtonPressed();
 }

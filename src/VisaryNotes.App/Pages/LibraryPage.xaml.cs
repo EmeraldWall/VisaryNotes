@@ -159,7 +159,7 @@ public partial class LibraryPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Could not open the file", ex.Message, "OK");
+            await BottomSheet.AlertAsync(this, "Could not open the file", ex.Message);
         }
     }
 
@@ -192,4 +192,7 @@ public partial class LibraryPage : ContentPage
             await _repo.MoveToTrashAsync(row.Item.Id);
         await LoadAsync();
     }
+
+    /// <summary>Back closes an open sheet before it leaves the page.</summary>
+    protected override bool OnBackButtonPressed() => BottomSheet.Dismiss(this) || base.OnBackButtonPressed();
 }

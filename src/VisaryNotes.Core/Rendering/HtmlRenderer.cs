@@ -398,7 +398,7 @@ public static class HtmlRenderer
         .notice{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;text-align:center;color:var(--ink);margin:16px 16px 0}
         #vn-menu{position:absolute;z-index:10;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:'Figtree',sans-serif}
         #vn-menu[hidden]{display:none}
-        #vn-menu button{min-height:48px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--ink);font:600 14px 'Figtree',sans-serif}
+        #vn-menu button{min-height:48px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--ink);font:600 15px 'Figtree',sans-serif}
         #vn-menu button.primary{background:var(--accent);color:var(--onAccent);font-weight:700}
         """;
 

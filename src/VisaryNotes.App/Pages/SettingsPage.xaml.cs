@@ -31,13 +31,14 @@ public partial class SettingsPage : ContentPage
         Densities.SetItems(["Comfortable", "Compact", "Dense"], (int)settings.Density);
         Densities.SelectedChanged += (_, i) => _settings.Density = (Density)i;
 
-        FontSize.Value = settings.ReadingFontSize;
         FontSizeLabel.Text = $"Text size {settings.ReadingFontSize:0}";
-        FontSize.ValueChanged += (_, e) =>
+        void Step(int by)
         {
-            _settings.ReadingFontSize = e.NewValue;
-            FontSizeLabel.Text = $"Text size {e.NewValue:0}";
-        };
+            _settings.ReadingFontSize = Math.Clamp(_settings.ReadingFontSize + by, 14, 28);
+            FontSizeLabel.Text = $"Text size {_settings.ReadingFontSize:0}";
+        }
+        Smaller.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => Step(-1)) });
+        Larger.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => Step(1)) });
 
         Solid.IsToggled = settings.ReduceTransparency;
         Solid.Toggled += (_, e) =>
@@ -147,7 +148,10 @@ public partial class SettingsPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Import failed", ex.Message, "OK");
+            await BottomSheet.AlertAsync(this, "Import failed", ex.Message);
         }
     }
+
+    /// <summary>Back closes an open sheet before it leaves the page.</summary>
+    protected override bool OnBackButtonPressed() => BottomSheet.Dismiss(this) || base.OnBackButtonPressed();
 }

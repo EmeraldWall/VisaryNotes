@@ -5,7 +5,8 @@
 -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:VisaryNotes.App.Controls">
 
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{DynamicResource Paper}" />
@@ -103,6 +104,22 @@
 
     <Style TargetType="CollectionView">
         <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
+    <!-- Square cornered outlined button (2dp ink, r-1) used for small secondary actions. -->
+    <Style x:Key="OutlineButton" TargetType="controls:Pressable">
+        <Setter Property="WidthRequest" Value="{StaticResource HControl}" />
+        <Setter Property="HeightRequest" Value="{StaticResource HControl}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+    </Style>
+
+    <Style x:Key="OutlineButtonText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
     </Style>
 
     <Style TargetType="Switch">

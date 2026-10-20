@@ -1,3 +1,4 @@
+using VisaryNotes.App.Controls;
 using VisaryNotes.App.Services;
 
 namespace VisaryNotes.App;
@@ -29,7 +30,7 @@ public partial class App : Application
     public static async Task ShowErrorAsync(string title, string message)
     {
         await WhenShellReadyAsync();
-        await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayAlertAsync(title, message, "OK"));
+        await MainThread.InvokeOnMainThreadAsync(() => Shell.Current.CurrentPage is ContentPage page ? BottomSheet.AlertAsync(page, title, message) : Task.CompletedTask);
     }
 
     /// <summary>Called for widget buttons, shortcuts and shared text.</summary>

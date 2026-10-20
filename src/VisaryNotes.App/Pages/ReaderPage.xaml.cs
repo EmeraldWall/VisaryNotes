@@ -72,7 +72,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         _opened = await _docs.OpenEntryAsync(id);
         if (_opened is null)
         {
-            await DisplayAlertAsync("Document not found", "This document is no longer available.", "OK");
+            await BottomSheet.AlertAsync(this, "Document not found", "This document is no longer available.");
             await Shell.Current.GoToAsync("..");
             return;
         }
@@ -274,5 +274,18 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         if (_opened is null)
             return;
         await Share.Default.RequestAsync(new ShareFileRequest(_opened.Entry.DisplayName, new ShareFile(_opened.Entry.Uri)));
+    }
+
+    /// <summary>Back closes an open sheet first, then the linked note, then leaves the page.</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (BottomSheet.Dismiss(this))
+            return true;
+        if (Sheet.IsVisible)
+        {
+            ShowSheet(false);
+            return true;
+        }
+        return base.OnBackButtonPressed();
     }
 }
