@@ -9,7 +9,8 @@
         <controls:MarkdownEditor x:Name="Body" AutoSize="Disabled"
                                  Placeholder="Start with a heading, then write"
                                  SemanticProperties.Description="Note text in Markdown" />
-        <WebView x:Name="Preview" IsVisible="False" BackgroundColor="{DynamicResource Paper}" />
+        <!-- The preview WebView is created on first use: WebViews are slow to create. -->
+        <ContentView x:Name="PreviewHost" IsVisible="False" />
 
         <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">

@@ -44,7 +44,8 @@
                     <Label Text="Open note" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
                 </controls:Pressable>
             </Grid>
-            <WebView x:Name="NoteView" Grid.Row="1" BackgroundColor="{DynamicResource Paper}" />
+            <!-- Created when the sheet first opens: WebViews are slow to create. -->
+            <ContentView x:Name="NoteHost" Grid.Row="1" />
             <controls:GlassView Grid.Row="2">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}" Margin="{StaticResource InsetBar}">
                     <Border Style="{StaticResource Field}">

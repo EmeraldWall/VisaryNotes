@@ -47,11 +47,6 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
             StartPdfPages();
         };
-        NoteView.Navigating += (_, e) =>
-        {
-            if (e.Url.StartsWith("visary://", StringComparison.Ordinal))
-                e.Cancel = true;
-        };
         CloseSheet.Content = Icons.Make(Icons.Close);
         CloseSheet.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => ShowSheet(false)) });
         OpenNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenLinkedNoteAsync()) });
@@ -220,6 +215,28 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         _chromeSync.Immersive = !on;
         Top.IsVisible = on;
         Dock.IsVisible = on;
+    }
+
+    private WebView? _noteView;
+
+    /// <summary>The linked note view is made when the sheet first opens, because a WebView is slow to create.</summary>
+    private WebView NoteView
+    {
+        get
+        {
+            if (_noteView is null)
+            {
+                _noteView = new WebView();
+                _noteView.SetDynamicResource(BackgroundColorProperty, "Paper");
+                _noteView.Navigating += (_, e) =>
+                {
+                    if (e.Url.StartsWith("visary://", StringComparison.Ordinal))
+                        e.Cancel = true;
+                };
+                NoteHost.Content = _noteView;
+            }
+            return _noteView;
+        }
     }
 
     private async Task ShowLinkedNoteAsync()

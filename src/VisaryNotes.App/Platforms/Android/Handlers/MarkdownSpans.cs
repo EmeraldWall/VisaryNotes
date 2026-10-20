@@ -11,7 +11,8 @@ namespace VisaryNotes.App.Platforms.Android.Handlers;
 
 /// <summary>
 /// Live Markdown styling for the note editor (docs/SPEC.md 6.2). Spans are recomputed for the edited
-/// paragraph only, so typing stays smooth on long notes. Syntax marks are dimmed, never hidden.
+/// paragraphs only, after a short pause in typing, so typing stays smooth on long notes. Syntax marks are
+/// dimmed, never hidden.
 /// </summary>
 public static partial class MarkdownSpans
 {
@@ -22,38 +23,72 @@ public static partial class MarkdownSpans
             if (view is not MarkdownEditor || handler.PlatformView.Tag is Java.Lang.String)
                 return;
             handler.PlatformView.Tag = new Java.Lang.String("visary-markdown");
-            handler.PlatformView.AddTextChangedListener(new Watcher());
+            handler.PlatformView.AddTextChangedListener(new Watcher(handler.PlatformView));
             handler.PlatformView.SetLineSpacing(0, 1.35f);
         });
     }
 
+    /// <summary>
+    /// Restyles the edited paragraphs once typing pauses for 150ms, not on every keystroke, so fast typing
+    /// and the keyboard's own suggestions are never held up by span work.
+    /// </summary>
     private sealed class Watcher : Java.Lang.Object, ITextWatcher
     {
-        private int _start;
+        private readonly global::Android.Widget.EditText _view;
+        private readonly global::Android.OS.Handler _main = new(global::Android.OS.Looper.MainLooper!);
+        private readonly Java.Lang.Runnable _pass;
+        private int _start = int.MaxValue;
         private int _end;
+
+        public Watcher(global::Android.Widget.EditText view)
+        {
+            _view = view;
+            _pass = new Java.Lang.Runnable(Restyle);
+        }
 
         public void BeforeTextChanged(Java.Lang.ICharSequence? s, int start, int count, int after) { }
 
         public void OnTextChanged(Java.Lang.ICharSequence? s, int start, int before, int count)
         {
-            _start = start;
-            _end = start + count;
+            _start = Math.Min(_start, start);
+            _end = Math.Max(_end, start + count);
         }
 
         public void AfterTextChanged(IEditable? e)
         {
+            _main.RemoveCallbacks(_pass);
+            _main.PostDelayed(_pass, 150);
+        }
+
+        private void Restyle()
+        {
+            var e = _view.EditableText;
             if (e is null)
                 return;
             var text = e.ToString() ?? "";
-            // Restyle from the start of the first changed paragraph to the end of the last one.
-            var from = _start == 0 ? 0 : Math.Max(0, text.LastIndexOf("\n\n", Math.Max(0, _start - 1), StringComparison.Ordinal));
-            var toIdx = text.IndexOf("\n\n", Math.Min(text.Length, _end), StringComparison.Ordinal);
-            var to = toIdx < 0 ? text.Length : toIdx;
+            var start = Math.Min(_start, text.Length);
+            var end = Math.Min(Math.Max(_end, start), text.Length);
+            _start = int.MaxValue;
+            _end = 0;
             if (text.Length > 200_000)
                 return;
-            Apply(e, text, from, to);
+            // Restyle from the start of the first changed paragraph to the end of the last one.
+            var from = start == 0 ? 0 : Math.Max(0, text.LastIndexOf("\n\n", Math.Max(0, start - 1), StringComparison.Ordinal));
+            var toIdx = text.IndexOf("\n\n", end, StringComparison.Ordinal);
+            Apply(e, text, from, toIdx < 0 ? text.Length : toIdx);
         }
     }
+
+    /// <summary>Only the span types this styler adds; the keyboard's own spans are never touched.</summary>
+    private static readonly Java.Lang.Class[] OwnSpanTypes =
+    [
+        Java.Lang.Class.FromType(typeof(StyleSpan)),
+        Java.Lang.Class.FromType(typeof(RelativeSizeSpan)),
+        Java.Lang.Class.FromType(typeof(ForegroundColorSpan)),
+        Java.Lang.Class.FromType(typeof(TypefaceSpan)),
+        Java.Lang.Class.FromType(typeof(BackgroundColorSpan)),
+        Java.Lang.Class.FromType(typeof(StrikethroughSpan))
+    ];
 
     [GeneratedRegex(@"\*\*(?=\S)(.+?)(?<=\S)\*\*")]
     private static partial Regex Bold();
@@ -69,11 +104,9 @@ public static partial class MarkdownSpans
 
     private static void Apply(IEditable e, string text, int from, int to)
     {
-        foreach (var span in e.GetSpans(from, to, Java.Lang.Class.FromType(typeof(Java.Lang.Object))) ?? [])
-        {
-            if (span is StyleSpan or RelativeSizeSpan or ForegroundColorSpan or TypefaceSpan or BackgroundColorSpan or StrikethroughSpan)
+        foreach (var type in OwnSpanTypes)
+            foreach (var span in e.GetSpans(from, to, type) ?? [])
                 e.RemoveSpan(span);
-        }
 
         var soft = ThemeService.Res("Soft").ToPlatform();
         var accent = ThemeService.Res("AccentText").ToPlatform();

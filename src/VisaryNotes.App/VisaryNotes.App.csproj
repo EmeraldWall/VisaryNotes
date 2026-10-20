@@ -14,8 +14,8 @@
 
 		<ApplicationTitle>VisaryNotes</ApplicationTitle>
 		<ApplicationId>com.visary.notes</ApplicationId>
-		<ApplicationDisplayVersion>0.2.3</ApplicationDisplayVersion>
-		<ApplicationVersion>5</ApplicationVersion>
+		<ApplicationDisplayVersion>0.2.4</ApplicationDisplayVersion>
+		<ApplicationVersion>6</ApplicationVersion>
 
 		<SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
 	</PropertyGroup>

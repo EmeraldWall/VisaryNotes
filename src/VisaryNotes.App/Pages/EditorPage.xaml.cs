@@ -16,7 +16,8 @@ public partial class EditorPage : ContentPage, IQueryAttributable
     private Note _note = new() { Body = "" };
     private CancellationTokenSource? _saveDelay;
     private bool _loading;
-    private readonly WebChrome _chromeSync;
+    private WebChrome? _chromeSync;
+    private WebView? _preview;
 
     public EditorPage(LibraryRepository repo, SettingsService settings, ThemeService themes)
     {
@@ -25,21 +26,8 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         _themes = themes;
         InitializeComponent();
 
-        _chromeSync = new WebChrome(Preview, () => Strip, () => Dock);
-        _chromeSync.Track(Strip, Dock, Pill);
         BuildToolbar();
         Body.TextChanged += (_, _) => ScheduleSave();
-        Preview.Navigating += async (_, e) =>
-        {
-            if (e.Url.StartsWith("file:///android_asset/", StringComparison.Ordinal))
-                return;
-            e.Cancel = true;
-            if (e.Url.StartsWith(LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal)
-                && int.TryParse(e.Url[LibraryRepository.DocumentLinkScheme.Length..].TrimEnd('/'), out var docId))
-                await Shell.Current.GoToAsync($"reader?doc={docId}");
-            else if (Uri.TryCreate(e.Url, UriKind.Absolute, out var u) && u.Scheme is "http" or "https" or "mailto")
-                await Launcher.Default.OpenAsync(u);
-        };
         Pill.HandSwiped += (_, hand) =>
         {
             _settings.Hand = hand;
@@ -176,9 +164,9 @@ public partial class EditorPage : ContentPage, IQueryAttributable
 
     private async Task TogglePreviewAsync()
     {
-        if (Preview.IsVisible)
+        if (PreviewHost.IsVisible)
         {
-            Preview.IsVisible = false;
+            PreviewHost.IsVisible = false;
             Body.IsVisible = true;
             return;
         }
@@ -187,8 +175,32 @@ public partial class EditorPage : ContentPage, IQueryAttributable
             new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid));
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
-        Preview.IsVisible = true;
-        _chromeSync.Sync();
+        PreviewHost.IsVisible = true;
+        _chromeSync?.Sync();
+    }
+
+    private WebView Preview => _preview ??= CreatePreview();
+
+    /// <summary>The preview is made on first use, because a WebView is slow to create.</summary>
+    private WebView CreatePreview()
+    {
+        var web = new WebView();
+        web.SetDynamicResource(BackgroundColorProperty, "Paper");
+        web.Navigating += async (_, e) =>
+        {
+            if (e.Url.StartsWith("file:///android_asset/", StringComparison.Ordinal))
+                return;
+            e.Cancel = true;
+            if (e.Url.StartsWith(LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal)
+                && int.TryParse(e.Url[LibraryRepository.DocumentLinkScheme.Length..].TrimEnd('/'), out var docId))
+                await Shell.Current.GoToAsync($"reader?doc={docId}");
+            else if (Uri.TryCreate(e.Url, UriKind.Absolute, out var u) && u.Scheme is "http" or "https" or "mailto")
+                await Launcher.Default.OpenAsync(u);
+        };
+        PreviewHost.Content = web;
+        _chromeSync = new WebChrome(web, () => Strip, () => Dock);
+        _chromeSync.Track(Strip, Dock, Pill);
+        return web;
     }
 
     /// <summary>Exports in the formats available in v0.1 and hands the file to the Android share sheet (docs/SPEC.md 8.2).</summary>

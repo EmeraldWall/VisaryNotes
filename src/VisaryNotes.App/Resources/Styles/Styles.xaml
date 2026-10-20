@@ -11,6 +11,9 @@
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{DynamicResource Paper}" />
         <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        <!-- All keeps pages clear of the system bars, as the default does, and also lifts them above the
+             keyboard, so bottom bars and fields stay visible while typing (MAUI 10 SafeAreaRegions). -->
+        <Setter Property="SafeAreaEdges" Value="All" />
     </Style>
 
     <Style TargetType="Label">
