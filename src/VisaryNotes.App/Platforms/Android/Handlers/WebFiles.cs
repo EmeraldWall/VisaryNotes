@@ -5,6 +5,7 @@ namespace VisaryNotes.App.Platforms.Android.Handlers;
 /// <summary>
 /// Lets document pages show images the app saved in its own storage, such as rendered PDF pages.
 /// Only file loads are allowed: scripts still cannot read files (file URL access stays off).
+/// Also keeps pages at 100 percent, so the app's bar insets line up with the page.
 /// </summary>
 public static class WebFiles
 {
@@ -14,6 +15,8 @@ public static class WebFiles
         {
             var settings = handler.PlatformView.Settings;
             settings.AllowFileAccess = true;
+            // Never shrink a page to fit content wider than the screen; the page wraps instead.
+            settings.LoadWithOverviewMode = false;
 #pragma warning disable CA1422 // Both default to false; set explicitly so older WebViews behave the same.
             settings.AllowFileAccessFromFileURLs = false;
             settings.AllowUniversalAccessFromFileURLs = false;

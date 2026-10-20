@@ -32,7 +32,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         _themes = themes;
         InitializeComponent();
 
-        _chromeSync = new WebChrome(Web, () => Top, () => Dock, () => [Strip, Pill, ModeBar]);
+        _chromeSync = new WebChrome(Web, () => Top, () => Dock);
         _chromeSync.Track(Top, Dock, Pill, ModeBar);
 
         Modes.SetItems(["Reading", "Original"], 0);

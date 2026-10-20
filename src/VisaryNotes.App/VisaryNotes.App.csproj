@@ -14,8 +14,8 @@
 
 		<ApplicationTitle>VisaryNotes</ApplicationTitle>
 		<ApplicationId>com.visary.notes</ApplicationId>
-		<ApplicationDisplayVersion>0.2.1</ApplicationDisplayVersion>
-		<ApplicationVersion>3</ApplicationVersion>
+		<ApplicationDisplayVersion>0.2.2</ApplicationDisplayVersion>
+		<ApplicationVersion>4</ApplicationVersion>
 
 		<!-- Android 10 and later: on Android 9 MAUI 10 lays pages out infinitely large, even its blank template. -->
 		<SupportedOSPlatformVersion>29.0</SupportedOSPlatformVersion>

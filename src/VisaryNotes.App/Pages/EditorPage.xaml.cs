@@ -25,7 +25,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         _themes = themes;
         InitializeComponent();
 
-        _chromeSync = new WebChrome(Preview, () => Strip, () => Dock, () => [Strip, Pill, ToolbarGlass]);
+        _chromeSync = new WebChrome(Preview, () => Strip, () => Dock);
         _chromeSync.Track(Strip, Dock, Pill);
         BuildToolbar();
         Body.TextChanged += (_, _) => ScheduleSave();
@@ -180,7 +180,6 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         {
             Preview.IsVisible = false;
             Body.IsVisible = true;
-            SetGlassOverWeb(false);
             return;
         }
         await SaveAsync();
@@ -189,15 +188,6 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
         Preview.IsVisible = true;
-        SetGlassOverWeb(true);
-    }
-
-    /// <summary>Over the preview the page draws the blurred frost, over the editor the bars use the dense tint.</summary>
-    private void SetGlassOverWeb(bool on)
-    {
-        Strip.OverWeb = on;
-        Pill.OverWeb = on;
-        ToolbarGlass.OverWeb = on;
         _chromeSync.Sync();
     }
 

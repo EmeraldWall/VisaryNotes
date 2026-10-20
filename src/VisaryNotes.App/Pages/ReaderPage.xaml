@@ -8,9 +8,9 @@
     <Grid>
         <WebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
 
-        <!-- Glance zone: file name and progress only. The page draws the frost under the glass. -->
+        <!-- Glance zone: file name and progress only. -->
         <VerticalStackLayout x:Name="Top" VerticalOptions="Start">
-            <controls:GlassView x:Name="Strip" OverWeb="True" HeightRequest="{StaticResource HStrip}">
+            <controls:GlassView x:Name="Strip" HeightRequest="{StaticResource HStrip}">
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
                     <Label x:Name="FileName" Style="{StaticResource StripTitle}" />
                     <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
@@ -27,9 +27,9 @@
         <!-- Act zone: action pill above the view switch. -->
         <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
             <Grid Padding="{StaticResource InsetPillRow}">
-                <controls:ActionPill x:Name="Pill" OverWeb="True" />
+                <controls:ActionPill x:Name="Pill" />
             </Grid>
-            <controls:GlassView x:Name="ModeBar" OverWeb="True">
+            <controls:GlassView x:Name="ModeBar">
                 <controls:Segments x:Name="Modes" Margin="{StaticResource InsetBar}" />
             </controls:GlassView>
         </VerticalStackLayout>

@@ -1,27 +1,21 @@
 using System.Globalization;
-using System.Text.Json;
 
 namespace VisaryNotes.App.Controls;
 
 /// <summary>
-/// Keeps a page in a WebView aware of the app's bars. The page pads its text clear of the top and bottom bars
-/// and draws a blurred frost under every glass shape, because a WebView can blur its own content while the app
-/// cannot yet blur what lies behind a native view (docs/DESIGN.md 4.2.1).
+/// Keeps a page in a WebView aware of the app's bars, so it pads its text clear of the top and bottom bars and
+/// nothing sits under a bar at rest. The bars themselves are native glass (docs/DESIGN.md 4.2.1).
 /// </summary>
 public sealed class WebChrome
 {
     private readonly WebView _web;
     private readonly Func<View?> _top;
     private readonly Func<View?> _bottom;
-    private readonly Func<IEnumerable<GlassView>> _glass;
     private bool _pending;
     private double _lastTop;
     private double _lastBottom;
 
-    /// <summary>
-    /// While the bars are hidden for immersive reading the page keeps its insets, so the text does not jump,
-    /// and only the frost is removed.
-    /// </summary>
+    /// <summary>While the bars are hidden for immersive reading the page keeps its insets, so the text does not jump.</summary>
     public bool Immersive
     {
         get;
@@ -32,12 +26,11 @@ public sealed class WebChrome
         }
     }
 
-    public WebChrome(WebView web, Func<View?> top, Func<View?> bottom, Func<IEnumerable<GlassView>> glass)
+    public WebChrome(WebView web, Func<View?> top, Func<View?> bottom)
     {
         _web = web;
         _top = top;
         _bottom = bottom;
-        _glass = glass;
         web.Navigated += (_, _) => Sync();
         web.SizeChanged += (_, _) => Sync();
     }
@@ -73,8 +66,8 @@ public sealed class WebChrome
         if (_web.Parent is not VisualElement root || !_web.IsVisible || _web.Width <= 0)
             return;
 
-        // Positions are sent relative to the WebView, which can sit below a system inset while the bars are
-        // measured from the page root. Without this the frost lands one status bar height too low.
+        // Insets are measured relative to the WebView, which can sit below a system inset while the bars are
+        // measured from the page root.
         var web = Bounds(_web, root);
         var top = _top() is { } t && Shown(t, root) ? Math.Max(0, Bounds(t, root).Bottom - web.Y) : 0;
         var bottom = _bottom() is { } b && Shown(b, root) ? Math.Max(0, web.Bottom - Bounds(b, root).Top) : 0;
@@ -82,15 +75,8 @@ public sealed class WebChrome
             (top, bottom) = (_lastTop, _lastBottom);
         else
             (_lastTop, _lastBottom) = (top, bottom);
-        var rects = _glass()
-            .Where(g => !Immersive && Shown(g, root) && g.OverWeb && g.Width > 0)
-            .Select(g =>
-            {
-                var r = Bounds(g, root);
-                return new { x = Round(r.X - web.X), y = Round(r.Y - web.Y), w = Round(r.Width), h = Round(r.Height), r = Round(g.IsPill ? r.Height / 2 : g.CornerRadius) };
-            });
         var script = string.Create(CultureInfo.InvariantCulture,
-            $"window.vnChrome && window.vnChrome({Round(top)},{Round(bottom)},{JsonSerializer.Serialize(rects)})");
+            $"window.vnChrome && window.vnChrome({Round(top)},{Round(bottom)},{Round(web.Width)})");
         try
         {
             await _web.EvaluateJavaScriptAsync(script);
