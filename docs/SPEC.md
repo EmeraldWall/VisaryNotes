@@ -60,7 +60,7 @@ Cloud sync, collaboration, handwriting recognition, encrypted vaults, full sprea
 | A4 | Minimum Android version 8.0 (API 26). Glass blur needs Android 12 (API 31) and degrades gracefully below that |
 | A5 | Target Android API 36, the default for .NET 10 ([Microsoft Learn, target frameworks](https://learn.microsoft.com/dotnet/standard/frameworks)). Move to API 37 (Android 17) once the .NET for Android release in use supports it as stable |
 | A6 | "ODF" in v1 means ODF Text (.odt and flat .fodt). Spreadsheets (.ods) and presentations (.odp) are view only and come in a later phase |
-| A7 | Opening .docx is not required for v1, only saving to it. Viewing .docx is a phase 4 stretch goal |
+| A7 | Viewing .docx, .doc and .pdf was brought into v1 at the owner's request (section 7.5) |
 | A8 | Distribution starts as a signed APK built in Visual Studio and sideloaded, Play Store (AAB) later |
 
 ---
@@ -323,6 +323,9 @@ Opened files can be read in place, or imported as a note (a copy the user can ed
 | Plain text | .txt, .text, .log | text/plain |
 | Rich Text | .rtf | application/rtf, text/rtf |
 | OpenDocument Text | .odt, .fodt | application/vnd.oasis.opendocument.text |
+| Word | .docx, .docm, .dotx | application/vnd.openxmlformats-officedocument.wordprocessingml.document |
+| Word 97 to 2003 | .doc, .dot | application/msword |
+| PDF | .pdf | application/pdf |
 | OpenDocument Spreadsheet (later) | .ods | application/vnd.oasis.opendocument.spreadsheet |
 | OpenDocument Presentation (later) | .odp | application/vnd.oasis.opendocument.presentation |
 
@@ -350,7 +353,7 @@ The user's last choice is remembered per format.
 **Plain text.**
 * Encoding detection (BOM, then UTF 8 validation, then a fallback for legacy encodings such as Windows 1252 and Shift JIS using `System.Text.Encoding.CodePages`), with a manual encoding picker.
 * Line ending detection (LF, CRLF, CR) and preserve on save.
-* Reading view wraps lines and uses the reading font. Original view uses a monospace font, no wrapping, horizontal scroll, so ASCII tables and art stay intact.
+* Reading view wraps lines and uses the reading font. Original view uses a monospace font and the file's own line breaks, and wraps only lines longer than the screen, because sideways scrolling proved unreadable on a phone.
 * Files over 5 MB open in a paged, read only viewer to stay responsive.
 
 **RTF.** Android has no built in RTF support, so VisaryNotes includes its own streaming RTF reader that outputs the document model, based on the Microsoft RTF 1.9.1 specification. The open source RtfPipe library (RTF to HTML for .NET) is used as a reference and test oracle, and may be adopted directly if its licence and Android compatibility check out. Its README warns that complex documents may not match Word exactly ([GitHub, RtfPipe](https://github.com/erdomke/RtfPipe)), which is one reason for owning the reader.
@@ -362,6 +365,20 @@ The user's last choice is remembered per format.
 * Supported. Paragraph and character styles with inheritance, headings, lists, tables (including merged cells), images, hyperlinks, footnotes, page layout (size, margins, orientation), headers and footers, sections with columns, document metadata.
 * Fonts. If the requested font is not bundled, a metric compatible substitute is used (for example Carlito for Calibri, Liberation Serif for Times New Roman), and Original view shows a small "Font substituted" notice.
 * Flat ODT (.fodt) uses the same parser without the ZIP step.
+
+**DOCX.** A .docx file is a ZIP package of WordprocessingML parts (Ecma International, ECMA-376 Office Open XML, [ecma-international.org](https://ecma-international.org/publications-and-standards/standards/ecma-376/)). VisaryNotes reads it with `ZipArchive` and the same safe `XmlReader` settings as ODT, so no extra dependency is needed.
+* Supported. Paragraph and character styles with inheritance, headings (heading styles, Title, outline levels), bulleted and numbered lists with nesting (numbering.xml), tables with merged cells, images (DrawingML and VML), hyperlinks, footnote numbers, page size and margins, header and footer text, document title and author.
+* Skipped on purpose. Tracked deletions, field instructions (the field result is kept), comments.
+
+**DOC (Word 97 to 2003).** A .doc file is a Compound File Binary container ([MS-CFB]) holding the WordDocument and table streams ([MS-DOC]), both published by Microsoft ([learn.microsoft.com, MS-DOC](https://learn.microsoft.com/openspecs/office_file_formats/ms-doc/ccd7b486-7881-484c-a137-51170af7cc22)). VisaryNotes includes a small reader for it.
+* Supported. Text through the piece table (both 8 bit and Unicode pieces), headings (built in heading styles), bold and italic, tables, field results.
+* Not supported. Images, fonts, colours, list numbering and the exact page layout. Original view shows the text on a plain A4 page with a notice. Encrypted files show a clear message.
+* Files saved with the wrong extension are detected from their first bytes: a .doc that is really .docx or RTF opens with the right reader.
+
+**PDF.** Text comes from PdfPig (Apache 2.0, [NuGet, PdfPig](https://www.nuget.org/packages/PdfPig)), pages from Android's own `PdfRenderer` ([Android Developers, PdfRenderer](https://developer.android.com/reference/android/graphics/pdf/PdfRenderer)).
+* Reading view. Words are grouped into blocks (Docstrum), put in reading order, split into paragraphs where the font size, line gap or bold weight changes, and lines starting with a bullet or number become lists. Larger text becomes headings, and words hyphenated at a line end are joined again. Images are placed between blocks by their position.
+* Original view. Every page is drawn natively at 1.5 times the screen width, cached as JPEG and handed to the page as it finishes, so long files show their first pages at once. Pages can be pinch zoomed.
+* Limits. Tables in PDFs come through as lines of text. Scanned PDFs have no text, so they open in Original view and Reading view explains why. Password protected PDFs show a clear message.
 
 ### 7.6 Internal document model
 
@@ -543,6 +560,7 @@ Keeping formats, data and theming in a plain `net10.0` library means most logic 
 | MAUI helpers (FileSaver, popups) | CommunityToolkit.Maui | MIT |
 | Database | sqlite-net-pcl, SQLitePCLRaw.bundle_e_sqlite3 | MIT, Apache 2.0 |
 | Markdown | Markdig | BSD 2 clause |
+| PDF text | PdfPig | Apache 2.0 |
 | DOCX export | DocumentFormat.OpenXml | MIT |
 | Legacy encodings | System.Text.Encoding.CodePages | MIT |
 | Foldables | Microsoft.Maui.Controls.Foldable or Xamarin.AndroidX.Window | MIT |
@@ -634,7 +652,7 @@ Release builds use trimming and the .NET for Android AOT defaults to keep startu
 | 2. Reader and loop | TXT, MD, RTF, ODT readers, document model, Reading and Original views, immersive mode, zero setup open with, highlights, Quote to note, linked notes, test corpus in the repo | Corpus of 50 real world files opens without crash. A quote round trip (select, quote, tap source) works on phone, foldable and tablet |
 | 3. Reply and widgets | All export formats and Save back, five widgets, Quick Settings tile, shortcuts, remaining themes, drag and drop from other apps | Round trip tests green, widgets interactive on Android 12+ |
 | 4. Beta and polish | Beta with 15 to 30 testers using the TPB and diffusion questionnaires in STRATEGY.md section 5, accessibility audit, performance pass, version history UI | Release candidate |
-| Later | .ods and .odp viewing, .docx viewing, math and Mermaid, multi window | After v1 (STRATEGY.md decision D10) |
+| Later | .ods and .odp viewing, math and Mermaid, multi window | After v1 (STRATEGY.md decision D10) |
 
 ---
 
@@ -648,7 +666,7 @@ iOS and Windows builds from the same solution, optional sync through user chosen
 
 1. Is the package name `com.visary.notes` acceptable, and is there a logo or brand colour beyond the emerald theme suggested by the organisation name?
 2. Should remote images in Markdown be supported at all (requires the internet permission), or should the app be fully offline by design?
-3. Is .docx viewing needed earlier than phase 4?
+3. Resolved: .docx, .doc and .pdf viewing are in v1.
 4. Are the proposed open licence fonts (Inter, Literata, JetBrains Mono, Atkinson Hyperlegible) acceptable?
 5. Will the repository stay public? This decides whether CI cost is a concern at all.
 6. Which Visual Studio edition and version is installed, and do you have a physical Android phone, foldable or tablet for testing, or emulators only?

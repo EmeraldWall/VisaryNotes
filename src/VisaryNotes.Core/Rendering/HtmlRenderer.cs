@@ -42,7 +42,7 @@ public static class HtmlRenderer
     public static string Render(Document doc, ViewMode mode, ReaderSettings settings, IReadOnlyCollection<string>? highlights = null)
     {
         var body = new StringBuilder();
-        var notes = new SortedSet<string>();
+        var notes = new SortedSet<string>(doc.Warnings);
 
         if (mode == ViewMode.Reading)
         {
@@ -59,6 +59,10 @@ public static class HtmlRenderer
             // width font, wrapped at the screen edge rather than shrunk onto a paper page.
             foreach (var block in doc.Blocks)
                 RenderBlock(block, body, mode, notes, 0);
+        }
+        else if (doc.Format == DocumentFormat.Pdf)
+        {
+            RenderFixedPages(doc, body);
         }
         else
         {
@@ -104,6 +108,24 @@ public static class HtmlRenderer
         sb.Append("<script>window.vnHighlights=").Append(JsonArray(highlights ?? [])).Append(";").Append(BridgeJs).Append("</script>");
         sb.Append("</body></html>");
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// PDF pages are drawn by the app (Android PdfRenderer) and handed to the page one image at a time
+    /// through window.vnPdfPage, so a long PDF shows its first pages at once.
+    /// </summary>
+    private static void RenderFixedPages(Document doc, StringBuilder body)
+    {
+        var first = doc.FixedPages.FirstOrDefault() ?? PageSetup.A4;
+        body.Append("<div class=\"desk\" data-page-width-mm=\"").Append(Num(first.WidthMm)).Append("\">");
+        for (var i = 0; i < doc.FixedPages.Count; i++)
+        {
+            var p = doc.FixedPages[i];
+            body.Append(string.Create(CultureInfo.InvariantCulture,
+                $"<section class=\"page pdf-page\" data-pdf-page=\"{i + 1}\" style=\"width:{p.WidthMm:0.##}mm;height:{p.HeightMm:0.##}mm\">"));
+            body.Append(string.Create(CultureInfo.InvariantCulture, $"<span class=\"pdf-wait\">Page {i + 1}</span><img alt=\"Page {i + 1}\"></section>"));
+        }
+        body.Append("</div>");
     }
 
     private static void RenderPages(Document doc, StringBuilder body, SortedSet<string> notes)
@@ -374,6 +396,11 @@ public static class HtmlRenderer
         .page td,.page th{border:.5pt solid #666;padding:2pt 4pt;vertical-align:top}
         .page img{max-width:100%}
         .page a{color:#1a4db3}
+        .pdf-page{padding:0;overflow:hidden}
+        .pdf-page img{display:block;width:100%;height:100%}
+        .pdf-page img:not([src]){display:none}
+        .pdf-wait{display:block;padding:24pt;font:500 14pt 'Figtree',sans-serif;color:#666}
+        .pdf-page img[src]~.pdf-wait,.pdf-page:has(img[src]) .pdf-wait{display:none}
         .page-header,.page-footer{font-size:8pt;color:#444}
         .page-header{border-bottom:.5pt solid #888;margin-bottom:8pt;padding-bottom:3pt}
         .page-footer{text-align:center;margin-top:8pt}
@@ -442,6 +469,10 @@ public static class HtmlRenderer
             desk.style.zoom = Math.min(1, (w - 16) / pagePx);
           }
           window.vnFit = fit;
+          window.vnPdfPage = function(n, src){
+            var img = document.querySelector('[data-pdf-page="' + n + '"] img');
+            if (img) img.src = src;
+          };
           // The app reports how much of the page its bars cover and where its glass sits. Text is padded
           // clear of the bars, and a blurred frost is drawn under each glass shape (docs/DESIGN.md 4.2.1).
           window.vnChrome = function(top, bottom, rects){

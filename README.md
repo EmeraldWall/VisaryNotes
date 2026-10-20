@@ -26,7 +26,7 @@ CI (`.github/workflows/build.yml`) runs only on demand or on a `v*` tag, to save
 
 ## Layout
 
-* `src/VisaryNotes.Core`: readers (txt, Markdown, RTF, ODT), document model, HTML rendering for the Reading and Original views, themes, SQLite library. No MAUI dependency, fully unit tested.
+* `src/VisaryNotes.Core`: readers (txt, Markdown, RTF, ODT, DOCX, DOC, PDF), document model, HTML rendering for the Reading and Original views, themes, SQLite library. No MAUI dependency, fully unit tested.
 * `src/VisaryNotes.App`: the MAUI app. Pages, glass controls, action pill, Android file intents and home screen widgets (`Platforms/Android`).
 * `tools/design`: tokens and themes, the source for every size, colour and font in the app.
 

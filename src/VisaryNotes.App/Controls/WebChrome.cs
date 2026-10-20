@@ -73,8 +73,11 @@ public sealed class WebChrome
         if (_web.Parent is not VisualElement root || !_web.IsVisible || _web.Width <= 0)
             return;
 
-        var top = _top() is { } t && Shown(t, root) ? Bounds(t, root).Bottom : 0;
-        var bottom = _bottom() is { } b && Shown(b, root) ? Math.Max(0, _web.Height - Bounds(b, root).Top) : 0;
+        // Positions are sent relative to the WebView, which can sit below a system inset while the bars are
+        // measured from the page root. Without this the frost lands one status bar height too low.
+        var web = Bounds(_web, root);
+        var top = _top() is { } t && Shown(t, root) ? Math.Max(0, Bounds(t, root).Bottom - web.Y) : 0;
+        var bottom = _bottom() is { } b && Shown(b, root) ? Math.Max(0, web.Bottom - Bounds(b, root).Top) : 0;
         if (Immersive)
             (top, bottom) = (_lastTop, _lastBottom);
         else
@@ -84,7 +87,7 @@ public sealed class WebChrome
             .Select(g =>
             {
                 var r = Bounds(g, root);
-                return new { x = Round(r.X), y = Round(r.Y), w = Round(r.Width), h = Round(r.Height), r = Round(g.IsPill ? r.Height / 2 : g.CornerRadius) };
+                return new { x = Round(r.X - web.X), y = Round(r.Y - web.Y), w = Round(r.Width), h = Round(r.Height), r = Round(g.IsPill ? r.Height / 2 : g.CornerRadius) };
             });
         var script = string.Create(CultureInfo.InvariantCulture,
             $"window.vnChrome && window.vnChrome({Round(top)},{Round(bottom)},{JsonSerializer.Serialize(rects)})");

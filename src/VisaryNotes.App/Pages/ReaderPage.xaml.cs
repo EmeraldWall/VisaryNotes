@@ -22,6 +22,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
     private bool _chrome = true;
     private int _highlightCount;
     private readonly WebChrome _chromeSync;
+    private CancellationTokenSource? _pdfRender;
 
     public ReaderPage(LibraryRepository repo, DocumentService docs, SettingsService settings, ThemeService themes)
     {
@@ -41,7 +42,11 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             await RenderAsync();
         };
         Web.Navigating += OnWebNavigating;
-        Web.Navigated += async (_, _) => await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
+        Web.Navigated += async (_, _) =>
+        {
+            await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
+            StartPdfPages();
+        };
         NoteView.Navigating += (_, e) =>
         {
             if (e.Url.StartsWith("visary://", StringComparison.Ordinal))
@@ -75,6 +80,9 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         var entry = _opened.Entry;
         _progress = entry.Progress;
         _mode = _opened.Document.Kind == DocumentKind.Markdown ? ViewMode.Reading : (ViewMode)entry.ViewMode;
+        // A scanned PDF has no text to reflow, so it opens on its pages.
+        if (_opened.Document.Kind == DocumentKind.Pdf && _opened.Document.PlainText().Length == 0)
+            _mode = ViewMode.Original;
         Modes.Selected = (int)_mode;
         ModeBar.IsVisible = _opened.Document.Kind != DocumentKind.Markdown;
         FileName.Text = entry.DisplayName;
@@ -106,6 +114,31 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         var html = await Task.Run(() => _opened.Document.Html(_mode, settings, highlights));
         Web.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Progress.Text = $"{Math.Round(_progress * 100)}%";
+    }
+
+    /// <summary>In Original view a PDF's pages are drawn natively and handed to the page as they finish.</summary>
+    private void StartPdfPages()
+    {
+        _pdfRender?.Cancel();
+        if (_opened is not { Document.Kind: DocumentKind.Pdf } || _mode != ViewMode.Original)
+            return;
+#if ANDROID
+        var cancel = new CancellationTokenSource();
+        _pdfRender = cancel;
+        var width = (int)Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width, DeviceDisplay.Current.MainDisplayInfo.Height) * 3 / 2;
+        var key = Path.GetFileNameWithoutExtension(_opened.Entry.Uri);
+        _ = Platforms.Android.PdfPages.RenderAsync(_opened.Entry.Uri, key, width,
+            (n, url) => MainThread.InvokeOnMainThreadAsync(() => Web.EvaluateJavaScriptAsync($"window.vnPdfPage({n},{JsonSerializer.Serialize(url)})")),
+            cancel.Token).ContinueWith(t =>
+            {
+                if (t.Exception is { } ex && !cancel.IsCancellationRequested)
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        Warning.Text = "The pages of this PDF could not be drawn. Reading view still shows its text.";
+                        Warning.IsVisible = true;
+                    });
+            }, TaskScheduler.Default);
+#endif
     }
 
     private async void OnWebNavigating(object? sender, WebNavigatingEventArgs e)
@@ -160,6 +193,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _pdfRender?.Cancel();
         PublishToWidget();
     }
 

@@ -4,6 +4,7 @@
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.110" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.13" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="Markdig" Version="1.4.1" />
     <PackageVersion Include="sqlite-net-pcl" Version="1.11.285" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />

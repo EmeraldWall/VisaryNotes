@@ -11,6 +11,9 @@ public sealed class Document
     public PageSetup Page { get; set; } = PageSetup.A4;
     public List<Block> Blocks { get; } = new();
 
+    /// <summary>Page sizes of a fixed layout document (PDF). Original view draws these pages as images.</summary>
+    public List<PageSetup> FixedPages { get; } = new();
+
     /// <summary>Notes produced while reading, such as substituted fonts or skipped objects.</summary>
     public List<string> Warnings { get; } = new();
 
@@ -32,7 +35,10 @@ public enum DocumentFormat
     Markdown,
     PlainText,
     Rtf,
-    Odt
+    Odt,
+    Docx,
+    Doc,
+    Pdf
 }
 
 /// <summary>Page size and margins in millimetres.</summary>

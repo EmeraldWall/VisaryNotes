@@ -15,9 +15,9 @@ namespace VisaryNotes.App;
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 [IntentFilter([Intent.ActionView], Categories = [Intent.CategoryDefault, Intent.CategoryBrowsable],
     DataSchemes = ["content", "file"],
-    DataMimeTypes = ["text/markdown", "text/x-markdown", "text/plain", "text/rtf", "application/rtf", "application/vnd.oasis.opendocument.text"])]
+    DataMimeTypes = ["text/markdown", "text/x-markdown", "text/plain", "text/rtf", "application/rtf", "application/vnd.oasis.opendocument.text", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"])]
 [IntentFilter([Intent.ActionSend], Categories = [Intent.CategoryDefault],
-    DataMimeTypes = ["text/markdown", "text/x-markdown", "text/plain", "text/rtf", "application/rtf", "application/vnd.oasis.opendocument.text"])]
+    DataMimeTypes = ["text/markdown", "text/x-markdown", "text/plain", "text/rtf", "application/rtf", "application/vnd.oasis.opendocument.text", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"])]
 public class MainActivity : MauiAppCompatActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)

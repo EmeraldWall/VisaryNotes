@@ -40,6 +40,7 @@ public static class MauiProgram
         Platforms.Android.Handlers.MarkdownSpans.Register();
         Platforms.Android.Handlers.PlainFields.Register();
         Platforms.Android.Handlers.PillElevation.Register();
+        Platforms.Android.Handlers.WebFiles.Register();
 #endif
 
 #if DEBUG

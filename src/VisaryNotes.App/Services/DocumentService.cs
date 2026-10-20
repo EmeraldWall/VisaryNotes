@@ -17,11 +17,14 @@ public sealed class DocumentService
         [DevicePlatform.Android] =
         [
             "text/markdown", "text/x-markdown", "text/plain", "application/rtf", "text/rtf",
-            "application/vnd.oasis.opendocument.text", "application/octet-stream"
+            "application/vnd.oasis.opendocument.text", "application/pdf", "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream"
         ]
     });
 
     private readonly LibraryRepository _repo;
+    // The document just imported, so the reader that opens next does not parse the file a second time.
+    private OpenedDocument? _justImported;
     private readonly string _docsDir = Path.Combine(FileSystem.AppDataDirectory, "documents");
 
     public DocumentService(LibraryRepository repo)
@@ -66,11 +69,17 @@ public sealed class DocumentService
         var kind = DocumentLoader.KindOf(fileName);
         var entry = await _repo.RecordOpenAsync(path, fileName, kind, addToLibrary);
         var (doc, warning) = await Task.Run(() => Load(bytes, fileName));
-        return new OpenedDocument(entry, doc, warning);
+        _justImported = new OpenedDocument(entry, doc, warning);
+        return _justImported;
     }
 
     public async Task<OpenedDocument?> OpenEntryAsync(int documentId)
     {
+        if (_justImported is { } recent && recent.Entry.Id == documentId)
+        {
+            _justImported = null;
+            return recent;
+        }
         var entry = await _repo.GetDocumentAsync(documentId);
         if (entry is null || !File.Exists(entry.Uri))
             return null;
@@ -88,6 +97,13 @@ public sealed class DocumentService
         }
         catch (Exception ex) when (ex is DocumentReadException or System.Xml.XmlException or InvalidDataException)
         {
+            var kind = DocumentLoader.Sniff(bytes, DocumentLoader.KindOf(fileName));
+            if (DocumentLoader.IsBinary(kind))
+            {
+                // Binary formats would show as garbage text, so show an empty page with the reason instead.
+                var empty = new LoadedDocument { FileName = fileName, Kind = kind, Model = new Document { Title = Path.GetFileNameWithoutExtension(fileName) } };
+                return (empty, $"This {DocumentLoader.Badge(kind)} file could not be opened. {ex.Message}");
+            }
             // Never crash on a bad file: show it as plain text with a short explanation (docs/SPEC.md 7.9).
             return (DocumentLoader.AsPlainText(bytes, fileName), $"This file could not be read as {DocumentLoader.Badge(DocumentLoader.KindOf(fileName))}, so it is shown as plain text. {ex.Message}");
         }
