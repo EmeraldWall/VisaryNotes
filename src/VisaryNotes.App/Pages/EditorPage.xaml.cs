@@ -105,7 +105,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         Add("Checklist", Icons.Check, () => LinePrefix("- [ ] "), isIcon: true);
         Add("Quote", Icons.Quote, () => LinePrefix("> "), isIcon: true);
         Add("Code", "{ }", () => Wrap("`"));
-        Add("Link", "↗", () => Wrap("[", "](https://)"));
+        Add("Link", Icons.Link, () => Wrap("[", "](https://)"), isIcon: true);
     }
 
     private void Wrap(string open, string? close = null)
@@ -209,18 +209,31 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         await SaveAsync();
         // The sheet rises from the bottom edge, so the keyboard goes away first.
         Body.Unfocus();
-        var choice = await BottomSheet.ChooseAsync(this, "Share as", ["Markdown (.md)", "Plain text (.txt)", "Web page (.html)"]);
+        var choice = await BottomSheet.ChooseAsync(this, "Share as", ["Word (.docx)", "Markdown (.md)", "Plain text (.txt)", "Web page (.html)"]);
         if (choice is null or "Cancel")
             return;
         var name = string.Concat((_note.Title.Length > 0 ? _note.Title : "Note").Where(c => !System.IO.Path.GetInvalidFileNameChars().Contains(c)));
-        var (ext, content) = choice switch
+        if (name.Length == 0)
+            name = "Note";
+        string path;
+        if (choice == "Word (.docx)")
         {
-            "Plain text (.txt)" => (".txt", MarkdownRenderer.ToPlainText(_note.Body)),
-            "Web page (.html)" => (".html", HtmlRenderer.Page(MarkdownRenderer.ToHtml(_note.Body), ViewMode.Reading, new ReaderSettings(ThemeCatalog.Get("Daylight")))),
-            _ => (".md", _note.Body)
-        };
-        var path = System.IO.Path.Combine(FileSystem.CacheDirectory, name + ext);
-        await File.WriteAllTextAsync(path, content);
+            // Word is what most people can open, so a note can go back in the format others expect.
+            path = System.IO.Path.Combine(FileSystem.CacheDirectory, name + ".docx");
+            var title = _note.Title.Length > 0 ? _note.Title : "Note";
+            await File.WriteAllBytesAsync(path, await Task.Run(() => Core.Export.DocxWriter.FromMarkdown(_note.Body, title)));
+        }
+        else
+        {
+            var (ext, content) = choice switch
+            {
+                "Plain text (.txt)" => (".txt", MarkdownRenderer.ToPlainText(_note.Body)),
+                "Web page (.html)" => (".html", HtmlRenderer.Page(MarkdownRenderer.ToHtml(_note.Body), ViewMode.Reading, new ReaderSettings(ThemeCatalog.Get("Daylight")))),
+                _ => (".md", _note.Body)
+            };
+            path = System.IO.Path.Combine(FileSystem.CacheDirectory, name + ext);
+            await File.WriteAllTextAsync(path, content);
+        }
         await Share.Default.RequestAsync(new ShareFileRequest(name, new ShareFile(path)));
     }
 

@@ -9,7 +9,7 @@ namespace VisaryNotes.Core.Rendering;
 public static class MarkdownRenderer
 {
     // Raw HTML is disabled: Markdown files are untrusted and the viewer must never run their scripts.
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+    internal static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .UseYamlFrontMatter()
         .DisableHtml()

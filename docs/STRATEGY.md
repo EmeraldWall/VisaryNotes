@@ -135,6 +135,10 @@ These are applied in SPEC.md version 0.3 and in the prototype.
 | D8 | **"Continue reading" widget** next to Quick Capture | VRIO R8 linked to R1, IDT observability |
 | D9 | **Test corpus** of real files in the repo from phase 2 | VRIO R2 organisation |
 | D10 | **Defer** .ods, .odp, math and Mermaid to after v1 | VRIO R9 |
+| D11 | **Nothing the user made is ever destroyed by one tap.** Every removal has Undo, and removing a document from the Library keeps its highlights and quotes ([UX-REVIEW.md](UX-REVIEW.md) U1, U2) | TPB perceived control, VRIO R1 organisation |
+| D12 | **Teach the loop once.** The empty Library names the benefit and offers three first steps; the first document shows how to select and quote (U4, U5) | TPB attitude, IDT complexity and relative advantage |
+| D13 | **Word export first** among the office formats, then RTF and ODT (U8) | TPB subjective norm, IDT observability, VRIO R6 |
+| D14 | **Visible actions over hidden gestures.** Row actions behind a visible button, not a swipe (U3) | IDT complexity, accessibility |
 
 ---
 

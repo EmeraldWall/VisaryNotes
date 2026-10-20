@@ -88,6 +88,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         PublishToWidget();
         BuildPill();
         await RenderAsync();
+        ShowQuoteTipOnce();
     }
 
     private void BuildPill()
@@ -162,7 +163,8 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             case "quote":
                 await _repo.QuoteToNoteAsync(id, _opened.Entry.DisplayName, text);
                 await MarkAsync(text);
-                await ShowLinkedNoteAsync();
+                // Confirm without covering the page, so reading continues; the note is one tap away.
+                _ = Notice.ShowAsync(this, "Quoted into your note", "View", ShowLinkedNoteAsync, Dock);
                 break;
             case "highlight":
                 await _repo.AddHighlightAsync(id, text);
@@ -170,6 +172,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
                 break;
             case "copy":
                 await Clipboard.Default.SetTextAsync(text);
+                _ = Notice.ShowAsync(this, "Copied", above: Dock);
                 break;
             case "tap":
                 SetChrome(!_chrome);
@@ -199,6 +202,18 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         if (_opened is not null)
             Platforms.Android.Widgets.WidgetActions.PublishReading(_opened.Entry.DisplayName, _progress);
 #endif
+    }
+
+    /// <summary>
+    /// The read, quote and write loop is the app's core (docs/STRATEGY.md, VRIO R1) but selection is invisible
+    /// until tried, so the first document opened shows how, once.
+    /// </summary>
+    private void ShowQuoteTipOnce()
+    {
+        if (Preferences.Default.Get("tip_quote_seen", false) || _opened?.Document.Kind == DocumentKind.Pdf && _mode == ViewMode.Original)
+            return;
+        Preferences.Default.Set("tip_quote_seen", true);
+        _ = Notice.ShowAsync(this, "Tip: press and hold a word, then drag to select. Highlight it or quote it into a note.", above: Dock);
     }
 
     private async Task MarkAsync(string text)

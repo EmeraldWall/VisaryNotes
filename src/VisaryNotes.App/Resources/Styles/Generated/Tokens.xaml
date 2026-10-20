@@ -39,6 +39,8 @@
     <Thickness x:Key="InsetPillRow">16,0,16,12</Thickness>
     <Thickness x:Key="InsetStrip">16,0,16,0</Thickness>
     <Thickness x:Key="InsetRow">16,8,16,8</Thickness>
+    <Thickness x:Key="InsetRowLead">16,8,0,8</Thickness>
+    <Thickness x:Key="InsetRowTrail">0,0,8,0</Thickness>
     <Thickness x:Key="InsetSheet">24,16,24,16</Thickness>
     <Thickness x:Key="InsetSectionLabel">16,24,16,8</Thickness>
     <Thickness x:Key="InsetScreen">16,0,16,0</Thickness>

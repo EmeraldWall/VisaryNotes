@@ -16,8 +16,7 @@ public sealed class LibraryRow
     public string Snippet => Item.Snippet;
     public string Badge => Item.Badge;
     public string DateText => FormatDate(Item.UpdatedAt);
-    public string PinText => Item.IsDocument ? "Remove" : Item.Pinned ? "Unpin" : "Pin";
-    public string DeleteText => Item.IsDocument ? "Remove" : "Delete";
+    public string MoreLabel => $"More actions for {Item.Title}";
 
     // Documents get a filled badge, notes an outlined one, so the two kinds differ without relying on colour.
     public Color BadgeFill => Item.IsDocument ? ThemeService.Res("Ink") : Colors.Transparent;
@@ -76,6 +75,10 @@ public partial class LibraryPage : ContentPage
             BuildPill();
         };
         _themes.Changed += async (_, _) => await LoadAsync();
+
+        EmptyOpen.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenFileAsync()) });
+        EmptyNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await Shell.Current.GoToAsync("editor")) });
+        EmptyImport.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportMarkdownAsync()) });
     }
 
     protected override async void OnAppearing()
@@ -171,26 +174,62 @@ public partial class LibraryPage : ContentPage
         await Shell.Current.GoToAsync(route);
     }
 
-    private async void OnPinInvoked(object? sender, EventArgs e)
+    /// <summary>Row actions in a sheet. Every removal can be undone from the notice that follows.</summary>
+    private async void OnMoreTapped(object? sender, TappedEventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
             return;
-        if (row.Item.IsDocument)
-            await _repo.RemoveDocumentAsync(row.Item.Id);
-        else
-            await _repo.SetPinnedAsync(row.Item.Id, !row.Item.Pinned);
-        await LoadAsync();
+        var item = row.Item;
+        string[] options = item.IsDocument
+            ? ["Open", "Remove from Library"]
+            : ["Open", item.Pinned ? "Unpin" : "Pin to top", "Delete note"];
+        var choice = await BottomSheet.ChooseAsync(this, item.Title, options);
+        switch (choice)
+        {
+            case "Open":
+                await Shell.Current.GoToAsync(item.IsDocument ? $"reader?doc={item.Id}" : $"editor?note={item.Id}");
+                break;
+            case "Pin to top" or "Unpin":
+                await _repo.SetPinnedAsync(item.Id, !item.Pinned);
+                await LoadAsync();
+                break;
+            case "Delete note":
+                await _repo.MoveToTrashAsync(item.Id);
+                await LoadAsync();
+                _ = Notice.ShowAsync(this, "Note deleted", "Undo", async () =>
+                {
+                    await _repo.RestoreAsync(item.Id);
+                    await LoadAsync();
+                }, Dock);
+                break;
+            case "Remove from Library":
+                // Highlights and quotes stay; opening the file again or Undo brings it all back.
+                await _repo.RemoveFromLibraryAsync(item.Id);
+                await LoadAsync();
+                _ = Notice.ShowAsync(this, "Removed from Library. Highlights are kept.", "Undo", async () =>
+                {
+                    await _repo.SaveToLibraryAsync(item.Id);
+                    await LoadAsync();
+                }, Dock);
+                break;
+        }
     }
 
-    private async void OnDeleteInvoked(object? sender, EventArgs e)
+    private async Task ImportMarkdownAsync()
     {
-        if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
-            return;
-        if (row.Item.IsDocument)
-            await _repo.RemoveDocumentAsync(row.Item.Id);
-        else
-            await _repo.MoveToTrashAsync(row.Item.Id);
-        await LoadAsync();
+        try
+        {
+            var files = await _docs.PickMarkdownFilesAsync();
+            if (files.Count == 0)
+                return;
+            var count = await _repo.ImportMarkdownAsync(files);
+            await LoadAsync();
+            _ = Notice.ShowAsync(this, count == 1 ? "Imported 1 note" : $"Imported {count} notes", above: Dock);
+        }
+        catch (Exception ex)
+        {
+            await BottomSheet.AlertAsync(this, "Import failed", ex.Message);
+        }
     }
 
     /// <summary>Back closes an open sheet before it leaves the page.</summary>

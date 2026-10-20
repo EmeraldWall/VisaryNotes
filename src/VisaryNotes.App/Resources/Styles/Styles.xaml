@@ -125,6 +125,31 @@
         <Setter Property="VerticalTextAlignment" Value="Center" />
     </Style>
 
+    <!-- Full width 56dp buttons for first run and empty states. Primary is accent filled, the rest outlined. -->
+    <Style x:Key="WideButton" TargetType="controls:Pressable">
+        <Setter Property="HeightRequest" Value="{StaticResource HPrimary}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Setter Property="Padding" Value="{StaticResource InsetButton}" />
+    </Style>
+
+    <Style x:Key="WideButtonPrimary" TargetType="controls:Pressable" BasedOn="{StaticResource WideButton}">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <Style x:Key="WideButtonText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontTitle}" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="WideButtonPrimaryText" TargetType="Label" BasedOn="{StaticResource WideButtonText}">
+        <Setter Property="TextColor" Value="{DynamicResource OnAccent}" />
+    </Style>
+
     <Style TargetType="Switch">
         <Setter Property="OnColor" Value="{DynamicResource Accent}" />
         <Setter Property="ThumbColor" Value="{DynamicResource Ink}" />

@@ -148,6 +148,21 @@ public sealed class LibraryRepository
             .FirstOrDefaultAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Takes a document off the Library list but keeps its highlights and note links, so Undo, or opening
+    /// the same file again, brings everything back. Nothing the user made is deleted.
+    /// </summary>
+    public async Task RemoveFromLibraryAsync(int documentId)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var d = await _db.FindAsync<DocumentEntry>(documentId).ConfigureAwait(false);
+        if (d is null || !d.InLibrary)
+            return;
+        d.InLibrary = false;
+        await _db.UpdateAsync(d).ConfigureAwait(false);
+    }
+
+    /// <summary>Deletes a document record with its highlights and links. Not offered in the UI.</summary>
     public async Task RemoveDocumentAsync(int documentId)
     {
         await _db.DeleteAsync<DocumentEntry>(documentId).ConfigureAwait(false);
