@@ -57,7 +57,7 @@ Cloud sync, collaboration, handwriting recognition, encrypted vaults, full sprea
 | A1 | IDE is **Visual Studio 2026 on Windows** (Community edition is enough) with the ".NET Multi-platform App UI development" workload. Not Visual Studio Code |
 | A2 | Language C#, UI framework **.NET MAUI on .NET 10** (the current long term support release), Android only target framework `net10.0-android` |
 | A3 | Package name `com.visary.notes`, app name "VisaryNotes" |
-| A4 | Minimum Android version 8.0 (API 26). Glass blur needs Android 12 (API 31) and degrades gracefully below that |
+| A4 | Minimum Android version 10 (API 29). On Android 9 and older, .NET MAUI 10 lays pages out infinitely large (seen with its own blank template on an emulator), so those versions are excluded. Glass blur needs Android 12 (API 31) and degrades gracefully below that |
 | A5 | Target Android API 36, the default for .NET 10 ([Microsoft Learn, target frameworks](https://learn.microsoft.com/dotnet/standard/frameworks)). Move to API 37 (Android 17) once the .NET for Android release in use supports it as stable |
 | A6 | "ODF" in v1 means ODF Text (.odt and flat .fodt). Spreadsheets (.ods) and presentations (.odp) are view only and come in a later phase |
 | A7 | Viewing .docx, .doc and .pdf was brought into v1 at the owner's request (section 7.5) |
