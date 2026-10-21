@@ -77,7 +77,9 @@ public enum LibraryFilter
     All,
     Notes,
     Documents,
-    Linked
+    Linked,
+    /// <summary>Notes deleted in the last 30 days, which can be restored or deleted for good.</summary>
+    Trash
 }
 
 public enum LibraryItemKind

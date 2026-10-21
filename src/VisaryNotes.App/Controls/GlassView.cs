@@ -31,6 +31,9 @@ public class GlassView : ContentView
         var bottomLine = new BoxView { HeightRequest = 1, VerticalOptions = LayoutOptions.End, InputTransparent = true };
         bottomLine.SetDynamicResource(BoxView.ColorProperty, "EdgeHi");
 
+        // The tint is a plain filled shape inside the bar. A gradient brush on the border did not draw on
+        // some phones, which left the top bar fully transparent over the document.
+        _layers.Add(_fill);
         _layers.Add(topShade);
         _layers.Add(bottomCatch);
         _layers.Add(topLine);
@@ -50,6 +53,7 @@ public class GlassView : ContentView
         };
     }
 
+    private readonly BoxView _fill = new() { InputTransparent = true };
     private readonly BoxView _topShade;
     private readonly BoxView _bottomCatch;
 
@@ -75,13 +79,10 @@ public class GlassView : ContentView
     private void Rebuild()
     {
         var radius = IsPill && Height > 0 ? Height / 2 : CornerRadius;
-        _border.StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(radius) };
-
-        var core = ThemeService.Res("GlassDenseCore");
-        var rim = ThemeService.Res("GlassDenseRim");
-        _border.Background = new RadialGradientBrush(
-            [new GradientStop(core, 0.55f), new GradientStop(rim, 1f)],
-            new Point(0.5, 0.5), 0.75);
+        _border.StrokeShape = radius > 0 ? new RoundRectangle { CornerRadius = new CornerRadius(radius) } : new Rectangle();
+        _border.Background = Brush.Transparent;
+        _fill.Color = ThemeService.Res("GlassDenseCore");
+        _fill.CornerRadius = new CornerRadius(radius);
 
         var lo = ThemeService.Res("EdgeLo");
         var hi = ThemeService.Res("EdgeHi");

@@ -6,6 +6,7 @@ using VisaryNotes.App.Services;
 using VisaryNotes.Core.Data;
 using VisaryNotes.Core.Documents;
 using VisaryNotes.Core.Rendering;
+using VisaryNotes.Core.Theming;
 
 namespace VisaryNotes.App.Pages;
 
@@ -50,7 +51,14 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         CloseSheet.Content = Icons.Make(Icons.Close);
         CloseSheet.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => ShowSheet(false)) });
         OpenNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenLinkedNoteAsync()) });
-        SaveButton.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await SaveToLibraryAsync()) });
+        FindPrev.Content = Icons.Make(Icons.Up);
+        FindNext.Content = Icons.Make(Icons.Down);
+        FindClose.Content = Icons.Make(Icons.Close);
+        FindPrev.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => FindStep(false)) });
+        FindNext.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => FindStep(true)) });
+        FindClose.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => SetFinding(false)) });
+        FindEntry.TextChanged += (_, e) => Find(e.NewTextValue);
+        FindEntry.Completed += (_, _) => FindStep(true);
         Thought.Completed += async (_, _) => await AddThoughtAsync();
         Pill.HandSwiped += (_, hand) =>
         {
@@ -81,7 +89,6 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         Modes.Selected = (int)_mode;
         ModeBar.IsVisible = _opened.Document.Kind != DocumentKind.Markdown;
         FileName.Text = entry.DisplayName;
-        SaveButton.IsVisible = !entry.InLibrary;
         Warning.Text = _opened.Warning;
         Warning.IsVisible = _opened.Warning is not null;
         _highlightCount = (await _repo.GetHighlightsAsync(entry.Id)).Count;
@@ -97,7 +104,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         [
             new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync("..")),
             new PillAction(Icons.Notes, _highlightCount > 0 ? $"Notes ({_highlightCount})" : "Notes", () => ShowLinkedNoteAsync(), IsPrimary: true),
-            new PillAction(Icons.Share, "Share file", ShareAsync)
+            new PillAction(Icons.More, "More reading tools", MoreAsync)
         ], _settings.Hand);
     }
 
@@ -106,7 +113,12 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         if (_opened is null)
             return;
         var highlights = await _repo.GetHighlightsAsync(_opened.Entry.Id);
-        var settings = new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid);
+        // The page reserves the bars' space from the first frame (sizes from the design tokens); the
+        // WebChrome sync refines it. Text also follows Android's system font size.
+        var pillRow = ThemeCatalog.Token("space", "sp-3") + ThemeCatalog.Token("size", "h-control") + 2 * ThemeCatalog.Token("space", "sp-1");
+        var modeBar = ModeBar.IsVisible ? ThemeCatalog.Token("size", "h-control") + 2 * ThemeCatalog.Token("space", "sp-2") : 0;
+        var settings = new ReaderSettings(_themes.Current, _settings.ReadingFontSize * SystemFontScale(), AllowRemoteImages: _settings.AllowRemoteImages,
+            Solid: _themes.Solid, TopInsetPx: ThemeCatalog.Token("size", "h-strip"), BottomInsetPx: pillRow + modeBar);
         var html = await Task.Run(() => _opened.Document.Html(_mode, settings, highlights));
         Web.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Progress.Text = $"{Math.Round(_progress * 100)}%";
@@ -173,6 +185,12 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             case "copy":
                 await Clipboard.Default.SetTextAsync(text);
                 _ = Notice.ShowAsync(this, "Copied", above: Dock);
+                break;
+            case "ready":
+                // Sent by the page itself once loaded, as a backup for the WebView's Navigated event.
+                _chromeSync.Sync();
+                await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
+                StartPdfPages();
                 break;
             case "tap":
                 SetChrome(!_chrome);
@@ -298,7 +316,133 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         if (_opened is null)
             return;
         await _repo.SaveToLibraryAsync(_opened.Entry.Id);
-        SaveButton.IsVisible = false;
+        _opened.Entry.InLibrary = true;
+        _ = Notice.ShowAsync(this, "Saved to Library", above: Dock);
+    }
+
+    private static double SystemFontScale()
+    {
+#if ANDROID
+        var scale = Platform.CurrentActivity?.Resources?.Configuration?.FontScale ?? 1f;
+        return Math.Clamp(scale, 0.85, 2.0);
+#else
+        return 1;
+#endif
+    }
+
+    /// <summary>
+    /// Reading tools that similar readers offer (find, contents, text size), kept in one sheet so the pill
+    /// stays at three buttons. Save to Library sits here, in the Act zone, instead of the top bar.
+    /// </summary>
+    private async Task MoreAsync()
+    {
+        if (_opened is null)
+            return;
+        var options = new List<string> { "Find in document", "Contents", "Text size" };
+        if (!_opened.Entry.InLibrary)
+            options.Insert(0, "Save to Library");
+        options.Add("Share file");
+        switch (await BottomSheet.ChooseAsync(this, _opened.Entry.DisplayName, options))
+        {
+            case "Save to Library":
+                await SaveToLibraryAsync();
+                break;
+            case "Find in document":
+                SetFinding(true);
+                break;
+            case "Contents":
+                await ContentsAsync();
+                break;
+            case "Text size":
+                await TextSizeAsync();
+                break;
+            case "Share file":
+                await ShareAsync();
+                break;
+        }
+    }
+
+    private async Task ContentsAsync()
+    {
+        var raw = await Web.EvaluateJavaScriptAsync("window.vnHeadings ? encodeURIComponent(window.vnHeadings()) : ''");
+        var heads = new List<(int Level, string Text)>();
+        if (!string.IsNullOrEmpty(raw))
+        {
+            try
+            {
+                foreach (var h in JsonSerializer.Deserialize<JsonElement[][]>(Uri.UnescapeDataString(raw)) ?? [])
+                    heads.Add((h[0].GetInt32(), h[1].GetString() ?? ""));
+            }
+            catch (JsonException)
+            {
+            }
+        }
+        if (heads.Count == 0)
+        {
+            await BottomSheet.AlertAsync(this, "No contents", "This document has no headings to jump to. Find in document can help instead.");
+            return;
+        }
+        // Indent by level; numbering keeps labels unique when two headings share a title.
+        var labels = heads.Select((h, i) => $"{new string(' ', (h.Level - 1) * 3)}{h.Text}​{new string('​', i)}").ToList();
+        var choice = await BottomSheet.ChooseAsync(this, "Contents", labels);
+        var index = choice is null ? -1 : labels.IndexOf(choice);
+        if (index >= 0)
+            await Web.EvaluateJavaScriptAsync($"window.vnGoHeading({index})");
+    }
+
+    private async Task TextSizeAsync()
+    {
+        var choice = await BottomSheet.ChooseAsync(this, "Text size", ["Larger", "Smaller", "Reset"], $"Now {_settings.ReadingFontSize:0}. Your phone's own text size is also applied.");
+        var size = choice switch
+        {
+            "Larger" => _settings.ReadingFontSize + 1,
+            "Smaller" => _settings.ReadingFontSize - 1,
+            "Reset" => 17,
+            _ => _settings.ReadingFontSize
+        };
+        size = Math.Clamp(size, 14, 28);
+        if (Math.Abs(size - _settings.ReadingFontSize) < 0.01)
+            return;
+        _settings.ReadingFontSize = size;
+        await RenderAsync();
+    }
+
+    private void SetFinding(bool on)
+    {
+        FindBar.IsVisible = on;
+        PillRow.IsVisible = !on;
+        if (on)
+        {
+            FindEntry.Focus();
+            return;
+        }
+        FindEntry.Text = "";
+        FindCount.Text = "";
+        FindEntry.Unfocus();
+#if ANDROID
+        Platforms.Android.WebFind.Clear(Web);
+#endif
+    }
+
+    private void Find(string? text)
+    {
+#if ANDROID
+        if (string.IsNullOrEmpty(text))
+        {
+            Platforms.Android.WebFind.Clear(Web);
+            FindCount.Text = "";
+            return;
+        }
+        Platforms.Android.WebFind.Find(Web, text, (current, total) =>
+            MainThread.BeginInvokeOnMainThread(() => FindCount.Text = total == 0 ? "None" : $"{current} of {total}"));
+#endif
+    }
+
+    private void FindStep(bool forward)
+    {
+#if ANDROID
+        Platforms.Android.WebFind.Next(Web, forward);
+#endif
     }
 
     private async Task ShareAsync()

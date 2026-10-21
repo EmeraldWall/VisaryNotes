@@ -13,7 +13,10 @@ public enum ViewMode
 }
 
 /// <param name="Solid">Reduce transparency or a High Contrast theme: bars become solid paper, no blur.</param>
-public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false, bool Solid = false);
+/// <param name="TopInsetPx">Space the app's top bar covers, reserved from the first frame so text never starts under it.</param>
+/// <param name="BottomInsetPx">Space the app's bottom bars cover.</param>
+public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false, bool Solid = false,
+    double TopInsetPx = 0, double BottomInsetPx = 0);
 
 /// <summary>
 /// Turns the document model into a self contained HTML page for the in app WebView (docs/SPEC.md 7.3 and 7.4).
@@ -83,7 +86,7 @@ public static class HtmlRenderer
             css.Append("--").Append(k).Append(':').Append(v).Append(';');
         css.Append("--read-size:").Append(Num(settings.FontSizePx)).Append("px;");
         css.Append("--read-font:'").Append(settings.ReadingFont).Append("',Georgia,serif;");
-        css.Append("--vn-top:0px;--vn-bottom:0px}");
+        css.Append("--vn-top:").Append(Num(settings.TopInsetPx)).Append("px;--vn-bottom:").Append(Num(settings.BottomInsetPx)).Append("px}");
         css.Append(BaseCss);
 
         var sb = new StringBuilder();
@@ -473,6 +476,14 @@ public static class HtmlRenderer
             r.setProperty('--vn-bottom', (bottom * k) + 'px');
             fit();
           };
+          // Contents: the headings of the document, and a jump that lands just below the top bar.
+          function heads(){ return Array.prototype.slice.call(document.querySelectorAll('main h1,main h2,main h3,.page h1,.page h2,.page h3,body > h1,body > h2,body > h3')); }
+          window.vnHeadings = function(){ return JSON.stringify(heads().map(function(h){ return [+h.tagName[1], h.textContent.trim().slice(0, 120)]; })); };
+          window.vnGoHeading = function(i){
+            var h = heads()[i]; if (!h) return;
+            var top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vn-top')) || 0;
+            window.scrollTo(0, h.getBoundingClientRect().top + window.scrollY - top - 8);
+          };
           window.vnScrollTo = function(f){ window.scrollTo(0, f * (document.body.scrollHeight - window.innerHeight)); };
           var p; window.addEventListener('scroll', function(){ clearTimeout(p); p = setTimeout(function(){
             var max = document.body.scrollHeight - window.innerHeight;
@@ -481,6 +492,8 @@ public static class HtmlRenderer
           window.addEventListener('resize', fit);
           window.addEventListener('load', fit);
           markAll(); fit();
+          // Tell the app the page is ready, independent of the WebView's own load events.
+          window.addEventListener('load', function(){ setTimeout(function(){ send('ready'); }, 0); });
         })();
         """;
 }

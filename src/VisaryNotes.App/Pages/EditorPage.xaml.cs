@@ -56,7 +56,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
 
         Body.Text = _note.Body;
         NoteTitle.Text = _note.Id == 0 ? "New note" : _note.Title;
-        SaveState.Text = _note.Id == 0 ? "" : "Saved";
+        SaveState.Text = _note.Id == 0 ? "" : Status("Saved");
         _loading = false;
         Body.Focus();
         Body.CursorPosition = Body.Text.Length;
@@ -146,12 +146,19 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         }, TaskScheduler.Default);
     }
 
+    /// <summary>Save state with a word count, as writing apps show, so progress is visible at a glance.</summary>
+    private string Status(string state)
+    {
+        var words = MarkdownRenderer.ToPlainText(Body.Text ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+        return words == 0 ? state : $"{state} · {words} {(words == 1 ? "word" : "words")}";
+    }
+
     private async Task SaveAsync()
     {
         var body = Body.Text ?? "";
         if (body == _note.Body && _note.Id != 0)
         {
-            SaveState.Text = "Saved";
+            SaveState.Text = Status("Saved");
             return;
         }
         if (_note.Id == 0 && string.IsNullOrWhiteSpace(body.Trim('#', ' ', '\n')))
@@ -159,7 +166,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         _note.Body = body;
         await _repo.SaveNoteAsync(_note);
         NoteTitle.Text = _note.Title;
-        SaveState.Text = "Saved";
+        SaveState.Text = Status("Saved");
     }
 
     private async Task TogglePreviewAsync()

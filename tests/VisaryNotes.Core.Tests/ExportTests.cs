@@ -97,3 +97,69 @@ public class RemoveFromLibraryTests : IAsyncLifetime
         Assert.Contains(await _repo.GetLibraryAsync(LibraryFilter.Documents), i => i.Id == doc.Id);
     }
 }
+
+public class TrashAndCleanUpTests : IAsyncLifetime
+{
+    private readonly string _path = Path.Combine(Path.GetTempPath(), $"vn-{Guid.NewGuid():N}.db3");
+    private LibraryRepository _repo = null!;
+
+    public async Task InitializeAsync()
+    {
+        _repo = new LibraryRepository(_path);
+        await _repo.InitAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _repo.CloseAsync();
+        File.Delete(_path);
+    }
+
+    [Fact]
+    public async Task Trash_lists_deleted_notes_with_days_left_and_can_be_emptied()
+    {
+        var keep = await _repo.SaveNoteAsync(new Note { Body = "# Keep" });
+        var gone = await _repo.SaveNoteAsync(new Note { Body = "# Gone" });
+        await _repo.MoveToTrashAsync(gone.Id);
+
+        var trash = await _repo.GetLibraryAsync(LibraryFilter.Trash);
+        var item = Assert.Single(trash);
+        Assert.Equal("Gone", item.Title);
+        Assert.Equal("30 days left", item.Snippet);
+        Assert.DoesNotContain(await _repo.GetLibraryAsync(LibraryFilter.All), i => i.Id == gone.Id);
+
+        Assert.Equal(1, await _repo.EmptyTrashAsync());
+        Assert.Empty(await _repo.GetLibraryAsync(LibraryFilter.Trash));
+        Assert.Null(await _repo.GetNoteAsync(gone.Id));
+        Assert.NotNull(await _repo.GetNoteAsync(keep.Id));
+        Assert.Empty(await _repo.SearchAsync("Gone"));
+    }
+
+    [Fact]
+    public async Task Clean_up_hides_only_stale_documents_and_keeps_their_highlights()
+    {
+        var old = await _repo.RecordOpenAsync("/x/old.pdf", "old.pdf", DocumentKind.Pdf, addToLibrary: true);
+        await Task.Delay(50);
+        var fresh = await _repo.RecordOpenAsync("/x/new.pdf", "new.pdf", DocumentKind.Pdf, addToLibrary: true);
+        await _repo.AddHighlightAsync(old.Id, "keep me");
+
+        // Everything opened before the fresh document counts as stale.
+        var removed = await _repo.CleanUpDocumentsAsync(fresh.LastOpenedAt);
+        Assert.Contains(old.Id, removed);
+        Assert.DoesNotContain(fresh.Id, removed);
+        Assert.Single(await _repo.GetHighlightsAsync(old.Id));
+    }
+}
+
+public class ReaderInsetTests
+{
+    [Fact]
+    public void Page_reserves_the_bars_space_from_the_first_frame()
+    {
+        var html = Rendering.HtmlRenderer.Page("<main class=\"reading\"><h1>T</h1></main>", Rendering.ViewMode.Reading,
+            new Rendering.ReaderSettings(Theming.ThemeCatalog.Get("Daylight"), TopInsetPx: 48, BottomInsetPx: 132));
+        Assert.Contains("--vn-top:48px;--vn-bottom:132px", html);
+        Assert.Contains("window.vnHeadings", html);
+        Assert.Contains("send('ready')", html);
+    }
+}

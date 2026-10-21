@@ -61,6 +61,47 @@ public sealed class LibraryRepository
         await _db.ExecuteAsync("DELETE FROM note_search WHERE rowid = ?", noteId).ConfigureAwait(false);
     }
 
+    /// <summary>Permanently deletes a note in the Trash, with its search entry and links.</summary>
+    public async Task DeleteForeverAsync(int noteId)
+    {
+        await InitAsync().ConfigureAwait(false);
+        await _db.DeleteAsync<Note>(noteId).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM note_search WHERE rowid = ?", noteId).ConfigureAwait(false);
+        await _db.ExecuteAsync("DELETE FROM note_links WHERE NoteId = ?", noteId).ConfigureAwait(false);
+    }
+
+    /// <summary>Permanently deletes every note in the Trash. Returns how many were deleted.</summary>
+    public async Task<int> EmptyTrashAsync()
+    {
+        await InitAsync().ConfigureAwait(false);
+        var ids = (await _db.Table<Note>().Where(n => n.DeletedAt != null).ToListAsync().ConfigureAwait(false)).Select(n => n.Id).ToList();
+        foreach (var id in ids)
+            await DeleteForeverAsync(id).ConfigureAwait(false);
+        return ids.Count;
+    }
+
+    /// <summary>
+    /// Takes documents not opened since <paramref name="before"/> off the Library list. Like a single removal,
+    /// highlights and quotes are kept. Returns the ids so the caller can offer Undo.
+    /// </summary>
+    public async Task<IReadOnlyList<int>> CleanUpDocumentsAsync(DateTime before)
+    {
+        await InitAsync().ConfigureAwait(false);
+        var stale = await _db.Table<DocumentEntry>().Where(d => d.InLibrary && d.LastOpenedAt < before).ToListAsync().ConfigureAwait(false);
+        foreach (var d in stale)
+        {
+            d.InLibrary = false;
+            await _db.UpdateAsync(d).ConfigureAwait(false);
+        }
+        return stale.Select(d => d.Id).ToList();
+    }
+
+    private static string TrashLeft(DateTime deletedUtc)
+    {
+        var days = Math.Max(0, (int)Math.Ceiling((deletedUtc + TrashRetention - DateTime.UtcNow).TotalDays));
+        return days == 1 ? "1 day left" : $"{days} days left";
+    }
+
     public async Task RestoreAsync(int noteId)
     {
         var note = await _db.FindAsync<Note>(noteId).ConfigureAwait(false);
@@ -235,6 +276,14 @@ public sealed class LibraryRepository
     {
         await InitAsync().ConfigureAwait(false);
         var items = new List<LibraryItem>();
+        if (filter == LibraryFilter.Trash)
+        {
+            var deleted = await _db.Table<Note>().Where(n => n.DeletedAt != null).ToListAsync().ConfigureAwait(false);
+            return deleted
+                .OrderByDescending(n => n.DeletedAt)
+                .Select(n => new LibraryItem(LibraryItemKind.Note, n.Id, n.Title, TrashLeft(n.DeletedAt!.Value), "MD", n.DeletedAt!.Value, false, false))
+                .ToList();
+        }
         var linkedNotes = (await _db.Table<NoteLink>().ToListAsync().ConfigureAwait(false));
         var linkedNoteIds = linkedNotes.Select(l => l.NoteId).ToHashSet();
         var linkedDocIds = linkedNotes.Select(l => l.DocumentId).ToHashSet();

@@ -51,6 +51,7 @@ public partial class SettingsPage : ContentPage
         Remote.IsToggled = settings.AllowRemoteImages;
         Remote.Toggled += (_, e) => _settings.AllowRemoteImages = e.Value;
 
+        CleanRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await CleanUpAsync()) });
         ImportRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportAsync()) });
         Pill.HandSwiped += (_, hand) =>
         {
@@ -134,6 +135,22 @@ public partial class SettingsPage : ContentPage
             ThemeList.Add(item);
             ThemeList.Add(new BoxView { HeightRequest = 1, Color = ThemeService.Res("Line") });
         }
+    }
+
+    /// <summary>Clears out documents nobody reads any more, without losing what the user marked in them.</summary>
+    private async Task CleanUpAsync()
+    {
+        var removed = await _repo.CleanUpDocumentsAsync(DateTime.UtcNow.AddDays(-30));
+        if (removed.Count == 0)
+        {
+            _ = Notice.ShowAsync(this, "Nothing to clean up. Every document was opened in the last 30 days.", above: PillRow);
+            return;
+        }
+        _ = Notice.ShowAsync(this, removed.Count == 1 ? "1 document removed" : $"{removed.Count} documents removed", "Undo", async () =>
+        {
+            foreach (var id in removed)
+                await _repo.SaveToLibraryAsync(id);
+        }, PillRow);
     }
 
     private async Task ImportAsync()

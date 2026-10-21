@@ -150,6 +150,20 @@
         <Setter Property="TextColor" Value="{DynamicResource OnAccent}" />
     </Style>
 
+    <!-- 48dp text buttons for bars: outlined, and accent filled for the main action. -->
+    <Style x:Key="SmallButton" TargetType="controls:Pressable">
+        <Setter Property="HeightRequest" Value="{StaticResource HControl}" />
+        <Setter Property="Padding" Value="{StaticResource InsetButtonSmall}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+    </Style>
+
+    <Style x:Key="SmallButtonPrimary" TargetType="controls:Pressable" BasedOn="{StaticResource SmallButton}">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Accent}" />
+    </Style>
+
     <Style TargetType="Switch">
         <Setter Property="OnColor" Value="{DynamicResource Accent}" />
         <Setter Property="ThumbColor" Value="{DynamicResource Ink}" />

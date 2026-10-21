@@ -46,20 +46,32 @@
                         <Label Style="{StaticResource T2}" MaxLines="3" LineBreakMode="WordWrap"
                                Text="Works offline. No account. Notes stay plain Markdown that you can take anywhere." />
                     </VerticalStackLayout>
+                    <VerticalStackLayout x:Name="TrashHeader" IsVisible="False" Padding="{StaticResource InsetSheet}" Spacing="{StaticResource Sp3}">
+                        <Label x:Name="TrashText" Style="{StaticResource T2}" TextColor="{DynamicResource Ink}" MaxLines="3" LineBreakMode="WordWrap" />
+                        <controls:Pressable x:Name="EmptyTrash" Style="{StaticResource WideButton}" SemanticProperties.Description="Empty Trash">
+                            <Label Text="Empty Trash" Style="{StaticResource WideButtonText}" />
+                        </controls:Pressable>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </CollectionView.Header>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="pages:LibraryRow">
                     <!-- Row actions sit behind a visible more button instead of a hidden swipe, so they can be
                          found, reached by TalkBack, and the list stays light to scroll (docs/UX-REVIEW.md). -->
-                    <Grid BackgroundColor="{DynamicResource Paper}" ColumnDefinitions="*,Auto">
+                    <Grid BackgroundColor="{Binding RowFill}" ColumnDefinitions="*,Auto">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}"
                               Padding="{StaticResource InsetRowLead}" MinimumHeightRequest="{Binding RowHeight}">
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnRowTapped" />
                             </Grid.GestureRecognizers>
-                            <Border Style="{StaticResource Badge}" BackgroundColor="{Binding BadgeFill}">
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{Binding BadgeFill}" IsVisible="{Binding NotSelecting}">
                                 <Label Text="{Binding Badge}" Style="{StaticResource BadgeText}" TextColor="{Binding BadgeInk}" />
+                            </Border>
+                            <!-- In selection mode the badge becomes a check box: outlined when off, filled ink with a tick when on. -->
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{Binding CheckFill}" IsVisible="{Binding IsSelecting}">
+                                <Path Data="M5 12L9 16L19 6" Stroke="{DynamicResource PaperBrush}" StrokeThickness="2.5" StrokeLineCap="Square"
+                                      WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center"
+                                      IsVisible="{Binding IsSelected}" InputTransparent="True" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}">
@@ -70,7 +82,7 @@
                             </VerticalStackLayout>
                         </Grid>
                         <controls:Pressable Grid.Column="1" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
-                                            VerticalOptions="Center" Margin="{StaticResource InsetRowTrail}"
+                                            VerticalOptions="Center" Margin="{StaticResource InsetRowTrail}" IsVisible="{Binding NotSelecting}"
                                             SemanticProperties.Description="{Binding MoreLabel}">
                             <controls:Pressable.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnMoreTapped" />
@@ -99,7 +111,7 @@
 
         <!-- Act zone: floating action pill above the filter tabs (docs/DESIGN.md 4.4, E1 to E3). -->
         <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
-            <Grid Padding="{StaticResource InsetPillRow}">
+            <Grid x:Name="PillRow" Padding="{StaticResource InsetPillRow}">
                 <controls:ActionPill x:Name="Pill" />
                 <Grid x:Name="SearchRow" IsVisible="False" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}">
                     <Border Style="{StaticResource Field}">
@@ -111,8 +123,26 @@
                     </controls:GlassView>
                 </Grid>
             </Grid>
-            <controls:GlassView>
+            <controls:GlassView x:Name="FilterBar">
                 <controls:Segments x:Name="Filters" Margin="{StaticResource InsetBar}" />
+            </controls:GlassView>
+            <!-- Selection mode replaces the pill and filters with the actions for the selected rows. -->
+            <controls:GlassView x:Name="SelectBar" IsVisible="False">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="{StaticResource Sp1}" Margin="{StaticResource InsetBar}">
+                    <controls:Pressable x:Name="SelectClose" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
+                                        SemanticProperties.Description="Done selecting" />
+                    <Label x:Name="SelectCount" Grid.Column="1" Style="{StaticResource T1}" FontFamily="FigtreeBold" VerticalTextAlignment="Center" />
+                    <controls:Pressable x:Name="SelectAll" Grid.Column="2" HeightRequest="{StaticResource HControl}" Padding="{StaticResource InsetButtonSmall}"
+                                        SemanticProperties.Description="Select all">
+                        <Label Text="All" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                    <controls:Pressable x:Name="SelectSecond" Grid.Column="3" Style="{StaticResource SmallButton}">
+                        <Label x:Name="SelectSecondText" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                    <controls:Pressable x:Name="SelectPrimary" Grid.Column="4" Style="{StaticResource SmallButtonPrimary}">
+                        <Label x:Name="SelectPrimaryText" Style="{StaticResource WideButtonPrimaryText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                </Grid>
             </controls:GlassView>
         </VerticalStackLayout>
     </Grid>

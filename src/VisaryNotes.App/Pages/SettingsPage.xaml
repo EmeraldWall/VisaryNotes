@@ -60,6 +60,14 @@
                     </VerticalStackLayout>
                 </controls:Pressable>
 
+                <Label Text="Library" Style="{StaticResource Cap}" />
+                <controls:Pressable x:Name="CleanRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Clean up Library" Style="{StaticResource T1}" />
+                        <Label x:Name="CleanStatus" Text="Remove documents not opened in 30 days. Highlights and quotes are kept." Style="{StaticResource T2}" MaxLines="2" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </controls:Pressable>
+
                 <BoxView HeightRequest="160" Color="Transparent" />
             </VerticalStackLayout>
         </ScrollView>
@@ -68,7 +76,7 @@
             <Label Text="Settings" Style="{StaticResource StripTitle}" Margin="{StaticResource InsetStrip}" />
         </controls:GlassView>
 
-        <Grid VerticalOptions="End" Padding="{StaticResource InsetPillRow}">
+        <Grid x:Name="PillRow" VerticalOptions="End" Padding="{StaticResource InsetPillRow}">
             <controls:ActionPill x:Name="Pill" />
         </Grid>
     </Grid>

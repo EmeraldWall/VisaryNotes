@@ -1,4 +1,4 @@
-# VisaryNotes UX Review, version 0.2.4
+# VisaryNotes UX Review, versions 0.2.4 to 0.2.6
 
 An expert review of the Android app as built, followed by improvements chosen with the Theory of Planned Behaviour, Innovation Diffusion Theory and VRIO from [STRATEGY.md](STRATEGY.md). The fixes marked **Fixed in 0.2.5** are in the code.
 
@@ -42,11 +42,33 @@ Severity 0 to 4. H numbers are Nielsen's heuristics: H1 visibility of status, H2
 | U11 | Editor | The Link button was a bare arrow glyph, easy to read as "open" or "share" | H2, H6 | 2 | `Add("Link", "↗", ...)` | Chain link icon | Fixed in 0.2.5 |
 | U12 | Library | Filter "Linked" is app jargon; it means documents and notes joined by quotes | H2 | 2 | `FilterLabels` | Candidate labels "Quoted" or "With notes"; pick by asking users | Open, test with users |
 | U13 | Reader | The blur sat beside the bars, not under them | H8 | 3 | Owner's screenshots | In-page blur removed; native glass | Fixed in 0.2.2 |
-| U14 | Reader | No find in document | H7 | 2 | No search UI in ReaderPage | Find bar in the Act zone | Open |
-| U15 | Library | No Trash view, so a note deleted more than 5 seconds ago cannot be recovered in the UI | H3, H9 | 3 | See U2 | "Recently deleted" filter or a Settings entry | Open |
-| U16 | Reader | "Save to Library", the key action for a first time trial, sits in the top strip, out of thumb reach (design rule E1) | H7 | 2 | `ReaderPage.xaml` SaveButton in the strip | Move it into the pill as the primary action while the document is unsaved | Open |
-| U17 | Reader | Reading text size is fixed in CSS pixels and ignores Android's system font size | H7, accessibility | 3 | `ReaderSettings.FontSizePx` | Scale the reading size by the system font scale | Open, needs a device to verify |
+| U14 | Reader | No find in document | H7 | 2 | No search UI in ReaderPage | Find bar in the Act zone with match count, previous and next | Fixed in 0.2.6 |
+| U15 | Library | No Trash view, so a note deleted more than 5 seconds ago cannot be recovered in the UI | H3, H9 | 3 | See U2 | Trash filter: restore, delete forever (asks first), empty Trash, days left on each note | Fixed in 0.2.6 |
+| U16 | Reader | "Save to Library", the key action for a first time trial, sits in the top strip, out of thumb reach (design rule E1) | H7 | 2 | `ReaderPage.xaml` SaveButton in the strip | First item of the reader's More sheet, in the Act zone | Fixed in 0.2.6 |
+| U17 | Reader | Reading text size is fixed in CSS pixels and ignores Android's system font size | H7, accessibility | 3 | `ReaderSettings.FontSizePx` | Reading size multiplied by the system font scale, plus a Text size control in the reader | Fixed in 0.2.6, verify on a device |
 | U18 | Editor | The strip repeats the first heading as the title, so the same words appear twice at the top | H8 | 1 | Owner's screenshot | Show the save state only, or hide the title while the heading is on screen | Open |
+
+### 3.1 Round 2 (owner feedback on 0.2.5)
+
+| ID | Screen | Problem | H | Sev | Fix | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| U19 | Reader | The top bar had no visible background, so the file name sat on top of the document's own title | H8, H1 | 3 | The bar tint is a solid filled shape inside the bar instead of a gradient brush on its border, which did not draw on the owner's phone | Fixed in 0.2.6, verify on a device |
+| U20 | Reader | The document started under the top bar | H8 | 3 | The page reserves the bars' space from the first frame, from the token sizes, instead of waiting for a message from the app; the page also reports "ready" itself as a backup for the WebView load event | Fixed in 0.2.6, verify on a device |
+| U21 | Library | No way to act on many items at once, and no way to clean out old documents | H7 | 3 | Selection mode (Select several, Select all, Pin, Delete, Restore, Delete forever) and Settings, Clean up Library (documents not opened in 30 days, highlights kept, Undo) | Fixed in 0.2.6 |
+
+### 3.2 Feature gaps against similar apps
+
+Features that people who already use these apps will expect (compatibility in Rogers' terms), checked against each app's own documentation.
+
+| Feature | Seen in | VisaryNotes 0.2.6 |
+| --- | --- | --- |
+| Select several notes, then delete or archive them together | Google Keep ([Keep Help, archive notes](https://support.google.com/keep/answer/6262765)) | Selection mode with Pin and Delete, or Restore and Delete forever in Trash |
+| Trash that keeps deleted notes for a while, and can be emptied | Google Keep keeps them 7 days ([Keep Help, delete and restore](https://support.google.com/keep/answer/6262770)) | Trash keeps notes 30 days and shows days left on each; Empty Trash asks first |
+| Outline of headings that jumps to a section | Obsidian Outline core plugin ([Obsidian Help, Outline](https://obsidian.md/help/plugins/outline)) | Contents in the reader's More sheet |
+| Search inside a book, adjustable text size | Moon+ Reader (release notes and feature list on [MobileRead Wiki, Moon+ Reader](https://wiki.mobileread.com/wiki/Moon+_Reader)) | Find in document with match count; Text size; system font size respected |
+| Word count while writing | Common in writing apps | Shown next to the save state |
+
+**Deliberately not added yet** (VRIO R9, one developer): tags, folders, reminders, sync, drawing. Each is parity at best, and the review found the core loop still needed work first.
 
 ## 4. Cognitive walkthrough
 
@@ -91,6 +113,16 @@ Rogers (2003), with Moore and Benbasat (1991) for result demonstrability.
 | **Trialability** | Every removal is reversible, so trying things costs nothing. "Open a document" is the first button, matching the zero setup Open with path (D5) |
 | **Compatibility** | "Bring Markdown notes" on the first screen, Word export out |
 | **Observability and result demonstrability** | A Word file made in VisaryNotes looks native in Word and LibreOffice, so the result is seen by the people it is sent to |
+
+### 6.2.1 Round 2 through the theories
+
+| Change | TPB | IDT | VRIO |
+| --- | --- | --- | --- |
+| Selection mode and bulk actions | Control: managing a growing Library is easy | Compatibility with Keep and Samsung Notes habits | Parity (R5 class), needed so the Library does not become a burden |
+| Trash with restore | Control: nothing is lost by mistake | Trialability: deleting is safe to try | Protects R1 output (notes made from quotes) |
+| Clean up Library | Attitude: the Library stays tidy without work | Complexity goes down as files pile up | Supports R2: the reader can be the default "Open with" app without the Library filling with one-off files |
+| Find, Contents, Text size | Attitude: reading here is as good as in a dedicated reader | Relative advantage over plain note apps; compatibility with reader apps | Strengthens R3 (reading view), the visible first-use win |
+| Word count | Attitude for writers | Compatibility with writing apps | Parity |
 
 ### 6.3 VRIO
 

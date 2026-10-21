@@ -18,6 +18,9 @@ public static class Icons
     public const string Edit = "M4 20H8L19 9L15 5L4 16ZM13 7L17 11";
     public const string Trash = "M4 7H20M9 7V4H15V7M6 7L7 20H17L18 7";
     public const string Check = "M5 12L9 16L19 6";
+    public const string More = "M5 12H6M11.5 12H12.5M18 12H19";
+    public const string Up = "M6 15L12 9L18 15";
+    public const string Down = "M6 9L12 15L18 9";
     public const string Link = "M9.5 14.5L14.5 9.5M11 7L12.5 5.5A4.25 4.25 0 0 1 18.5 11.5L17 13M13 17L11.5 18.5A4.25 4.25 0 0 1 5.5 12.5L7 11";
     public const string Quote = "M6 17H10V11H7C7 9 8 8 10 8V6C7 6 5 8 5 11V17ZM14 17H18V11H15C15 9 16 8 18 8V6C15 6 13 8 13 11V17Z";
 

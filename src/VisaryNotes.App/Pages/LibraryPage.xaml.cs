@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 using VisaryNotes.App.Controls;
 using VisaryNotes.App.Services;
@@ -5,12 +6,17 @@ using VisaryNotes.Core.Data;
 
 namespace VisaryNotes.App.Pages;
 
-/// <summary>One Library row (docs/SPEC.md 6.1).</summary>
-public sealed class LibraryRow
+/// <summary>One Library row (docs/SPEC.md 6.1). Selection state changes in place, so it notifies.</summary>
+public sealed class LibraryRow : INotifyPropertyChanged
 {
+    private bool _isSelecting;
+    private bool _isSelected;
+
     public required LibraryItem Item { get; init; }
     public required double RowHeight { get; init; }
     public required bool ShowSnippet { get; init; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string Title => Item.Title;
     public string Snippet => Item.Snippet;
@@ -21,6 +27,33 @@ public sealed class LibraryRow
     // Documents get a filled badge, notes an outlined one, so the two kinds differ without relying on colour.
     public Color BadgeFill => Item.IsDocument ? ThemeService.Res("Ink") : Colors.Transparent;
     public Color BadgeInk => Item.IsDocument ? ThemeService.Res("Paper") : ThemeService.Res("Ink");
+
+    public bool IsSelecting
+    {
+        get => _isSelecting;
+        set => Set(ref _isSelecting, value);
+    }
+
+    public bool NotSelecting => !_isSelecting;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => Set(ref _isSelected, value);
+    }
+
+    // Selected rows: a filled check box and a tinted row, so selection never depends on colour alone.
+    public Color CheckFill => _isSelected ? ThemeService.Res("Ink") : Colors.Transparent;
+    public Color RowFill => _isSelected ? ThemeService.Res("Selection") : ThemeService.Res("Paper");
+
+    /// <summary>Every derived property depends on these two flags, so all bindings refresh together.</summary>
+    private void Set(ref bool field, bool value)
+    {
+        if (field == value)
+            return;
+        field = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+    }
 
     public static string FormatDate(DateTime utc)
     {
@@ -35,7 +68,7 @@ public sealed class LibraryRow
 
 public partial class LibraryPage : ContentPage
 {
-    private static readonly string[] FilterLabels = ["All", "Notes", "Docs", "Linked"];
+    private static readonly string[] FilterLabels = ["All", "Notes", "Docs", "Linked", "Trash"];
 
     private readonly LibraryRepository _repo;
     private readonly SettingsService _settings;
@@ -43,6 +76,8 @@ public partial class LibraryPage : ContentPage
     private readonly DocumentService _docs;
     private LibraryFilter _filter = LibraryFilter.All;
     private int? _continueId;
+    private List<LibraryRow> _rows = [];
+    private bool _selecting;
 
     public LibraryPage(LibraryRepository repo, SettingsService settings, ThemeService themes, DocumentService docs)
     {
@@ -79,6 +114,13 @@ public partial class LibraryPage : ContentPage
         EmptyOpen.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenFileAsync()) });
         EmptyNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await Shell.Current.GoToAsync("editor")) });
         EmptyImport.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportMarkdownAsync()) });
+        EmptyTrash.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await EmptyTrashAsync()) });
+
+        SelectClose.Content = Icons.Make(Icons.Close);
+        SelectClose.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => SetSelecting(false)) });
+        SelectAll.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(ToggleSelectAll) });
+        SelectPrimary.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await BulkPrimaryAsync()) });
+        SelectSecond.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await BulkSecondAsync()) });
     }
 
     protected override async void OnAppearing()
@@ -116,14 +158,23 @@ public partial class LibraryPage : ContentPage
             ContinueBar.WidthRequest = Math.Max(4, (Width - 96) * cont.Progress);
             ContinueRow.SetDynamicResource(BackgroundColorProperty, "Fill");
         }
-        EmptyText.IsVisible = items.Count == 0 && cont is null;
+
+        var trash = _filter == LibraryFilter.Trash;
+        EmptyText.IsVisible = !trash && items.Count == 0 && cont is null;
+        TrashHeader.IsVisible = trash;
+        EmptyTrash.IsVisible = trash && items.Count > 0;
+        TrashText.Text = items.Count == 0
+            ? "Trash is empty. Deleted notes wait here for 30 days, so a mistake is never final."
+            : "Deleted notes wait here for 30 days, then they are deleted for good. Tap a note to restore it.";
     }
 
     private void Show(IReadOnlyList<LibraryItem> items)
     {
         var height = _settings.RowHeight;
         var snippet = _settings.Density != Density.Dense;
-        List.ItemsSource = items.Select(i => new LibraryRow { Item = i, RowHeight = height, ShowSnippet = snippet }).ToList();
+        _rows = items.Select(i => new LibraryRow { Item = i, RowHeight = height, ShowSnippet = snippet, IsSelecting = _selecting }).ToList();
+        List.ItemsSource = _rows;
+        UpdateSelectionBar();
     }
 
     private async Task SearchAsync(string? text)
@@ -170,6 +221,17 @@ public partial class LibraryPage : ContentPage
     {
         if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
             return;
+        if (_selecting)
+        {
+            row.IsSelected = !row.IsSelected;
+            UpdateSelectionBar();
+            return;
+        }
+        if (_filter == LibraryFilter.Trash)
+        {
+            await TrashActionsAsync(row.Item);
+            return;
+        }
         var route = row.Item.IsDocument ? $"reader?doc={row.Item.Id}" : $"editor?note={row.Item.Id}";
         await Shell.Current.GoToAsync(route);
     }
@@ -180,9 +242,14 @@ public partial class LibraryPage : ContentPage
         if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
             return;
         var item = row.Item;
+        if (_filter == LibraryFilter.Trash)
+        {
+            await TrashActionsAsync(item);
+            return;
+        }
         string[] options = item.IsDocument
-            ? ["Open", "Remove from Library"]
-            : ["Open", item.Pinned ? "Unpin" : "Pin to top", "Delete note"];
+            ? ["Open", "Select several", "Remove from Library"]
+            : ["Open", item.Pinned ? "Unpin" : "Pin to top", "Select several", "Delete note"];
         var choice = await BottomSheet.ChooseAsync(this, item.Title, options);
         switch (choice)
         {
@@ -193,26 +260,177 @@ public partial class LibraryPage : ContentPage
                 await _repo.SetPinnedAsync(item.Id, !item.Pinned);
                 await LoadAsync();
                 break;
-            case "Delete note":
-                await _repo.MoveToTrashAsync(item.Id);
-                await LoadAsync();
-                _ = Notice.ShowAsync(this, "Note deleted", "Undo", async () =>
-                {
-                    await _repo.RestoreAsync(item.Id);
-                    await LoadAsync();
-                }, Dock);
+            case "Select several":
+                SetSelecting(true);
+                row.IsSelected = true;
+                UpdateSelectionBar();
                 break;
-            case "Remove from Library":
-                // Highlights and quotes stay; opening the file again or Undo brings it all back.
-                await _repo.RemoveFromLibraryAsync(item.Id);
-                await LoadAsync();
-                _ = Notice.ShowAsync(this, "Removed from Library. Highlights are kept.", "Undo", async () =>
-                {
-                    await _repo.SaveToLibraryAsync(item.Id);
-                    await LoadAsync();
-                }, Dock);
+            case "Delete note" or "Remove from Library":
+                await RemoveAsync([item]);
                 break;
         }
+    }
+
+    private async Task TrashActionsAsync(LibraryItem item)
+    {
+        var choice = await BottomSheet.ChooseAsync(this, item.Title, ["Restore", "Select several", "Delete forever"], item.Snippet);
+        switch (choice)
+        {
+            case "Restore":
+                await _repo.RestoreAsync(item.Id);
+                await LoadAsync();
+                _ = Notice.ShowAsync(this, "Note restored", above: Dock);
+                break;
+            case "Select several":
+                SetSelecting(true);
+                if (_rows.FirstOrDefault(r => r.Item.Id == item.Id) is { } row)
+                    row.IsSelected = true;
+                UpdateSelectionBar();
+                break;
+            case "Delete forever":
+                await DeleteForeverAsync([item]);
+                break;
+        }
+    }
+
+    // Selection mode (docs/UX-REVIEW.md, round 2): act on many rows at once.
+
+    private void SetSelecting(bool on)
+    {
+        _selecting = on;
+        foreach (var r in _rows)
+        {
+            r.IsSelecting = on;
+            if (!on)
+                r.IsSelected = false;
+        }
+        PillRow.IsVisible = !on;
+        FilterBar.IsVisible = !on;
+        SelectBar.IsVisible = on;
+        UpdateSelectionBar();
+    }
+
+    private List<LibraryRow> Selected => _rows.Where(r => r.IsSelected).ToList();
+
+    private void UpdateSelectionBar()
+    {
+        if (!_selecting)
+            return;
+        var selected = Selected;
+        SelectCount.Text = selected.Count == 1 ? "1 selected" : $"{selected.Count} selected";
+        if (_filter == LibraryFilter.Trash)
+        {
+            SelectSecondText.Text = "Restore";
+            SelectPrimaryText.Text = "Delete forever";
+        }
+        else
+        {
+            var notes = selected.Where(r => !r.Item.IsDocument).ToList();
+            SelectSecondText.Text = notes.Count > 0 && notes.All(r => r.Item.Pinned) ? "Unpin" : "Pin";
+            SelectSecond.IsVisible = notes.Count > 0;
+            SelectPrimaryText.Text = "Delete";
+        }
+        SelectPrimary.Opacity = selected.Count > 0 ? 1 : 0.4;
+        SelectSecond.Opacity = selected.Count > 0 ? 1 : 0.4;
+        SemanticProperties.SetDescription(SelectPrimary, SelectPrimaryText.Text);
+        SemanticProperties.SetDescription(SelectSecond, SelectSecondText.Text);
+    }
+
+    private void ToggleSelectAll()
+    {
+        var all = _rows.All(r => r.IsSelected);
+        foreach (var r in _rows)
+            r.IsSelected = !all;
+        UpdateSelectionBar();
+    }
+
+    private async Task BulkPrimaryAsync()
+    {
+        var items = Selected.Select(r => r.Item).ToList();
+        if (items.Count == 0)
+            return;
+        if (_filter == LibraryFilter.Trash)
+            await DeleteForeverAsync(items);
+        else
+            await RemoveAsync(items);
+    }
+
+    private async Task BulkSecondAsync()
+    {
+        var items = Selected.Select(r => r.Item).ToList();
+        if (items.Count == 0)
+            return;
+        if (_filter == LibraryFilter.Trash)
+        {
+            foreach (var item in items)
+                await _repo.RestoreAsync(item.Id);
+            SetSelecting(false);
+            await LoadAsync();
+            _ = Notice.ShowAsync(this, items.Count == 1 ? "1 note restored" : $"{items.Count} notes restored", above: Dock);
+            return;
+        }
+        var notes = items.Where(i => !i.IsDocument).ToList();
+        var pin = !notes.All(n => n.Pinned);
+        foreach (var n in notes)
+            await _repo.SetPinnedAsync(n.Id, pin);
+        SetSelecting(false);
+        await LoadAsync();
+    }
+
+    /// <summary>Notes go to the Trash and documents leave the Library; both come back with Undo.</summary>
+    private async Task RemoveAsync(IReadOnlyList<LibraryItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (item.IsDocument)
+                await _repo.RemoveFromLibraryAsync(item.Id);
+            else
+                await _repo.MoveToTrashAsync(item.Id);
+        }
+        SetSelecting(false);
+        await LoadAsync();
+        var notes = items.Count(i => !i.IsDocument);
+        var docs = items.Count - notes;
+        var message = (notes, docs) switch
+        {
+            (1, 0) => "Note moved to Trash",
+            (_, 0) => $"{notes} notes moved to Trash",
+            (0, 1) => "Removed from Library. Highlights are kept.",
+            (0, _) => $"{docs} documents removed. Highlights are kept.",
+            _ => $"{notes + docs} items removed"
+        };
+        _ = Notice.ShowAsync(this, message, "Undo", async () =>
+        {
+            foreach (var item in items)
+            {
+                if (item.IsDocument)
+                    await _repo.SaveToLibraryAsync(item.Id);
+                else
+                    await _repo.RestoreAsync(item.Id);
+            }
+            await LoadAsync();
+        }, Dock);
+    }
+
+    /// <summary>The one action that cannot be undone, so it asks first.</summary>
+    private async Task DeleteForeverAsync(IReadOnlyList<LibraryItem> items)
+    {
+        var title = items.Count == 1 ? $"Delete \"{items[0].Title}\" for good?" : $"Delete {items.Count} notes for good?";
+        if (!await BottomSheet.ConfirmAsync(this, title, "This cannot be undone.", "Delete forever"))
+            return;
+        foreach (var item in items)
+            await _repo.DeleteForeverAsync(item.Id);
+        SetSelecting(false);
+        await LoadAsync();
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        if (!await BottomSheet.ConfirmAsync(this, "Empty Trash?", "Every note in the Trash is deleted for good. This cannot be undone.", "Empty Trash"))
+            return;
+        var count = await _repo.EmptyTrashAsync();
+        await LoadAsync();
+        _ = Notice.ShowAsync(this, count == 1 ? "1 note deleted for good" : $"{count} notes deleted for good", above: Dock);
     }
 
     private async Task ImportMarkdownAsync()
@@ -232,6 +450,16 @@ public partial class LibraryPage : ContentPage
         }
     }
 
-    /// <summary>Back closes an open sheet before it leaves the page.</summary>
-    protected override bool OnBackButtonPressed() => BottomSheet.Dismiss(this) || base.OnBackButtonPressed();
+    /// <summary>Back closes an open sheet, then leaves selection mode, then leaves the page.</summary>
+    protected override bool OnBackButtonPressed()
+    {
+        if (BottomSheet.Dismiss(this))
+            return true;
+        if (_selecting)
+        {
+            SetSelecting(false);
+            return true;
+        }
+        return base.OnBackButtonPressed();
+    }
 }

@@ -11,13 +11,9 @@
         <!-- Glance zone: file name and progress only. -->
         <VerticalStackLayout x:Name="Top" VerticalOptions="Start">
             <controls:GlassView x:Name="Strip" HeightRequest="{StaticResource HStrip}">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
                     <Label x:Name="FileName" Style="{StaticResource StripTitle}" />
                     <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
-                    <controls:Pressable x:Name="SaveButton" Grid.Column="2" IsVisible="False" HeightRequest="{StaticResource HControl}"
-                                        Padding="{StaticResource InsetButtonSmall}" SemanticProperties.Description="Save to Library">
-                        <Label Text="Save to Library" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
-                    </controls:Pressable>
                 </Grid>
             </controls:GlassView>
             <Label x:Name="Warning" IsVisible="False" Padding="{StaticResource InsetRow}"
@@ -26,9 +22,21 @@
 
         <!-- Act zone: action pill above the view switch. -->
         <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
-            <Grid Padding="{StaticResource InsetPillRow}">
+            <Grid x:Name="PillRow" Padding="{StaticResource InsetPillRow}">
                 <controls:ActionPill x:Name="Pill" />
             </Grid>
+            <!-- Find in document: field, match count, previous, next, close. Replaces the pill while open. -->
+            <controls:GlassView x:Name="FindBar" IsVisible="False">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{StaticResource Sp1}" Margin="{StaticResource InsetBar}">
+                    <Border Style="{StaticResource Field}" HeightRequest="{StaticResource HControl}">
+                        <Entry x:Name="FindEntry" Placeholder="Find in document" ReturnType="Search" SemanticProperties.Description="Find in document" />
+                    </Border>
+                    <Label x:Name="FindCount" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
+                    <controls:Pressable x:Name="FindPrev" Grid.Column="2" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Previous match" />
+                    <controls:Pressable x:Name="FindNext" Grid.Column="3" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Next match" />
+                    <controls:Pressable x:Name="FindClose" Grid.Column="4" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Close find" />
+                </Grid>
+            </controls:GlassView>
             <controls:GlassView x:Name="ModeBar">
                 <controls:Segments x:Name="Modes" Margin="{StaticResource InsetBar}" />
             </controls:GlassView>
