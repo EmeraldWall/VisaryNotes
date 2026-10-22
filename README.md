@@ -21,7 +21,7 @@ dotnet test tests/VisaryNotes.Core.Tests
 dotnet build src/VisaryNotes.App -f net10.0-android -c Release
 ```
 
-The APK lands in `src/VisaryNotes.App/bin/Release/net10.0-android/com.visary.notes-Signed.apk`. It is signed with the debug key, so it can be sideloaded for testing but not published. Make signed releases with **Build > Archive** in Visual Studio.
+The APK lands in `src/VisaryNotes.App/bin/Release/net10.0-android/com.vishvplus.visarynotes-Signed.apk`. It is signed with the debug key, so it can be sideloaded for testing but not published. Make signed releases with **Build > Archive** in Visual Studio.
 
 CI (`.github/workflows/build.yml`) runs only on demand or on a `v*` tag, to save Actions minutes.
 

@@ -13,9 +13,9 @@
 		<UseMaterial3>false</UseMaterial3>
 
 		<ApplicationTitle>VisaryNotes</ApplicationTitle>
-		<ApplicationId>com.visary.notes</ApplicationId>
-		<ApplicationDisplayVersion>0.2.6</ApplicationDisplayVersion>
-		<ApplicationVersion>8</ApplicationVersion>
+		<ApplicationId>com.vishvplus.visarynotes</ApplicationId>
+		<ApplicationDisplayVersion>0.2.7</ApplicationDisplayVersion>
+		<ApplicationVersion>9</ApplicationVersion>
 
 		<SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
 	</PropertyGroup>

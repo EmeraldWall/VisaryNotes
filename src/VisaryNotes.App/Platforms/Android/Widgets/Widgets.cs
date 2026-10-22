@@ -18,7 +18,7 @@ public static class WidgetActions
     public static PendingIntent Open(Context context, string action, int requestCode)
     {
         var intent = new Intent(context, typeof(MainActivity));
-        intent.SetAction("com.visary.notes." + action);
+        intent.SetAction(context.PackageName + "." + action);
         intent.PutExtra(Extra, action);
         intent.AddFlags(ActivityFlags.NewTask | ActivityFlags.SingleTop);
         return PendingIntent.GetActivity(context, requestCode, intent, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent)!;

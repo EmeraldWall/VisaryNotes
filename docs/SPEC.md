@@ -75,7 +75,7 @@ Accounts and cloud sync run by VisaryNotes, collaboration, editing office files 
 | ID | Assumption | Status |
 | --- | --- | --- |
 | A1 | Visual Studio on Windows, .NET 10, .NET MAUI, C#, Android only (`net10.0-android`) | Confirmed by the owner |
-| A2 | Package name `com.visary.notes`, app name VisaryNotes. The package name can never change once the app is on Google Play, so it must be confirmed before the first upload | In use, not yet confirmed; urgent |
+| A2 | Package name `com.vishvplus.visarynotes`, app name VisaryNotes. The package name can never change once the app is on Google Play | Package confirmed by the owner (from build 0.2.7); app name in use |
 | A3 | Minimum Android 8.0 (API 26), target API 36 | In use |
 | A4 | No open source licence for now: the code is public but all rights are reserved. The open principles in section 14 apply in full. A licence may be chosen later (section 14.3) | Confirmed by the owner |
 | A5 | No telemetry of any kind; feedback comes from opt in channels (section 14.5) | Proposed |
@@ -682,7 +682,7 @@ Two earlier fixes (bar tint in 0.2.6, keyboard lift in 0.2.4) did not take effec
 
 | Release | Theme | Scope | Exit criteria |
 | --- | --- | --- | --- |
-| **0.3 Parity and trust** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); README rights notice and open principles (14.3), contributing, code of conduct, security policy, issue templates including corpus donation; third party licences screen; first GitHub Release; release checklist; first performance measurements; confirm package name (A2); Play developer account and verification (GP7); AAB build (GP2); privacy policy and Settings row (GP4) | Every blocker verified on a real phone; a full backup restores on a second phone; the README states the rights and the open principles; an AAB uploads to an internal test track |
+| **0.3 Parity and trust** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); README rights notice and open principles (14.3), contributing, code of conduct, security policy, issue templates including corpus donation; third party licences screen; first GitHub Release; release checklist; first performance measurements; Play developer account and verification (GP7); AAB build (GP2); privacy policy and Settings row (GP4) | Every blocker verified on a real phone; a full backup restores on a second phone; the README states the rights and the open principles; an AAB uploads to an internal test track |
 | **0.4 Writing** | Editing on par with Markdown apps (P3, P4, P5) | Undo and redo, find and replace, list continuation, checklist ticking in preview, images, tables, `[[links]]` and backlinks, tags, notebooks, sort, templates, outline, Markdown bundle export, follow system theme | Owner writes daily notes for two weeks without needing another app |
 | **0.5 Reading and the loop** | Build the create column | Quote anchors and jump to passage, highlights digest, highlight colours, quotes to Word, ODT and RTF export, PDF export and print, search inside documents, side by side on foldables and tablets, backdrop blur, checklist widget, Quick Settings tile, shortcuts, keyboard support | A quote round trip (select, quote, tap source, land on the passage) works on phone, foldable and tablet |
 | **0.6 Community beta** | Learn from real people | 15 to 30 testers from section 1.3, run as the Google Play closed test (GP5) with an APK on GitHub for people without Play; data safety form and content rating (GP3, GP6); usability rounds of 5; translations; reproducible build notes; links to installers that track GitHub Releases | At least 12 testers stay in the closed test for 14 days in a row; measures in section 16 reach their targets or the plan is revised |
@@ -717,7 +717,7 @@ Version history; work in folder mode; sync through a user chosen service (WebDAV
 ### 17.2 Open questions
 
 1. **Licence.** Deferred by the owner. Revisit before 1.0 or when outside code contributions are wanted (section 14.3).
-2. **Name and package.** Confirm VisaryNotes and `com.visary.notes`, and whether to register the name. Urgent: the package name is permanent once on Google Play.
+2. **Name.** The package is settled as `com.vishvplus.visarynotes`. Confirm the app name VisaryNotes, and whether to register it.
 3. **Repository visibility.** Assumed to stay public for principle O4. Confirm, since a private repository would also end free CI minutes (section 14.1).
 4. **Test devices.** Which phone, and whether a foldable or tablet is available, for the release checklist.
 5. **Organisation model.** Tags only, notebooks only, or both (section 6.1, N9 and N10).
