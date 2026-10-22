@@ -245,15 +245,10 @@ public static class HtmlRenderer
                 sb.Append("></figure>");
                 break;
             case Preformatted pre when original:
-                sb.Append("<pre class=\"original-text\">").Append(Esc(pre.Text)).Append("</pre>");
+                sb.Append(PlainTextLayout.Original(pre.Text));
                 break;
             case Preformatted pre:
-                foreach (var para in pre.Text.Split("\n\n"))
-                {
-                    if (string.IsNullOrWhiteSpace(para))
-                        continue;
-                    sb.Append("<p class=\"plain\">").Append(Esc(para.Trim('\n')).Replace("\n", "<br>")).Append("</p>");
-                }
+                sb.Append(PlainTextLayout.Reading(pre.Text));
                 break;
             case Quote q:
                 sb.Append("<blockquote>");
@@ -377,6 +372,7 @@ public static class HtmlRenderer
         .reading dl.pairs dt{color:var(--soft)}
         .reading dl.pairs dd{margin:0;font-weight:600;text-align:right}
         .reading .plain{white-space:normal}
+        .reading hr{border:0;border-top:1px solid var(--line);margin:16px 0}
         .doc-title{margin-top:0}
         html:has(.desk),.mode-original:has(.desk){background:var(--desk)}
         .desk{padding:12px 8px 0;display:flex;flex-direction:column;align-items:center;gap:12px;transform-origin:top center}
@@ -397,6 +393,7 @@ public static class HtmlRenderer
         .page-header,.page-footer{font-size:8pt;color:#444}
         .page-header{border-bottom:.5pt solid #888;margin-bottom:8pt;padding-bottom:3pt}
         .page-footer{text-align:center;margin-top:8pt}
+        .original-text .rule-line{display:block;white-space:pre;overflow:hidden}
         .original-text{margin:0;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px 16px 0;color:var(--ink)}
         .notice{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;text-align:center;color:var(--ink);margin:16px 16px 0}
         #vn-menu{position:absolute;z-index:10;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:'Figtree',sans-serif}

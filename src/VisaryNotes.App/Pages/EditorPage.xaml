@@ -13,9 +13,9 @@
         <ContentView x:Name="PreviewHost" IsVisible="False" />
 
         <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
-                <Label x:Name="NoteTitle" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
-                <Label x:Name="SaveState" Grid.Column="1" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
+            <!-- Save state and word count only: the note's own heading is already the first line below (E13). -->
+            <Grid Padding="{StaticResource InsetStrip}">
+                <Label x:Name="SaveState" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
             </Grid>
         </controls:GlassView>
 

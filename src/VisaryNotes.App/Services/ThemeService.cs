@@ -51,10 +51,17 @@ public sealed class ThemeService
         // the tint the design already sets for busy backdrops (docs/DESIGN.md 4.2.1).
         r["GlassDenseCore"] = Solid ? C(t.Paper) : glass.WithAlpha((float)t.GlassAlphaMax);
         r["GlassDenseRim"] = Solid ? C(t.Paper) : glass.WithAlpha((float)Math.Min(1, t.GlassAlphaMax + 0.1));
+        // Bars that sit over content (top strip, mode bar, toolbar) take a tint between paper and desk, so they
+        // read as bars and never vanish into the page. The glass colour alone is almost the paper colour in the
+        // light themes, which left bars looking transparent on phones (docs/SPEC.md B1, B2).
+        var bar = Mix(C(t.Paper), C(t.Desk), 0.7f);
+        r["Bar"] = t.IsHighContrast ? C(t.Paper) : Solid ? bar : bar.WithAlpha(BarAlpha);
+        r["Clear"] = Colors.Transparent;
+        r["BarEdge"] = t.IsHighContrast ? C(t.Line) : C(t.Line).WithAlpha(t.IsDark ? 0.7f : 0.55f);
         r["EdgeLo"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.Black.WithAlpha(0.6f) : Colors.Black.WithAlpha(0.22f);
         r["EdgeHi"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.White.WithAlpha(0.2f) : Colors.White.WithAlpha(0.95f);
 
-        foreach (var key in new[] { "Paper", "Desk", "Ink", "Soft", "Accent", "AccentText", "OnAccent", "Line", "Fill" })
+        foreach (var key in new[] { "Paper", "Desk", "Ink", "Soft", "Accent", "AccentText", "OnAccent", "Line", "Fill", "BarEdge" })
             r[key + "Brush"] = new SolidColorBrush((Color)r[key]);
 
         Application.Current.UserAppTheme = t.IsDark ? AppTheme.Dark : AppTheme.Light;
@@ -62,7 +69,13 @@ public sealed class ThemeService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Bars stay faintly translucent; text under them shows at most this faintly (tools/design/contrast.py).</summary>
+    public const float BarAlpha = 0.94f;
+
     public static Color C(string hex) => Color.FromArgb(hex);
+
+    private static Color Mix(Color a, Color b, float t) =>
+        new(a.Red + (b.Red - a.Red) * t, a.Green + (b.Green - a.Green) * t, a.Blue + (b.Blue - a.Blue) * t);
 
     public static Color Res(string key) =>
         Application.Current?.Resources.TryGetValue(key, out var v) == true && v is Color c ? c : Colors.Magenta;

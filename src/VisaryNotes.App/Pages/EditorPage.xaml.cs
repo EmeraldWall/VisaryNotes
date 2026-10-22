@@ -55,8 +55,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
             _note = new Note { Body = "# " };
 
         Body.Text = _note.Body;
-        NoteTitle.Text = _note.Id == 0 ? "New note" : _note.Title;
-        SaveState.Text = _note.Id == 0 ? "" : Status("Saved");
+        SaveState.Text = _note.Id == 0 ? "New note" : Status("Saved");
         _loading = false;
         Body.Focus();
         Body.CursorPosition = Body.Text.Length;
@@ -69,13 +68,15 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         await SaveAsync();
     }
 
+    /// <summary>Preview, or Edit while previewing, is the main action; Share is used less often (E14).</summary>
     private void BuildPill()
     {
+        var previewing = PreviewHost.IsVisible;
         Pill.SetActions(
         [
             new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync("..")),
-            new PillAction(Icons.Share, "Share", ShareAsync, IsPrimary: true),
-            new PillAction(Icons.Preview, "Preview", TogglePreviewAsync)
+            new PillAction(previewing ? Icons.Edit : Icons.Preview, previewing ? "Edit" : "Preview", TogglePreviewAsync, IsPrimary: true),
+            new PillAction(Icons.Share, "Share", ShareAsync)
         ], _settings.Hand);
     }
 
@@ -165,7 +166,6 @@ public partial class EditorPage : ContentPage, IQueryAttributable
             return;
         _note.Body = body;
         await _repo.SaveNoteAsync(_note);
-        NoteTitle.Text = _note.Title;
         SaveState.Text = Status("Saved");
     }
 
@@ -175,6 +175,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         {
             PreviewHost.IsVisible = false;
             Body.IsVisible = true;
+            BuildPill();
             return;
         }
         await SaveAsync();
@@ -183,6 +184,8 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
         PreviewHost.IsVisible = true;
+        Body.Unfocus();
+        BuildPill();
         _chromeSync?.Sync();
     }
 

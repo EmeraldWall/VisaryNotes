@@ -22,6 +22,7 @@ This is the single source of truth for what VisaryNotes is, why it is shaped thi
 | Planned 0.x | Scheduled for that release (section 15) |
 | Later | After 1.0 |
 | Blocker | A defect that must be fixed before the next release |
+| Fixed 0.2.8, to verify | A blocker fixed in build 0.2.8, waiting for the owner to confirm on a phone |
 
 ---
 
@@ -103,7 +104,7 @@ Must match, or the app is not taken seriously in that frame. Status against buil
 | --- | --- | --- | --- |
 | P1 | Fast capture, search, pin, trash with restore, undo | Notes | Built |
 | P2 | Polished, bug free interface | Both | **Blocker** (section 15.1) |
-| P3 | Markdown editing basics: live styling, toolbar, lists, checklists, links | Notes | Partial, styling regressed (B3) |
+| P3 | Markdown editing basics: live styling, toolbar, lists, checklists, links | Notes | Partial (B3 fixed 0.2.8, to verify) |
 | P4 | Undo and redo, find and replace in a note | Notes | Planned 0.4 |
 | P5 | Organisation: tags, and folders or notebooks | Notes | Planned 0.4 |
 | P6 | Backup and moving to a new phone without losing anything | Notes | Planned 0.3 |
@@ -205,7 +206,7 @@ Every spacing, size, radius, inset and font size comes from `tools/design/tokens
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| V1 | Bars and the pill show a visible tint so labels never sit on bare content | **Blocker** B1 and B2 |
+| V1 | Bars and the pill show a visible tint so labels never sit on bare content | Fixed 0.2.8, to verify (B1, B2) |
 | V2 | Tint at the adaptive maximum (80 percent light, 85 percent dark) until real blur exists | Built, unverified |
 | V3 | Backdrop blur on Android 12 and later through a native handler (RenderEffect) | Planned 0.5 |
 | V4 | Reduce transparency and High Contrast themes make bars solid paper | Built |
@@ -224,7 +225,7 @@ Every spacing, size, radius, inset and font size comes from `tools/design/tokens
 | --- | --- | --- |
 | Top strip | 48dp, title and one fact (progress, save state, counts) | Built |
 | Bottom | Pill row plus at most one bar (filters, view switch, toolbar, find, selection) | Built |
-| Content at rest | Never under a bar; content may scroll under bars | **Blocker** B4 at the bottom edge |
+| Content at rest | Never under a bar; content may scroll under bars | Fixed 0.2.8, to verify (B4) |
 | Immersive reading | A tap on the page hides all bars; a second tap shows them | Built |
 | List density | Comfortable 64dp, Compact 56dp (default), Dense 48dp | Built |
 
@@ -285,8 +286,8 @@ The editor must be as good as dedicated Markdown apps (point of parity P3, P4), 
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| E1 | Live Markdown styling in place: headings larger and bold, bold, italic, code, quotes, checklists, links; syntax marks dimmed but editable | **Blocker** B3 (headings and quotes stopped styling) |
-| E2 | Format toolbar above the keyboard, always visible while typing | **Blocker** B5 |
+| E1 | Live Markdown styling in place: headings larger and bold, bold, italic, code, quotes, checklists, links; syntax marks dimmed but editable | Fixed 0.2.8, to verify (B3) |
+| E2 | Format toolbar above the keyboard, always visible while typing | Fixed 0.2.8, to verify (B5) |
 | E3 | Autosave on pause and on leaving, save state and word count in the strip | Built |
 | E4 | Preview | Built |
 | E5 | Undo and redo | Planned 0.4 |
@@ -296,9 +297,9 @@ The editor must be as good as dedicated Markdown apps (point of parity P3, P4), 
 | E9 | Insert image from the photo picker or camera, stored beside the note | Planned 0.4 |
 | E10 | Insert table | Planned 0.4 |
 | E11 | Links between notes (`[[Note title]]`) and a backlinks list | Planned 0.4 |
-| E12 | Quote source links shown as a readable chip ("OFL.txt"), not raw link code | Planned 0.3 (B8) |
-| E13 | The strip shows the save state; it does not repeat the note's first heading | Planned 0.3 (B9) |
-| E14 | The pill's primary action is the most frequent one (Preview or Done), with Share secondary | Planned 0.3 (B10) |
+| E12 | Quote source links shown as a readable chip ("OFL.txt"), not raw link code | Fixed 0.2.8, to verify (B8) |
+| E13 | The strip shows the save state; it does not repeat the note's first heading | Fixed 0.2.8, to verify (B9) |
+| E14 | The pill's primary action is the most frequent one (Preview or Done), with Share secondary | Fixed 0.2.8, to verify (B10) |
 | E15 | Toolbar buttons have clear icons and long press labels | Planned 0.4 |
 | E16 | Outline of a note's headings | Planned 0.4 |
 
@@ -334,8 +335,8 @@ One viewer for every format: each reader produces the shared document model (7.6
 | ID | Requirement | Status |
 | --- | --- | --- |
 | R5 | Reading view reflows for the screen; Original view keeps page size, margins, fonts and layout | Built |
-| R6 | Plain text in Reading view joins hard wrapped lines into paragraphs and keeps blank line paragraph breaks | **Blocker** B6 |
-| R7 | Separator lines (rows of dashes or equals signs) render as a rule, never wrap | **Blocker** B7 |
+| R6 | Plain text in Reading view joins hard wrapped lines into paragraphs and keeps blank line paragraph breaks | Fixed 0.2.8, to verify (B6) |
+| R7 | Separator lines (rows of dashes or equals signs) render as a rule, never wrap | Fixed 0.2.8, to verify (B7) |
 | R8 | Find in document with match count, previous, next | Built, unverified |
 | R9 | Contents: jump to any heading | Built, unverified |
 | R10 | Text size control; system font size respected | Built, unverified |
@@ -663,20 +664,20 @@ The owner holds all rights, so publishing on Play needs no licence decision. The
 
 ### 15.1 Release blockers (owner's phone, build 0.2.6)
 
-| ID | Defect | Breaks |
-| --- | --- | --- |
-| B1 | Reader top bar is transparent; the file name and progress sit on top of the text | P2, V1 |
-| B2 | Bars show no edge or tint, so they do not read as bars | P2, V1 |
-| B3 | Editor live styling no longer styles headings and quotes | P3, E1 |
-| B4 | Reading/Original bar has no background; text shows between and below its buttons, down into the gesture area | P2, 4.5 |
-| B5 | With the keyboard open, the editor's pill and toolbar are hidden | P3, E2 |
-| B6 | Plain text Reading view keeps hard line breaks, so sentences break mid line | P8, R6 |
-| B7 | Lines of dashes wrap and leave a stray "-" | R7 |
-| B8 | Quote source links show as raw `visary-doc://` code in the editor | E12 |
-| B9 | The editor strip repeats the note's heading, larger than the heading itself | E13 |
-| B10 | Share is the editor's primary action, above writing actions | E14 |
+| ID | Defect | Breaks | Cause found | Fix in 0.2.8 | Status |
+| --- | --- | --- | --- | --- | --- |
+| B1 | Reader top bar is transparent; the file name and progress sit on top of the text | P2, V1 | The light glass colour (#F7F7F4) is almost the paper colour (#FBFAF7), so the bar drew but could not be seen | Bars use their own tint between paper and desk at 94 percent, drawn as the view's own background | Fixed, to verify |
+| B2 | Bars show no edge or tint, so they do not read as bars | P2, V1 | Edge lines were black at 22 percent on top and white on the bottom, invisible on light paper | A hairline in the theme's line colour on both edges | Fixed, to verify |
+| B3 | Editor live styling no longer styles headings and quotes | P3, E1 | Restyling a paragraph also removed the spans that only touched it, so the heading or quote before it lost its style. An opened note's text also arrived before the styler attached | Only spans inside the range are removed; the whole note is styled once on open | Fixed, to verify |
+| B4 | Reading/Original bar has no background; text shows between and below its buttons, down into the gesture area | P2, 4.5 | Same tint problem as B1, and the page was not kept clear of the gesture area on the owner's phone | Bar tint as B1; every page now measures its overlap with the system bars and pads by it | Fixed, to verify |
+| B5 | With the keyboard open, the editor's pill and toolbar are hidden | P3, E2 | The safe area setting did not lift pages above the keyboard on the owner's phone | The same measurement includes the keyboard; the activity also asks the system to resize | Fixed, to verify |
+| B6 | Plain text Reading view keeps hard line breaks, so sentences break mid line | P8, R6 | Reading view turned every line break into a break | Wrapped lines are joined; short lines, list items and lines ending in a colon keep their breaks. Tested | Fixed, to verify |
+| B7 | Lines of dashes wrap and leave a stray "-" | R7 | Separator lines were treated as text | A rule in Reading view; clipped, never wrapped, in Original view. Tested | Fixed, to verify |
+| B8 | Quote source links show as raw `visary-doc://` code in the editor | E12 | No special styling for source links | Drawn as a chip with the document name; the Markdown is unchanged | Fixed, to verify |
+| B9 | The editor strip repeats the note's heading, larger than the heading itself | E13 | The strip showed the title | The strip shows only the save state and word count | Fixed, to verify |
+| B10 | Share is the editor's primary action, above writing actions | E14 | Pill order | Preview is primary (Edit while previewing); Share is secondary | Fixed, to verify |
 
-Two earlier fixes (bar tint in 0.2.6, keyboard lift in 0.2.4) did not take effect on the owner's phone. Root cause must be found on a real device before more visual work.
+The two earlier fixes that did not take effect (bar tint in 0.2.6, keyboard lift in 0.2.4) are explained by the causes above: the tint drew but matched the paper, and the keyboard lift relied on a setting that did not apply on the phone. 0.2.8 no longer depends on either. Each blocker closes only when confirmed on the owner's phone.
 
 ### 15.2 Releases
 

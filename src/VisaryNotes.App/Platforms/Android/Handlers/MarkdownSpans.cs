@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Android.Graphics;
+using Paint = Android.Graphics.Paint;
 using Android.Text;
 using Android.Text.Style;
 using Microsoft.Maui.Handlers;
@@ -44,6 +45,10 @@ public static partial class MarkdownSpans
         {
             _view = view;
             _pass = new Java.Lang.Runnable(Restyle);
+            // A note's text is set before this watcher is attached, so the first pass styles all of it.
+            _start = 0;
+            _end = int.MaxValue;
+            _main.Post(_pass);
         }
 
         public void BeforeTextChanged(Java.Lang.ICharSequence? s, int start, int count, int after) { }
@@ -72,8 +77,10 @@ public static partial class MarkdownSpans
             _end = 0;
             if (text.Length > 200_000)
                 return;
-            // Restyle from the start of the first changed paragraph to the end of the last one.
-            var from = start == 0 ? 0 : Math.Max(0, text.LastIndexOf("\n\n", Math.Max(0, start - 1), StringComparison.Ordinal));
+            // Restyle from the start of the first changed paragraph to the end of the last one. The range starts
+            // after the blank line, so the paragraph before keeps its styles (B3).
+            var gap = start == 0 ? -1 : text.LastIndexOf("\n\n", Math.Max(0, start - 1), StringComparison.Ordinal);
+            var from = gap < 0 ? 0 : gap + 2;
             var toIdx = text.IndexOf("\n\n", end, StringComparison.Ordinal);
             Apply(e, text, from, toIdx < 0 ? text.Length : toIdx);
         }
@@ -87,7 +94,8 @@ public static partial class MarkdownSpans
         Java.Lang.Class.FromType(typeof(ForegroundColorSpan)),
         Java.Lang.Class.FromType(typeof(TypefaceSpan)),
         Java.Lang.Class.FromType(typeof(BackgroundColorSpan)),
-        Java.Lang.Class.FromType(typeof(StrikethroughSpan))
+        Java.Lang.Class.FromType(typeof(StrikethroughSpan)),
+        Java.Lang.Class.FromType(typeof(SourceChip))
     ];
 
     [GeneratedRegex(@"\*\*(?=\S)(.+?)(?<=\S)\*\*")]
@@ -104,13 +112,17 @@ public static partial class MarkdownSpans
 
     private static void Apply(IEditable e, string text, int from, int to)
     {
+        // Only spans inside the range are removed. GetSpans also returns spans that merely touch it, and
+        // removing those unstyled the neighbouring heading or quote without restyling it.
         foreach (var type in OwnSpanTypes)
             foreach (var span in e.GetSpans(from, to, type) ?? [])
-                e.RemoveSpan(span);
+                if (e.GetSpanStart(span) >= from && e.GetSpanEnd(span) <= to)
+                    e.RemoveSpan(span);
 
         var soft = ThemeService.Res("Soft").ToPlatform();
         var accent = ThemeService.Res("AccentText").ToPlatform();
         var fill = ThemeService.Res("Fill").ToPlatform();
+        var chip = ThemeService.Res("Accent").WithAlpha(0.14f).ToPlatform();
         const SpanTypes Mode = SpanTypes.ExclusiveExclusive;
 
         var lineStart = from;
@@ -166,6 +178,12 @@ public static partial class MarkdownSpans
             foreach (Match m in Link().Matches(line))
             {
                 var s = lineStart + m.Index;
+                if (m.Groups[2].Value.StartsWith(Core.Data.LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal))
+                {
+                    // A quote's source shows as a chip with the document name, not as link code (B8).
+                    e.SetSpan(new SourceChip(m.Groups[1].Value, accent, chip), s, s + m.Length, Mode);
+                    continue;
+                }
                 e.SetSpan(new ForegroundColorSpan(accent), s + 1, s + 1 + m.Groups[1].Length, Mode);
                 e.SetSpan(new ForegroundColorSpan(soft), s + 1 + m.Groups[1].Length, s + m.Length, Mode);
             }
@@ -173,6 +191,60 @@ public static partial class MarkdownSpans
             if (nl < 0)
                 break;
             lineStart = nl + 1;
+        }
+    }
+
+    /// <summary>
+    /// Draws a quote's source link, "[report.odt](visary-doc://12)", as a small chip that shows only the
+    /// document name (docs/SPEC.md E12). The underlying Markdown stays in the note and opens the document in
+    /// Preview and in the reader's note sheet.
+    /// </summary>
+    private sealed class SourceChip : ReplacementSpan
+    {
+        private const int MaxChars = 40;
+        private readonly string _label;
+        private readonly global::Android.Graphics.Color _ink;
+        private readonly global::Android.Graphics.Color _fill;
+
+        public SourceChip(string name, global::Android.Graphics.Color ink, global::Android.Graphics.Color fill)
+        {
+            _label = name.Length > MaxChars ? name[..(MaxChars - 1)] + "\u2026" : name;
+            _ink = ink;
+            _fill = fill;
+        }
+
+        private static Paint Small(Paint paint) => new(paint) { TextSize = paint.TextSize * 0.85f };
+
+        private static float Pad(Paint paint) => paint.TextSize * 0.5f;
+
+        public override int GetSize(Paint paint, Java.Lang.ICharSequence? text, int start, int end, Paint.FontMetricsInt? fm)
+        {
+            if (fm is not null && paint.GetFontMetricsInt() is { } own)
+            {
+                fm.Ascent = own.Ascent;
+                fm.Descent = own.Descent;
+                fm.Top = own.Top;
+                fm.Bottom = own.Bottom;
+            }
+            using var small = Small(paint);
+            return (int)Math.Ceiling(small.MeasureText(_label) + 2 * Pad(paint));
+        }
+
+        public override void Draw(Canvas canvas, Java.Lang.ICharSequence? text, int start, int end, float x, int top, int y, int bottom, Paint paint)
+        {
+            using var small = Small(paint);
+            var width = small.MeasureText(_label) + 2 * Pad(paint);
+            var metrics = small.GetFontMetrics()!;
+            var chipTop = y + metrics.Ascent - paint.TextSize * 0.2f;
+            var chipBottom = y + metrics.Descent + paint.TextSize * 0.2f;
+            var radius = (chipBottom - chipTop) / 2;
+            using (var back = new Paint(PaintFlags.AntiAlias) { Color = _fill })
+            {
+                back.SetStyle(Paint.Style.Fill);
+                canvas.DrawRoundRect(x, chipTop, x + width, chipBottom, radius, radius, back);
+            }
+            small.Color = _ink;
+            canvas.DrawText(_label, x + Pad(paint), y, small);
         }
     }
 }
