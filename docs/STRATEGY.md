@@ -142,6 +142,12 @@ These are applied in SPEC.md version 0.3 and in the prototype.
 
 ---
 
+## 7. Positioning update (October 2026)
+
+Points of parity, points of difference and a partial blue ocean strategy (eliminate, reduce, raise, create) are now part of the strategy. They live in [SPEC.md](SPEC.md) section 2, together with the decision to make VisaryNotes an open source project (SPEC.md section 14). In short, the app straddles two frames (note apps and document readers), must meet the parity points of both, and creates new value in the read to note loop, readable office files on a phone, and openness.
+
+---
+
 ## References
 
 * Ajzen, I. (1991). The theory of planned behavior. Organizational Behavior and Human Decision Processes, 50(2), 179 to 211. https://doi.org/10.1016/0749-5978(91)90020-T

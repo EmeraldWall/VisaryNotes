@@ -1,7 +1,8 @@
 # VisaryNotes
 A document reader and note taking app for Android phones, foldables and tablets, with a distinct glass design. Built with C# and .NET MAUI in Visual Studio.
 
-* Product and technical specification: [docs/SPEC.md](docs/SPEC.md)
+* Product and technical specification, positioning and open source plan: [docs/SPEC.md](docs/SPEC.md)
+* UX review: [docs/UX-REVIEW.md](docs/UX-REVIEW.md)
 * Design rationale (CMF, colour theory, UX laws, one handed use, tokens): [docs/DESIGN.md](docs/DESIGN.md)
 * Strategy analysis (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory): [docs/STRATEGY.md](docs/STRATEGY.md)
 * Design prototype sources: `design/prototype`
