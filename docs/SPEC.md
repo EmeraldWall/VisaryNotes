@@ -7,8 +7,8 @@ This is the single source of truth for what VisaryNotes is, why it is shaped thi
 **What is new in 1.0**
 
 * A positioning built on points of parity, points of difference and a partial blue ocean strategy (section 2).
-* VisaryNotes is an open source project, with a licence, governance, privacy and distribution plan (section 14).
-* It ships on Google Play as well as from source, with the Play requirements, signing model and listing plan in section 14.7.
+* VisaryNotes follows open principles (no telemetry, no account, no ads, plain files, code in public view) without an open source licence for now. Section 14 sets out what that allows and what it does not.
+* It ships on Google Play and as a GitHub release, with the Play requirements, signing model and listing plan in section 14.7.
 * Every requirement has an ID, a status against build 0.2.6 and an acceptance check.
 * Known defects found on the owner's phone are listed as release blockers (section 15.1), because they break points of parity.
 
@@ -29,7 +29,7 @@ This is the single source of truth for what VisaryNotes is, why it is shaped thi
 
 ### 1.1 One line
 
-**VisaryNotes is an open source notebook for reading and writing on Android: it opens the documents people send you as well as a dedicated reader does, lets you write as well as a Markdown note app does, and joins the two with quotes that remember where they came from.**
+**VisaryNotes is a private, offline notebook for reading and writing on Android: it opens the documents people send you as well as a dedicated reader does, lets you write as well as a Markdown note app does, and joins the two with quotes that remember where they came from.**
 
 ### 1.2 The four jobs
 
@@ -62,7 +62,7 @@ Hypotheses from [STRATEGY.md](STRATEGY.md) section 4.2, to be tested in the beta
 | G4 | Nothing the user makes is lost: undo, trash, backup, plain files, no lock in (sections 6.1 and 8) |
 | G5 | Usable with one hand, either hand (section 4.4) |
 | G6 | Legible in every theme: body text 7 to 1 contrast or better (section 5) |
-| G7 | Free and open source, offline, no account, no ads, no tracking (section 14) |
+| G7 | Free, offline, no account, no ads, no tracking, plain files, code in public view (section 14) |
 | G8 | Phones, foldables and tablets from one codebase (section 3) |
 | G9 | Built and released by one developer from Visual Studio, with near zero CI cost (section 14) |
 
@@ -77,9 +77,9 @@ Accounts and cloud sync run by VisaryNotes, collaboration, editing office files 
 | A1 | Visual Studio on Windows, .NET 10, .NET MAUI, C#, Android only (`net10.0-android`) | Confirmed by the owner |
 | A2 | Package name `com.visary.notes`, app name VisaryNotes. The package name can never change once the app is on Google Play, so it must be confirmed before the first upload | In use, not yet confirmed; urgent |
 | A3 | Minimum Android 8.0 (API 26), target API 36 | In use |
-| A4 | The project is open source under GPL-3.0-or-later (section 14.3) | Proposed, owner to confirm |
+| A4 | No open source licence for now: the code is public but all rights are reserved. The open principles in section 14 apply in full. A licence may be chosen later (section 14.3) | Confirmed by the owner |
 | A5 | No telemetry of any kind; feedback comes from opt in channels (section 14.5) | Proposed |
-| A6 | Published on Google Play and as open source at the same time, from the same source code (section 14.7) | Confirmed by the owner |
+| A6 | Published on Google Play and on GitHub Releases at the same time, from the same public source code (section 14.7) | Confirmed by the owner |
 
 ---
 
@@ -121,7 +121,7 @@ Must be relevant (people care), distinctive (others do not offer it) and believa
 | D1 | **Quote to note with a link back to the source**, and a per document digest of highlights and quotes | All | Main difference. The loop as a whole is hard to copy (VRIO R1) |
 | D2 | **Readable Reading view of RTF, ODT, DOC, DOCX and PDF on a phone**, beside an Original view | Note apps, most readers | Main difference. The parsers and a growing test corpus take years to match (VRIO R2) |
 | D3 | **Reader and writer equally strong in one app** | Single job apps | The combination is the new space (section 2.4) |
-| D4 | **Open source, no account, plain Markdown files** | Keep, Samsung Notes, Obsidian | Parity against Markor; a difference against the rest |
+| D4 | **No account, no tracking, plain Markdown files, code in public view** | Keep, Samsung Notes, Obsidian | Parity against Markor on files and privacy; Markor is also open source, which VisaryNotes is not yet |
 | D5 | **Reply in the sender's format**, including a Word file of a document's quotes | Note apps | Supporting difference |
 | D6 | One handed pill that follows the chosen hand | All | Supporting, easy to copy |
 | D7 | Visary Glass look | All | Image only, never at the cost of legibility (VRIO R4) |
@@ -143,7 +143,7 @@ Kim and Mauborgne's blue ocean method redesigns an offer with four actions: elim
 | Markdown editing quality, to the level of dedicated Markdown apps | Highlights digest per document |
 | Safety: undo, trash, backup | Reply in the sender's format, including quotes as a Word file |
 | One handed reach | Document and note side by side on foldables and tablets |
-| Openness: source code, plain files, open formats | A community grown corpus of real documents that makes the readers better (section 14.4) |
+| Openness: visible code, plain files, open formats, no tracking | A community grown corpus of real documents that makes the readers better (section 14.4) |
 
 ### 2.5 Strategy canvas
 
@@ -158,7 +158,7 @@ Offering level per factor, 1 (low) to 5 (high). Competitor columns are the autho
 | Editing office files in place | 1 | 1 | 1 | 5 | 1 |
 | Read to note loop with source links | 1 | 2 | 1 | 2 | 5 |
 | No account, offline, plain files | 1 | 4 | 5 | 2 | 5 |
-| Open source | 1 | 1 | 5 | 1 | 5 |
+| Openness (visible code, no tracking) | 1 | 2 | 5 | 1 | 4 |
 | Cloud sync by the vendor | 5 | 4 | 1 | 4 | 1 |
 | One handed design | 2 | 2 | 2 | 2 | 5 |
 
@@ -172,7 +172,7 @@ The VisaryNotes curve is low where competitors spend most (vendor sync, office e
 | Theory of Planned Behaviour | Perceived control is the weakest link: every destructive action has undo or asks first, data is portable, nothing is hidden behind gestures |
 | Innovation Diffusion Theory | Zero setup trial through "Open with"; compatibility with Markdown folders and Word; observable results through exported files that look native |
 | Blue ocean | Every new feature must either close a parity gap (2.2) or build a create item (2.4). Anything else waits |
-| Open source | Openness raises trust (TPB attitude), trialability and observability (IDT), and lets the community grow the hard to copy asset (VRIO) |
+| Open principles | Visible code and no tracking raise trust (TPB attitude) and observability (IDT); document donations let the community grow the hard to copy asset (VRIO) |
 
 ---
 
@@ -482,7 +482,7 @@ VisaryNotes.sln
 | PDF text | PdfPig | Apache 2.0 |
 | Fonts | Figtree, Literata, JetBrains Mono (OFL 1.1), Tinos (Apache 2.0) | As listed in `licenses/` |
 
-All are compatible with the proposed project licence (section 14.3). New dependencies must be free software, with a licence compatible with GPL-3.0, and must not need Google Play Services.
+All are permissive licences, so they allow any future licence choice, open or closed (section 14.3). Their notices must ship with the app. New dependencies must use a permissive licence (MIT, BSD, Apache 2.0, OFL for fonts), not a copyleft one such as GPL, so the licence decision stays open, and must not need Google Play Services.
 
 ### 11.3 Data model
 
@@ -497,7 +497,7 @@ Planned 0.4: Tag, NoteTag, Notebook, Attachment.  Planned 0.5: anchor fields on 
 
 ### 11.4 Permissions
 
-`INTERNET` only for opt in remote images. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs, and no Google Play Services libraries, so the Play build and the open source build are the same code. Every permission added later must be justified here and in the Play data safety form (section 14.7).
+`INTERNET` only for opt in remote images. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs, and no Google Play Services libraries, so the Play build and the GitHub build are the same code. Every permission added later must be justified here and in the Play data safety form (section 14.7).
 
 ### 11.5 Development environment
 
@@ -534,13 +534,14 @@ The headless emulator available to automated builds cannot lay out MAUI pages co
 
 ---
 
-## 14. Open source project, CI and delivery
+## 14. Open principles, CI and delivery
 
 ### 14.1 Key facts
 
 * The repository is public. GitHub does not charge Actions minutes for standard hosted runners on public repositories ([GitHub Docs, Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)).
-* .NET MAUI is MIT licensed (listed as MIT by the [.NET Foundation](https://old.dotnetfoundation.org/projects/dotnet-maui) and on its NuGet packages), so the whole toolchain and runtime are open source.
-* A public repository without a licence file is not open source: by default nobody may copy or change it. Adding the licence is the first task of 0.3.
+* .NET MAUI is MIT licensed (listed as MIT by the [.NET Foundation](https://old.dotnetfoundation.org/projects/dotnet-maui) and on its NuGet packages), so the toolchain allows any licence for the app.
+* A public repository without a licence file is not open source. GitHub's own documentation says that without a licence the default copyright laws apply, so the owner keeps all rights and nobody may reproduce, distribute or create derivative works ([GitHub Docs, Licensing a repository](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)). This is the chosen state for now.
+* GitHub's terms still let other users view and fork a public repository on GitHub itself ([GitHub Terms of Service, section D.5](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#5-license-grant-to-other-users)). That does not grant any right to publish the app elsewhere.
 
 ### 14.2 CI rules
 
@@ -552,29 +553,45 @@ The headless emulator available to automated builds cannot lay out MAUI pages co
 
 Status: Built (`.github/workflows/build.yml`).
 
-### 14.3 Licence
+### 14.3 Licence (deferred) and open principles
 
-| Decision | Detail |
+**Licence decision.** No open source licence for now. There is no `LICENSE` file and no SPDX header. A short notice in the README states "Copyright the owner. All rights reserved. The source is public so anyone can see how the app works and check its privacy promises."
+
+**Open principles.** These hold whatever licence is chosen later, and they are what users and testers are promised.
+
+| ID | Principle | How it is kept |
+| --- | --- | --- |
+| O1 | **No telemetry, analytics, crash reporting or ads, ever** | Section 11.4 bans the SDKs; section 14.5 states it to users; the data safety form says so (GP3) |
+| O2 | **No account, works offline** | No sign in screen, no server run by VisaryNotes (section 1.5) |
+| O3 | **The user owns the data** | Notes are plain Markdown; backup and export in open formats (section 8) |
+| O4 | **Code in public view** | The repository stays public, so anyone can read the code and check O1 to O3. The README says plainly that viewing is allowed but copying and redistribution are not |
+| O5 | **Same code everywhere** | The Play build and the GitHub build come from the same public tag, with nothing hidden (section 14.7) |
+| O6 | **Free, no paywall, no in app purchases** | Section 14.7 |
+| O7 | **Open formats in and out** | ODT, RTF, DOCX, Markdown, HTML, plain text (sections 7 and 8) |
+
+**Keeping the licence option open**
+
+| Rule | Why |
 | --- | --- |
-| **Project licence: GPL-3.0-or-later** (proposed, owner to confirm) | Anyone may use, study, change and share the app. Changed versions that are distributed must stay open under the same licence |
-| Why copyleft | The document engine and its corpus are the hard to copy asset (VRIO R2). A permissive licence would let a closed app take them; copyleft keeps improvements in the commons and builds trust with privacy minded users |
-| Compatibility | Apache 2.0 code (PdfPig, AndroidX, Tinos) is compatible with GPL-3.0 but not GPL-2.0 ([FSF licence list](https://www.gnu.org/licenses/license-list.html)). MIT and BSD code is compatible. Fonts stay under their own OFL and Apache licences |
-| Alternative | Apache-2.0, if wider reuse by closed apps is preferred over protecting the engine |
-| Files | `LICENSE` (full GPL-3.0 text), SPDX headers (`// SPDX-License-Identifier: GPL-3.0-or-later`) in source files, `licenses/` for third party notices, an in app "Open source licences" screen |
-| Name and logo | The code is free; the VisaryNotes name and icon are reserved so forks use their own name (a short `TRADEMARKS.md`) |
+| Only permissive dependencies (section 11.2) | A GPL dependency would force the whole app under GPL. Permissive ones allow any later choice |
+| No outside code contributions yet | Without a licence or contribution terms, code from others has unclear ownership and would complicate a later licence choice. Issues, ideas, translation suggestions and donated test documents are welcome |
+| Third party notices | `licenses/` and an in app "Licences" screen, as Apache 2.0 and OFL require, whatever the app's own licence |
+| Name and logo | Reserved, noted in the README |
+
+**If a licence is chosen later.** GPL-3.0-or-later keeps the document engine from being taken into closed apps. Apache-2.0 allows wider reuse. Apache 2.0 code such as PdfPig is compatible with GPL-3.0 but not GPL-2.0 ([FSF licence list](https://www.gnu.org/licenses/license-list.html)). Choosing either would also reopen F-Droid (section 14.6) and outside code contributions.
 
 ### 14.4 Community and governance
 
 | Item | Detail | Status |
 | --- | --- | --- |
 | `README.md` | What the app is, screenshots, build in Visual Studio, links | Built, to extend |
-| `CONTRIBUTING.md` | How to build, run tests, the design token rules, how to propose a change, small pull requests, Developer Certificate of Origin sign off (section 14.7) | Planned 0.3 |
+| `CONTRIBUTING.md` | How to report a bug, suggest a feature or donate a document. States that code pull requests are not accepted until a licence is chosen (section 14.3) | Planned 0.3 |
 | `CODE_OF_CONDUCT.md` | Contributor Covenant 2.1 | Planned 0.3 |
 | `SECURITY.md` | Private reporting through GitHub security advisories; a malformed file that crashes or hangs a reader counts as a security issue | Planned 0.3 |
 | Issue templates | Bug (device, Android version, steps), Feature (which parity or create item it serves), **Document that will not open** | Planned 0.3 |
 | **Corpus contributions** | Users can donate a file that opens badly, with permission, through the "Document that will not open" template. Each one becomes a test fixture. This turns the community into the engine behind point of difference D2 | Planned 0.3 |
 | Decision making | The owner is maintainer and final decision maker; proposals that touch positioning are checked against section 2 | Planned 0.3 |
-| Translations | String resources extracted; community translations through pull requests or a hosted tool | Planned 0.6 |
+| Translations | String resources extracted; translations suggested through issues, with the contributor's written permission to use them | Planned 0.6 |
 | Changelog | `CHANGELOG.md` in Keep a Changelog style, one entry per release | Planned 0.3 |
 
 ### 14.5 Privacy
@@ -591,14 +608,14 @@ Status: Built (`.github/workflows/build.yml`).
 | Channel | Plan | Status |
 | --- | --- | --- |
 | GitHub Releases | Signed APK per version tag, with checksums and the changelog | Planned 0.3 |
-| F-Droid main repository | F-Droid builds every app from source with a fully free toolchain ([F-Droid Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy)). A forum thread reports that .NET MAUI apps cannot be built on its build server yet ([F-Droid Forum](https://forum.f-droid.org/t/why-isnt-c-net-maui-supported/24842)) | Blocked upstream; revisit each release |
-| F-Droid compatible third party repositories, and installers that track GitHub Releases | The inclusion policy allows separate F-Droid compatible repositories. Which one to use is to be verified | Planned 0.6 |
+| F-Droid | F-Droid only includes free and open source software ([F-Droid Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy)), so it is closed to VisaryNotes while there is no licence. A forum thread also reports that .NET MAUI apps cannot be built on its build server yet ([F-Droid Forum](https://forum.f-droid.org/t/why-isnt-c-net-maui-supported/24842)) | Not applicable; revisit if a licence is chosen |
+| Installers that track GitHub Releases | Apps such as update checkers that follow a repository's releases can install the GitHub APK. Which ones to mention is to be verified | Planned 0.6 |
 | **Google Play** | A main channel, not an afterthought. Same source, no Play Services, Android App Bundle signed through Play. Details in section 14.7 | Closed test 0.6, production 1.0 |
-| Reproducible builds | Document the exact SDK and workload versions so anyone can rebuild the release APK | Planned 0.6 |
+| Reproducible builds | Document the exact SDK and workload versions so anyone can rebuild the release APK and check it matches the public code (principle O4) | Planned 0.6 |
 
-### 14.7 Google Play, as an open source app
+### 14.7 Google Play, with open principles
 
-Being on Google Play and being open source do not conflict. The owner holds the copyright, so the owner can publish the app on Play under GPL-3.0 like any other distributor, as long as the source stays available. The rules below keep both sides honest.
+The owner holds all rights, so publishing on Play needs no licence decision. The rules below make sure the Play app keeps every open principle in section 14.3.
 
 **Play requirements that apply**
 
@@ -621,22 +638,21 @@ Being on Google Play and being open source do not conflict. The owner holds the 
 | Reproducible builds | Apply to the GitHub APK, which anyone can rebuild and compare. The Play build is made from the same tagged commit, and the tag is named in the Play release notes |
 | Keys | Upload key and release key are kept outside the repository, with an offline backup. Losing the release key ends updates for GitHub users |
 
-**Open source rules on Play**
+**Open principles on Play**
 
 | Rule | Detail |
 | --- | --- |
 | Same code | The Play build contains nothing that is not in the public repository at the release tag. No closed modules, no Play only features |
-| Source link | The store listing and the in app "About" screen link to the repository and the licence |
-| Contributions | Contributors keep their copyright and sign off each commit under the Developer Certificate of Origin (`git commit -s`). No contributor licence agreement is needed, because publishing on Play is distribution under GPL-3.0 like any other |
+| Source link | The store listing and the in app "About" screen link to the public repository, described as "source available", never as "open source" while there is no licence |
 | Price | Free, no ads, no in app purchases. Donations, if any, link out from the repository, not from the app |
-| Name | The listing uses the VisaryNotes name and icon reserved in `TRADEMARKS.md`; forks on Play must use their own |
+| Wording | Store text, README and the app never call VisaryNotes "open source" until a licence exists, so no claim is misleading |
 
 **Store listing**
 
 | Element | Plan |
 | --- | --- |
 | Title | VisaryNotes, with a short description built on the tagline: "Read what you're sent. Write what you think." |
-| Full description | Leads with the two jobs (open any document, write notes) and the loop between them, then the three trust points: offline, no tracking, open source |
+| Full description | Leads with the two jobs (open any document, write notes) and the loop between them, then the three trust points: offline, no tracking, code you can read |
 | Screenshots | One per job: Reading view of a DOCX, a PDF, the editor, Quote to note, a widget. Taken on a real phone after the release blockers are fixed |
 | Category | Productivity |
 | Data safety section | "No data collected" and "No data shared", matching GP3 |
@@ -666,10 +682,10 @@ Two earlier fixes (bar tint in 0.2.6, keyboard lift in 0.2.4) did not take effec
 
 | Release | Theme | Scope | Exit criteria |
 | --- | --- | --- | --- |
-| **0.3 Parity and openness** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); licence, contributing, code of conduct, security policy, issue templates including corpus donation; first GitHub Release; release checklist; first performance measurements; confirm package name (A2); Play developer account and verification (GP7); AAB build (GP2); privacy policy and Settings row (GP4) | Every blocker verified on a real phone; a full backup restores on a second phone; the repository is legally open source; an AAB uploads to an internal test track |
+| **0.3 Parity and trust** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); README rights notice and open principles (14.3), contributing, code of conduct, security policy, issue templates including corpus donation; third party licences screen; first GitHub Release; release checklist; first performance measurements; confirm package name (A2); Play developer account and verification (GP7); AAB build (GP2); privacy policy and Settings row (GP4) | Every blocker verified on a real phone; a full backup restores on a second phone; the README states the rights and the open principles; an AAB uploads to an internal test track |
 | **0.4 Writing** | Editing on par with Markdown apps (P3, P4, P5) | Undo and redo, find and replace, list continuation, checklist ticking in preview, images, tables, `[[links]]` and backlinks, tags, notebooks, sort, templates, outline, Markdown bundle export, follow system theme | Owner writes daily notes for two weeks without needing another app |
 | **0.5 Reading and the loop** | Build the create column | Quote anchors and jump to passage, highlights digest, highlight colours, quotes to Word, ODT and RTF export, PDF export and print, search inside documents, side by side on foldables and tablets, backdrop blur, checklist widget, Quick Settings tile, shortcuts, keyboard support | A quote round trip (select, quote, tap source, land on the passage) works on phone, foldable and tablet |
-| **0.6 Community beta** | Learn from real people | 15 to 30 testers from section 1.3, run as the Google Play closed test (GP5) with an APK on GitHub for people without Play; data safety form and content rating (GP3, GP6); usability rounds of 5; translations; reproducible build notes; F-Droid compatible channel | At least 12 testers stay in the closed test for 14 days in a row; measures in section 16 reach their targets or the plan is revised |
+| **0.6 Community beta** | Learn from real people | 15 to 30 testers from section 1.3, run as the Google Play closed test (GP5) with an APK on GitHub for people without Play; data safety form and content rating (GP3, GP6); usability rounds of 5; translations; reproducible build notes; links to installers that track GitHub Releases | At least 12 testers stay in the closed test for 14 days in a row; measures in section 16 reach their targets or the plan is revised |
 | **1.0** | Release | Fixes from the beta; accessibility pass; Play production release and store listing built on the frame in 2.1 (section 14.7); GitHub Release of the same tag | No open severity 3 or 4 findings; Play listing approved; the Play and GitHub builds come from the same tag |
 
 ---
@@ -700,9 +716,9 @@ Version history; work in folder mode; sync through a user chosen service (WebDAV
 
 ### 17.2 Open questions
 
-1. **Licence.** Confirm GPL-3.0-or-later, or choose Apache-2.0 (section 14.3).
+1. **Licence.** Deferred by the owner. Revisit before 1.0 or when outside code contributions are wanted (section 14.3).
 2. **Name and package.** Confirm VisaryNotes and `com.visary.notes`, and whether to register the name. Urgent: the package name is permanent once on Google Play.
-3. **F-Droid route.** Which F-Droid compatible repository to use while the main repository cannot build MAUI.
+3. **Repository visibility.** Assumed to stay public for principle O4. Confirm, since a private repository would also end free CI minutes (section 14.1).
 4. **Test devices.** Which phone, and whether a foldable or tablet is available, for the release checklist.
 5. **Organisation model.** Tags only, notebooks only, or both (section 6.1, N9 and N10).
 6. **Play account type.** A personal account needs the 12 tester closed test (GP5) and shows the owner's name on the listing; an organisation account skips the test but needs a registered organisation. Which one to open.
@@ -730,7 +746,8 @@ Version history; work in folder mode; sync through a user chosen service (WebDAV
 * Testers Community, Google Play 12 testers policy (secondary source). https://www.testerscommunity.com/blog/google-play-12-testers-policy
 * Android Authority, developer verification and sideloading. https://www.androidauthority.com/how-to-bypass-android-developer-verification-sideloading-rules-3718002/
 * F-Droid Forum, Google will require developer verification to install Android apps. https://forum.f-droid.org/t/google-will-require-developer-verification-to-install-android-apps-including-sideloading/33123
-* Developer Certificate of Origin. https://developercertificate.org/
+* GitHub Docs, Licensing a repository. https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository
+* GitHub Terms of Service, section D.5. https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#5-license-grant-to-other-users
 * Google Keep Help, delete and restore notes. https://support.google.com/keep/answer/6262770
 * Obsidian Help, Outline. https://obsidian.md/help/plugins/outline
 * Project documents: [STRATEGY.md](STRATEGY.md), [DESIGN.md](DESIGN.md), [UX-REVIEW.md](UX-REVIEW.md), [archive/SPEC-0.7.md](archive/SPEC-0.7.md)

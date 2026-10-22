@@ -1,7 +1,7 @@
 # VisaryNotes
 A document reader and note taking app for Android phones, foldables and tablets, with a distinct glass design. Built with C# and .NET MAUI in Visual Studio.
 
-* Product and technical specification, positioning and open source plan: [docs/SPEC.md](docs/SPEC.md)
+* Product and technical specification, positioning and open principles: [docs/SPEC.md](docs/SPEC.md)
 * UX review: [docs/UX-REVIEW.md](docs/UX-REVIEW.md)
 * Design rationale (CMF, colour theory, UX laws, one handed use, tokens): [docs/DESIGN.md](docs/DESIGN.md)
 * Strategy analysis (VRIO, Theory of Planned Behavior, Innovation Diffusion Theory): [docs/STRATEGY.md](docs/STRATEGY.md)
@@ -38,3 +38,11 @@ python3 tools/design/contrast.py           # every theme meets its contrast targ
 python3 tools/design/lint_layout.py src design/prototype   # no hard coded spacing, radius or font size
 python3 tools/design/generate.py           # regenerate MAUI, Android and CSS token files
 ```
+
+## Rights and principles
+
+Copyright (c) 2026 the VisaryNotes author. All rights reserved. VisaryNotes is source available, not open source: the code is public so anyone can read how the app works and check its privacy promises, but it may not be copied, changed or redistributed. Third party components keep their own licences.
+
+The app follows these principles whatever its licence: no telemetry, analytics, crash reporting or ads; no account; works offline; notes are plain Markdown files you own; the Google Play and GitHub builds come from the same public code. See [docs/SPEC.md](docs/SPEC.md) section 14.
+
+Bug reports, ideas and documents that open badly are welcome as issues. Code pull requests are not accepted for now.

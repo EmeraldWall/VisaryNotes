@@ -104,7 +104,7 @@ Rogers' adopter categories (innovators, early adopters, early majority, late maj
 3. Owners of foldables and tablets who want document and notes side by side.
 4. Privacy minded users who avoid account based apps.
 
-Channels for these groups (suggestions). Open source communities, Android app forums and subreddits, LibreOffice and Markdown communities, and F-Droid if the app is open sourced (open question in the spec).
+Channels for these groups (suggestions). Open source communities, Android app forums and subreddits, LibreOffice and Markdown communities, and F-Droid only if an open source licence is chosen later (SPEC.md section 14.3).
 
 ---
 
@@ -144,7 +144,7 @@ These are applied in SPEC.md version 0.3 and in the prototype.
 
 ## 7. Positioning update (October 2026)
 
-Points of parity, points of difference and a partial blue ocean strategy (eliminate, reduce, raise, create) are now part of the strategy. They live in [SPEC.md](SPEC.md) section 2, together with the decision to make VisaryNotes an open source project (SPEC.md section 14). In short, the app straddles two frames (note apps and document readers), must meet the parity points of both, and creates new value in the read to note loop, readable office files on a phone, and openness.
+Points of parity, points of difference and a partial blue ocean strategy (eliminate, reduce, raise, create) are now part of the strategy. They live in [SPEC.md](SPEC.md) section 2, together with its open principles (SPEC.md section 14). The owner has deferred an open source licence: the code is public, all rights are reserved, and no telemetry, no account and plain files still apply. In short, the app straddles two frames (note apps and document readers), must meet the parity points of both, and creates new value in the read to note loop, readable office files on a phone, and openness.
 
 ---
 
