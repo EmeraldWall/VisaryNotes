@@ -8,6 +8,7 @@ This is the single source of truth for what VisaryNotes is, why it is shaped thi
 
 * A positioning built on points of parity, points of difference and a partial blue ocean strategy (section 2).
 * VisaryNotes is an open source project, with a licence, governance, privacy and distribution plan (section 14).
+* It ships on Google Play as well as from source, with the Play requirements, signing model and listing plan in section 14.7.
 * Every requirement has an ID, a status against build 0.2.6 and an acceptance check.
 * Known defects found on the owner's phone are listed as release blockers (section 15.1), because they break points of parity.
 
@@ -74,10 +75,11 @@ Accounts and cloud sync run by VisaryNotes, collaboration, editing office files 
 | ID | Assumption | Status |
 | --- | --- | --- |
 | A1 | Visual Studio on Windows, .NET 10, .NET MAUI, C#, Android only (`net10.0-android`) | Confirmed by the owner |
-| A2 | Package name `com.visary.notes`, app name VisaryNotes | In use, not yet confirmed |
+| A2 | Package name `com.visary.notes`, app name VisaryNotes. The package name can never change once the app is on Google Play, so it must be confirmed before the first upload | In use, not yet confirmed; urgent |
 | A3 | Minimum Android 8.0 (API 26), target API 36 | In use |
 | A4 | The project is open source under GPL-3.0-or-later (section 14.3) | Proposed, owner to confirm |
 | A5 | No telemetry of any kind; feedback comes from opt in channels (section 14.5) | Proposed |
+| A6 | Published on Google Play and as open source at the same time, from the same source code (section 14.7) | Confirmed by the owner |
 
 ---
 
@@ -495,7 +497,7 @@ Planned 0.4: Tag, NoteTag, Notebook, Attachment.  Planned 0.5: anchor fields on 
 
 ### 11.4 Permissions
 
-`INTERNET` only for opt in remote images. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs.
+`INTERNET` only for opt in remote images. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs, and no Google Play Services libraries, so the Play build and the open source build are the same code. Every permission added later must be justified here and in the Play data safety form (section 14.7).
 
 ### 11.5 Development environment
 
@@ -566,7 +568,7 @@ Status: Built (`.github/workflows/build.yml`).
 | Item | Detail | Status |
 | --- | --- | --- |
 | `README.md` | What the app is, screenshots, build in Visual Studio, links | Built, to extend |
-| `CONTRIBUTING.md` | How to build, run tests, the design token rules, how to propose a change, small pull requests | Planned 0.3 |
+| `CONTRIBUTING.md` | How to build, run tests, the design token rules, how to propose a change, small pull requests, Developer Certificate of Origin sign off (section 14.7) | Planned 0.3 |
 | `CODE_OF_CONDUCT.md` | Contributor Covenant 2.1 | Planned 0.3 |
 | `SECURITY.md` | Private reporting through GitHub security advisories; a malformed file that crashes or hangs a reader counts as a security issue | Planned 0.3 |
 | Issue templates | Bug (device, Android version, steps), Feature (which parity or create item it serves), **Document that will not open** | Planned 0.3 |
@@ -581,6 +583,8 @@ Status: Built (`.github/workflows/build.yml`).
 * Nothing leaves the phone unless the user shares, exports or backs up to a place they choose.
 * Remote images in Markdown are off until the user turns them on.
 * Feedback comes only from opt in channels: GitHub issues, beta questionnaires, an in app "Report a problem" that opens a prefilled issue without attaching data.
+* A short privacy policy (`PRIVACY.md`, published as a web page) states all of the above. Google Play requires the link in Play Console and inside the app (section 14.7), so Settings gets a "Privacy" row.
+* Google Play itself may collect crash and performance data for the developer console (Android vitals). That is collected by Google, not by the app. The privacy policy says so plainly, and the app adds no reporting of its own.
 
 ### 14.6 Distribution
 
@@ -589,8 +593,53 @@ Status: Built (`.github/workflows/build.yml`).
 | GitHub Releases | Signed APK per version tag, with checksums and the changelog | Planned 0.3 |
 | F-Droid main repository | F-Droid builds every app from source with a fully free toolchain ([F-Droid Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy)). A forum thread reports that .NET MAUI apps cannot be built on its build server yet ([F-Droid Forum](https://forum.f-droid.org/t/why-isnt-c-net-maui-supported/24842)) | Blocked upstream; revisit each release |
 | F-Droid compatible third party repositories, and installers that track GitHub Releases | The inclusion policy allows separate F-Droid compatible repositories. Which one to use is to be verified | Planned 0.6 |
-| Google Play | Optional, after 1.0; the same build, no Play Services | Later |
+| **Google Play** | A main channel, not an afterthought. Same source, no Play Services, Android App Bundle signed through Play. Details in section 14.7 | Closed test 0.6, production 1.0 |
 | Reproducible builds | Document the exact SDK and workload versions so anyone can rebuild the release APK | Planned 0.6 |
+
+### 14.7 Google Play, as an open source app
+
+Being on Google Play and being open source do not conflict. The owner holds the copyright, so the owner can publish the app on Play under GPL-3.0 like any other distributor, as long as the source stays available. The rules below keep both sides honest.
+
+**Play requirements that apply**
+
+| ID | Requirement | What VisaryNotes does | Status |
+| --- | --- | --- | --- |
+| GP1 | **Target API.** New apps and updates must target Android 16 (API 36) from 31 August 2026 ([Play Console Help, target API](https://support.google.com/googleplay/android-developer/answer/11926878?hl=en-GB)) | Already targets API 36 (A3). Each year's new target is added to the release checklist | Built |
+| GP2 | **App Bundle.** New apps must be uploaded as an Android App Bundle (AAB), required since August 2021 ([Android Developers Blog](https://android-developers.googleblog.com/2021/06/the-future-of-android-app-bundles-is.html)). Microsoft's guide says the MAUI Release package format must be set to bundle for Play ([Microsoft Learn](https://learn.microsoft.com/en-in/dotnet/maui/android/deployment/publish-google-play?view=net-maui-8.0)) | Release builds produce an AAB for Play and a signed APK for GitHub. CI builds both | Planned 0.3 |
+| GP3 | **Data safety form.** Every app must complete it, even one that collects no data ([Play Console Help, data safety](https://support.google.com/googleplay/android-developer/answer/10787469?hl=en)) | Declare: no data collected, no data shared. Kept true by section 11.4 and 14.5 | Planned 0.6 |
+| GP4 | **Privacy policy.** A link is required in Play Console and inside the app ([User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311?hl=en)) | `PRIVACY.md` published as a page; Settings "Privacy" row | Planned 0.3 |
+| GP5 | **Closed testing before production.** Personal developer accounts created after 13 November 2023 must run a closed test with at least 12 testers for 14 days in a row before applying for production. Organisation accounts are exempt. This is reported by secondary sources such as [Testers Community](https://www.testerscommunity.com/blog/google-play-12-testers-policy); confirm in Play Console before planning dates | The 0.6 community beta is the closed test, with 15 to 30 testers so drop outs do not break the 12 tester minimum | Planned 0.6 |
+| GP6 | **Content rating questionnaire** and target audience | A productivity tool with no user generated content shared between users; expect the lowest rating | Planned 0.6 |
+| GP7 | **Developer verification for apps installed outside Play.** Google began enforcing it on 30 September 2026 in Brazil, Indonesia, Singapore and Thailand, with a global rollout planned for 2027. It covers APKs from GitHub and F-Droid; unverified apps can still be installed through an "advanced flow" with a waiting period ([Android Authority](https://www.androidauthority.com/how-to-bypass-android-developer-verification-sideloading-rules-3718002/), [F-Droid Forum](https://forum.f-droid.org/t/google-will-require-developer-verification-to-install-android-apps-including-sideloading/33123)) | Register the package name and the GitHub release signing key under the owner's verified developer account, so GitHub APKs install normally | Planned 0.3; check rules again before 1.0 |
+
+**Signing and update paths**
+
+| Topic | Decision |
+| --- | --- |
+| Two signing keys | With an AAB, Google re-signs the app for delivery with the app signing key it holds (Play App Signing); the owner only holds the upload key. To verify in Play Console help before the first upload. The GitHub APK is signed with the owner's own release key |
+| Users cannot switch channel by updating | Android refuses an update signed by a different key. A user who moves from the GitHub APK to Play, or the other way, must back up (S1), uninstall, install, and restore. The README and release notes say so; backup in 0.3 makes the move safe |
+| Reproducible builds | Apply to the GitHub APK, which anyone can rebuild and compare. The Play build is made from the same tagged commit, and the tag is named in the Play release notes |
+| Keys | Upload key and release key are kept outside the repository, with an offline backup. Losing the release key ends updates for GitHub users |
+
+**Open source rules on Play**
+
+| Rule | Detail |
+| --- | --- |
+| Same code | The Play build contains nothing that is not in the public repository at the release tag. No closed modules, no Play only features |
+| Source link | The store listing and the in app "About" screen link to the repository and the licence |
+| Contributions | Contributors keep their copyright and sign off each commit under the Developer Certificate of Origin (`git commit -s`). No contributor licence agreement is needed, because publishing on Play is distribution under GPL-3.0 like any other |
+| Price | Free, no ads, no in app purchases. Donations, if any, link out from the repository, not from the app |
+| Name | The listing uses the VisaryNotes name and icon reserved in `TRADEMARKS.md`; forks on Play must use their own |
+
+**Store listing**
+
+| Element | Plan |
+| --- | --- |
+| Title | VisaryNotes, with a short description built on the tagline: "Read what you're sent. Write what you think." |
+| Full description | Leads with the two jobs (open any document, write notes) and the loop between them, then the three trust points: offline, no tracking, open source |
+| Screenshots | One per job: Reading view of a DOCX, a PDF, the editor, Quote to note, a widget. Taken on a real phone after the release blockers are fixed |
+| Category | Productivity |
+| Data safety section | "No data collected" and "No data shared", matching GP3 |
 
 ---
 
@@ -617,11 +666,11 @@ Two earlier fixes (bar tint in 0.2.6, keyboard lift in 0.2.4) did not take effec
 
 | Release | Theme | Scope | Exit criteria |
 | --- | --- | --- | --- |
-| **0.3 Parity and openness** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); licence, contributing, code of conduct, security policy, issue templates including corpus donation; first GitHub Release; release checklist; first performance measurements | Every blocker verified on a real phone; a full backup restores on a second phone; the repository is legally open source |
+| **0.3 Parity and openness** | Close the gaps that stop people trusting the app | B1 to B10; backup and restore (S1, S2); licence, contributing, code of conduct, security policy, issue templates including corpus donation; first GitHub Release; release checklist; first performance measurements; confirm package name (A2); Play developer account and verification (GP7); AAB build (GP2); privacy policy and Settings row (GP4) | Every blocker verified on a real phone; a full backup restores on a second phone; the repository is legally open source; an AAB uploads to an internal test track |
 | **0.4 Writing** | Editing on par with Markdown apps (P3, P4, P5) | Undo and redo, find and replace, list continuation, checklist ticking in preview, images, tables, `[[links]]` and backlinks, tags, notebooks, sort, templates, outline, Markdown bundle export, follow system theme | Owner writes daily notes for two weeks without needing another app |
 | **0.5 Reading and the loop** | Build the create column | Quote anchors and jump to passage, highlights digest, highlight colours, quotes to Word, ODT and RTF export, PDF export and print, search inside documents, side by side on foldables and tablets, backdrop blur, checklist widget, Quick Settings tile, shortcuts, keyboard support | A quote round trip (select, quote, tap source, land on the passage) works on phone, foldable and tablet |
-| **0.6 Community beta** | Learn from real people | 15 to 30 testers from section 1.3; usability rounds of 5; translations; reproducible build notes; F-Droid compatible channel | Measures in section 16 reach their targets or the plan is revised |
-| **1.0** | Release | Fixes from the beta; accessibility pass; store listing built on the frame in 2.1 | No open severity 3 or 4 findings |
+| **0.6 Community beta** | Learn from real people | 15 to 30 testers from section 1.3, run as the Google Play closed test (GP5) with an APK on GitHub for people without Play; data safety form and content rating (GP3, GP6); usability rounds of 5; translations; reproducible build notes; F-Droid compatible channel | At least 12 testers stay in the closed test for 14 days in a row; measures in section 16 reach their targets or the plan is revised |
+| **1.0** | Release | Fixes from the beta; accessibility pass; Play production release and store listing built on the frame in 2.1 (section 14.7); GitHub Release of the same tag | No open severity 3 or 4 findings; Play listing approved; the Play and GitHub builds come from the same tag |
 
 ---
 
@@ -638,6 +687,8 @@ No telemetry, so every measure comes from the beta questionnaire, usability sess
 | Perceived behavioural control score (Ajzen items) | Higher than attitude and norm scores, or rising between rounds | Questionnaire |
 | Documents donated to the corpus | 50 by 1.0 | Issue tracker |
 | Release blockers open at release | 0 | Section 15.1 |
+| Play rating | 4.3 or more, with every review answered | Google Play Console (public reviews, not telemetry) |
+| Installs from Play and downloads from GitHub | Tracked per release, no target | Play Console totals, GitHub release download counts |
 
 ---
 
@@ -650,10 +701,12 @@ Version history; work in folder mode; sync through a user chosen service (WebDAV
 ### 17.2 Open questions
 
 1. **Licence.** Confirm GPL-3.0-or-later, or choose Apache-2.0 (section 14.3).
-2. **Name and package.** Confirm VisaryNotes and `com.visary.notes`, and whether to register the name.
+2. **Name and package.** Confirm VisaryNotes and `com.visary.notes`, and whether to register the name. Urgent: the package name is permanent once on Google Play.
 3. **F-Droid route.** Which F-Droid compatible repository to use while the main repository cannot build MAUI.
 4. **Test devices.** Which phone, and whether a foldable or tablet is available, for the release checklist.
 5. **Organisation model.** Tags only, notebooks only, or both (section 6.1, N9 and N10).
+6. **Play account type.** A personal account needs the 12 tester closed test (GP5) and shows the owner's name on the listing; an organisation account skips the test but needs a registered organisation. Which one to open.
+7. **Play App Signing.** Confirm in Play Console help how app signing keys work for new apps, and whether the owner can supply their own key so Play and GitHub builds share one (section 14.7).
 
 ---
 
@@ -669,6 +722,15 @@ Version history; work in folder mode; sync through a user chosen service (WebDAV
 * Free Software Foundation, Various Licenses and Comments about Them. https://www.gnu.org/licenses/license-list.html
 * .NET Foundation, .NET MAUI project page. https://old.dotnetfoundation.org/projects/dotnet-maui
 * GitHub Docs, Actions billing. https://docs.github.com/en/billing/concepts/product-billing/github-actions
+* Play Console Help, Target API level requirements. https://support.google.com/googleplay/android-developer/answer/11926878?hl=en-GB
+* Play Console Help, Provide information for Google Play's Data safety section. https://support.google.com/googleplay/android-developer/answer/10787469?hl=en
+* Google Play, User Data policy. https://support.google.com/googleplay/android-developer/answer/10144311?hl=en
+* Android Developers Blog (June 2021), The future of Android App Bundles is here. https://android-developers.googleblog.com/2021/06/the-future-of-android-app-bundles-is.html
+* Microsoft Learn, Publish an Android app for Google Play distribution. https://learn.microsoft.com/en-in/dotnet/maui/android/deployment/publish-google-play?view=net-maui-8.0
+* Testers Community, Google Play 12 testers policy (secondary source). https://www.testerscommunity.com/blog/google-play-12-testers-policy
+* Android Authority, developer verification and sideloading. https://www.androidauthority.com/how-to-bypass-android-developer-verification-sideloading-rules-3718002/
+* F-Droid Forum, Google will require developer verification to install Android apps. https://forum.f-droid.org/t/google-will-require-developer-verification-to-install-android-apps-including-sideloading/33123
+* Developer Certificate of Origin. https://developercertificate.org/
 * Google Keep Help, delete and restore notes. https://support.google.com/keep/answer/6262770
 * Obsidian Help, Outline. https://obsidian.md/help/plugins/outline
 * Project documents: [STRATEGY.md](STRATEGY.md), [DESIGN.md](DESIGN.md), [UX-REVIEW.md](UX-REVIEW.md), [archive/SPEC-0.7.md](archive/SPEC-0.7.md)
