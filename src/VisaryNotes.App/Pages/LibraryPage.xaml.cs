@@ -21,7 +21,11 @@ public sealed class LibraryRow : INotifyPropertyChanged
     public string Title => Item.Title;
     public string Snippet => Item.Snippet;
     public string Badge => Item.Badge;
-    public string DateText => FormatDate(Item.UpdatedAt);
+    // A task shows when it is due; an overdue one says so in words and in ink, not by colour alone.
+    public string DateText => Item.IsTask
+        ? Item.Due is { } due ? (due < DateTime.Now ? "Late, " : "") + BottomSheet.When(due) : ""
+        : FormatDate(Item.UpdatedAt);
+    public Color DateInk => Item.IsTask && Item.Due < DateTime.Now ? ThemeService.Res("Ink") : ThemeService.Res("Soft");
     public string MoreLabel => $"More actions for {Item.Title}";
 
     // Documents get a filled badge, notes an outlined one, so the two kinds differ without relying on colour.
@@ -68,7 +72,9 @@ public sealed class LibraryRow : INotifyPropertyChanged
 
 public partial class LibraryPage : ContentPage
 {
-    private static readonly string[] FilterLabels = ["All", "Notes", "Docs", "Linked", "Trash"];
+    // Tasks took the place of Linked, which is rarely used on its own; linked notes still show under Notes.
+    private static readonly (string Label, LibraryFilter Filter)[] Tabs =
+        [("All", LibraryFilter.All), ("Notes", LibraryFilter.Notes), ("Docs", LibraryFilter.Documents), ("Tasks", LibraryFilter.Tasks), ("Trash", LibraryFilter.Trash)];
 
     private readonly LibraryRepository _repo;
     private readonly SettingsService _settings;
@@ -97,10 +103,11 @@ public partial class LibraryPage : ContentPage
                 await Shell.Current.GoToAsync($"reader?doc={id}");
         }) });
 
-        Filters.SetItems(FilterLabels, 0);
+        Filters.SetItems(Tabs.Select(t => t.Label).ToList(), 0);
         Filters.SelectedChanged += async (_, i) =>
         {
-            _filter = (LibraryFilter)i;
+            _filter = Tabs[i].Filter;
+            BuildPill();
             await LoadAsync();
         };
         SearchEntry.TextChanged += async (_, e) => await SearchAsync(e.NewTextValue);
@@ -135,7 +142,9 @@ public partial class LibraryPage : ContentPage
         Pill.SetActions(
         [
             new PillAction(Icons.Folder, "Open file", OpenFileAsync),
-            new PillAction(Icons.Plus, "New note", () => Shell.Current.GoToAsync("editor"), IsPrimary: true),
+            _filter == LibraryFilter.Tasks
+                ? new PillAction(Icons.Plus, "New task", NewTaskAsync, IsPrimary: true)
+                : new PillAction(Icons.Plus, "New note", () => Shell.Current.GoToAsync("editor"), IsPrimary: true),
             new PillAction(Icons.Search, "Search", () => SetSearching(true))
         ], _settings.Hand);
     }
@@ -160,12 +169,17 @@ public partial class LibraryPage : ContentPage
         }
 
         var trash = _filter == LibraryFilter.Trash;
-        EmptyText.IsVisible = !trash && items.Count == 0 && cont is null;
-        TrashHeader.IsVisible = trash;
+        var tasks = _filter == LibraryFilter.Tasks;
+        if (tasks)
+            Counts.Text = items.Count == 1 ? "1 open task" : $"{items.Count} open tasks";
+        EmptyText.IsVisible = !trash && !tasks && items.Count == 0 && cont is null;
+        TrashHeader.IsVisible = trash || tasks && items.Count == 0;
         EmptyTrash.IsVisible = trash && items.Count > 0;
-        TrashText.Text = items.Count == 0
-            ? "Trash is empty. Deleted notes wait here for 30 days, so a mistake is never final."
-            : "Deleted notes wait here for 30 days, then they are deleted for good. Tap a note to restore it.";
+        TrashText.Text = tasks
+            ? "No open tasks. Add one with New task, or write \"- [ ]\" in any note. Give it a time and you get a reminder."
+            : items.Count == 0
+                ? "Trash is empty. Deleted notes wait here for 30 days, so a mistake is never final."
+                : "Deleted notes wait here for 30 days, then they are deleted for good. Tap a note to restore it.";
     }
 
     private void Show(IReadOnlyList<LibraryItem> items)
@@ -217,10 +231,15 @@ public partial class LibraryPage : ContentPage
         }
     }
 
-    private async void OnRowTapped(object? sender, TappedEventArgs e)
+    private async void OnRowTapped(object? sender, EventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
             return;
+        if (row.Item.IsTask)
+        {
+            await CompleteTaskAsync(row.Item);
+            return;
+        }
         if (_selecting)
         {
             row.IsSelected = !row.IsSelected;
@@ -232,29 +251,60 @@ public partial class LibraryPage : ContentPage
             await TrashActionsAsync(row.Item);
             return;
         }
-        var route = row.Item.IsDocument ? $"reader?doc={row.Item.Id}" : $"editor?note={row.Item.Id}";
-        await Shell.Current.GoToAsync(route);
+        await Shell.Current.GoToAsync(Route(row.Item));
     }
 
-    /// <summary>Row actions in a sheet. Every removal can be undone from the notice that follows.</summary>
+    /// <summary>Notes open to read; Edit is one tap away. A new note opens to write.</summary>
+    private static string Route(LibraryItem item) => item.IsDocument ? $"reader?doc={item.Id}" : $"editor?note={item.Id}&mode=view";
+
     private async void OnMoreTapped(object? sender, TappedEventArgs e)
+    {
+        if ((sender as BindableObject)?.BindingContext is LibraryRow row)
+            await ActionsAsync(row);
+    }
+
+    /// <summary>A long press opens the same actions as the more button; in selection mode it selects.</summary>
+    private async void OnRowLongPressed(object? sender, EventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not LibraryRow row)
             return;
+        if (_selecting)
+        {
+            row.IsSelected = !row.IsSelected;
+            UpdateSelectionBar();
+            return;
+        }
+        await ActionsAsync(row);
+    }
+
+    /// <summary>Row actions in a sheet. Every removal can be undone from the notice that follows.</summary>
+    private async Task ActionsAsync(LibraryRow row)
+    {
         var item = row.Item;
         if (_filter == LibraryFilter.Trash)
         {
             await TrashActionsAsync(item);
             return;
         }
+        if (item.IsTask)
+        {
+            await TaskActionsAsync(item);
+            return;
+        }
         string[] options = item.IsDocument
-            ? ["Open", "Select several", "Remove from Library"]
-            : ["Open", item.Pinned ? "Unpin" : "Pin to top", "Select several", "Delete note"];
+            ? ["Open", "Rename", "Select several", "Remove from Library"]
+            : ["Open", "Edit", "Rename", item.Pinned ? "Unpin" : "Pin to top", "Select several", "Delete note"];
         var choice = await BottomSheet.ChooseAsync(this, item.Title, options);
         switch (choice)
         {
             case "Open":
-                await Shell.Current.GoToAsync(item.IsDocument ? $"reader?doc={item.Id}" : $"editor?note={item.Id}");
+                await Shell.Current.GoToAsync(Route(item));
+                break;
+            case "Edit":
+                await Shell.Current.GoToAsync($"editor?note={item.Id}");
+                break;
+            case "Rename":
+                await RenameAsync(item);
                 break;
             case "Pin to top" or "Unpin":
                 await _repo.SetPinnedAsync(item.Id, !item.Pinned);
@@ -267,6 +317,80 @@ public partial class LibraryPage : ContentPage
                 break;
             case "Delete note" or "Remove from Library":
                 await RemoveAsync([item]);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// A note's name is its first heading, so renaming changes that heading. A document keeps its file as it is;
+    /// only the name shown in the Library changes.
+    /// </summary>
+    private async Task RenameAsync(LibraryItem item)
+    {
+        var current = item.IsDocument ? Path.GetFileNameWithoutExtension(item.Title) : item.Title;
+        var name = await BottomSheet.PromptAsync(this, item.IsDocument ? "Rename document" : "Rename note", current, "Rename",
+            item.IsDocument ? "Name in your Library" : "Note title");
+        if (name is null || name == current)
+            return;
+        if (item.IsDocument)
+            await _repo.RenameDocumentAsync(item.Id, name);
+        else
+            await _repo.RenameNoteAsync(item.Id, name);
+        await LoadAsync();
+        _ = Notice.ShowAsync(this, "Renamed", above: Dock);
+    }
+
+    // Tasks (docs/SPEC.md 6.4)
+
+    private async Task NewTaskAsync()
+    {
+        var text = await BottomSheet.PromptAsync(this, "New task", "", "Next", "What needs doing");
+        if (text is null)
+            return;
+        var when = await BottomSheet.PickReminderAsync(this, text, null);
+        if (when?.At is not null)
+            await ReminderService.EnsureNotificationsAsync();
+        await _repo.AddTaskAsync(text, when?.At);
+        await ReminderService.RescheduleAsync();
+        await LoadAsync();
+        _ = Notice.ShowAsync(this, when?.At is { } at ? $"Task added. Reminder {BottomSheet.When(at)}" : "Task added to your Tasks note", above: Dock);
+    }
+
+    /// <summary>Ticks a task off; Undo puts it back.</summary>
+    private async Task CompleteTaskAsync(LibraryItem item)
+    {
+        await _repo.ToggleTaskAsync(item.Id, item.TaskLine);
+        await ReminderService.RescheduleAsync();
+        await LoadAsync();
+        _ = Notice.ShowAsync(this, "Task done", "Undo", async () =>
+        {
+            await _repo.ToggleTaskAsync(item.Id, item.TaskLine);
+            await ReminderService.RescheduleAsync();
+            await LoadAsync();
+        }, Dock);
+    }
+
+    private async Task TaskActionsAsync(LibraryItem item)
+    {
+        var options = new List<string> { "Mark done", item.Due is null ? "Remind me" : "Change reminder", "Open note" };
+        var choice = await BottomSheet.ChooseAsync(this, item.Title, options, $"In {item.Snippet}");
+        switch (choice)
+        {
+            case "Mark done":
+                await CompleteTaskAsync(item);
+                break;
+            case "Open note":
+                await Shell.Current.GoToAsync($"editor?note={item.Id}&mode=view");
+                break;
+            case "Remind me" or "Change reminder":
+                var when = await BottomSheet.PickReminderAsync(this, item.Title, item.Due);
+                if (when is null)
+                    return;
+                if (when.At is not null)
+                    await ReminderService.EnsureNotificationsAsync();
+                await _repo.SetTaskDueAsync(item.Id, item.TaskLine, when.At);
+                await ReminderService.RescheduleAsync();
+                await LoadAsync();
                 break;
         }
     }

@@ -59,11 +59,10 @@
                     <!-- Row actions sit behind a visible more button instead of a hidden swipe, so they can be
                          found, reached by TalkBack, and the list stays light to scroll (docs/UX-REVIEW.md). -->
                     <Grid BackgroundColor="{Binding RowFill}" ColumnDefinitions="*,Auto">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}"
-                              Padding="{StaticResource InsetRowLead}" MinimumHeightRequest="{Binding RowHeight}">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnRowTapped" />
-                            </Grid.GestureRecognizers>
+                        <!-- Tap opens (or ticks a task); a long press opens the row's actions, as on any Android list. -->
+                        <controls:PressRow ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}"
+                                           Padding="{StaticResource InsetRowLead}" MinimumHeightRequest="{Binding RowHeight}"
+                                           Tapped="OnRowTapped" LongPressed="OnRowLongPressed">
                             <Border Style="{StaticResource Badge}" BackgroundColor="{Binding BadgeFill}" IsVisible="{Binding NotSelecting}">
                                 <Label Text="{Binding Badge}" Style="{StaticResource BadgeText}" TextColor="{Binding BadgeInk}" />
                             </Border>
@@ -76,11 +75,11 @@
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}">
                                     <Label Text="{Binding Title}" Style="{StaticResource T1}" />
-                                    <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource T2}" />
+                                    <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource T2}" TextColor="{Binding DateInk}" />
                                 </Grid>
                                 <Label Text="{Binding Snippet}" Style="{StaticResource T2}" IsVisible="{Binding ShowSnippet}" />
                             </VerticalStackLayout>
-                        </Grid>
+                        </controls:PressRow>
                         <controls:Pressable Grid.Column="1" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
                                             VerticalOptions="Center" Margin="{StaticResource InsetRowTrail}" IsVisible="{Binding NotSelecting}"
                                             SemanticProperties.Description="{Binding MoreLabel}">

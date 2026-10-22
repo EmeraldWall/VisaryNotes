@@ -15,8 +15,9 @@ public enum ViewMode
 /// <param name="Solid">Reduce transparency or a High Contrast theme: bars become solid paper, no blur.</param>
 /// <param name="TopInsetPx">Space the app's top bar covers, reserved from the first frame so text never starts under it.</param>
 /// <param name="BottomInsetPx">Space the app's bottom bars cover.</param>
+/// <param name="TaskBoxes">Task boxes can be ticked, which the page reports as a "task" message (a note's view).</param>
 public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false, bool Solid = false,
-    double TopInsetPx = 0, double BottomInsetPx = 0);
+    double TopInsetPx = 0, double BottomInsetPx = 0, bool TaskBoxes = false);
 
 /// <summary>
 /// Turns the document model into a self contained HTML page for the in app WebView (docs/SPEC.md 7.3 and 7.4).
@@ -91,7 +92,8 @@ public static class HtmlRenderer
 
         var sb = new StringBuilder();
         sb.Append("<!doctype html><html><head><meta charset=\"utf-8\">");
-        sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=5\">");
+        // Pinch zoom is allowed in both views (the WebView turns it on in WebFiles), never below 100 percent.
+        sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes\">");
         sb.Append("<style>").Append(css).Append("</style></head><body class=\"").Append(mode == ViewMode.Reading ? "mode-reading" : "mode-original").Append(settings.Solid ? " solid" : "").Append("\">");
         sb.Append(bodyHtml);
         var noteList = notes?.ToList() ?? [];
@@ -105,7 +107,8 @@ public static class HtmlRenderer
         sb.Append("<button data-act=\"highlight\">Highlight</button>");
         sb.Append("<button data-act=\"quote\" class=\"primary\">Quote to note</button>");
         sb.Append("<button data-act=\"copy\">Copy</button></div>");
-        sb.Append("<script>window.vnHighlights=").Append(JsonArray(highlights ?? [])).Append(";").Append(BridgeJs).Append("</script>");
+        sb.Append("<script>window.vnHighlights=").Append(JsonArray(highlights ?? [])).Append(";window.vnTaskBoxes=").Append(settings.TaskBoxes ? "true" : "false")
+          .Append(";").Append(BridgeJs).Append("</script>");
         sb.Append("</body></html>");
         return sb.ToString();
     }
@@ -429,8 +432,16 @@ public static class HtmlRenderer
             send(b.getAttribute('data-act'), {text: lastText});
             window.getSelection().removeAllRanges(); menu.hidden = true;
           });
+          // In a note's view each task box can be ticked; the app finds the task by its position.
+          if (window.vnTaskBoxes){
+            var boxes = document.querySelectorAll('li.task-list-item > input[type=checkbox]');
+            Array.prototype.forEach.call(boxes, function(box, i){
+              box.disabled = false;
+              box.addEventListener('click', function(e){ e.stopPropagation(); send('task', {i: i}); });
+            });
+          }
           document.addEventListener('click', function(e){
-            if (e.target.closest('a,#vn-menu')) return;
+            if (e.target.closest('a,#vn-menu,input')) return;
             if (window.getSelection().toString()) return;
             send('tap');
           });

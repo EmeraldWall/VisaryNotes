@@ -23,6 +23,7 @@ This is the single source of truth for what VisaryNotes is, why it is shaped thi
 | Later | After 1.0 |
 | Blocker | A defect that must be fixed before the next release |
 | Fixed 0.2.8, to verify | A blocker fixed in build 0.2.8, waiting for the owner to confirm on a phone |
+| Built 0.2.9, unverified | Added in build 0.2.9 at the owner's request, not yet confirmed on a phone |
 
 ---
 
@@ -265,7 +266,7 @@ Themes switch at runtime through dynamic resources; the reader, widgets and stat
 
 | ID | Requirement | Status |
 | --- | --- | --- |
-| N1 | One Library for notes and documents, filters All, Notes, Docs, Linked, Trash | Built |
+| N1 | One Library for notes and documents, filters All, Notes, Docs, Tasks, Trash. Tasks replaced Linked in 0.2.9 to keep five tabs that fit a phone; linked notes still show under Notes | Built |
 | N2 | Continue reading row at the top | Built |
 | N3 | Full text search over notes (SQLite FTS5) | Built |
 | N4 | Pin, delete to Trash with undo, restore, delete forever, empty Trash (asks first), 30 days retention | Built |
@@ -279,6 +280,8 @@ Themes switch at runtime through dynamic resources; the reader, widgets and stat
 | N12 | Search inside documents' text | Planned 0.5 |
 | N13 | Templates: meeting, journal, checklist, blank | Planned 0.4 |
 | N14 | Version history: the last 20 saves of a note | Later |
+| N15 | A long press on any row opens its actions, the same as the more button; in selection mode it selects. Native long click with the usual haptic tick and press ripple | Built 0.2.9, unverified |
+| N16 | Rename. A note's name is its first heading, so renaming edits that heading (or adds one). A document's Library name changes; the file itself never does, and its extension is kept | Built 0.2.9, unverified |
 
 ### 6.2 Editor
 
@@ -290,10 +293,11 @@ The editor must be as good as dedicated Markdown apps (point of parity P3, P4), 
 | E2 | Format toolbar above the keyboard, always visible while typing | Fixed 0.2.8, to verify (B5) |
 | E3 | Autosave on pause and on leaving, save state and word count in the strip | Built |
 | E4 | Preview | Built |
+| E17 | Saved notes open to read, with Edit as the main action and the formatting bar hidden; new notes open to write. From the Library, More offers Edit directly | Built 0.2.9, unverified |
 | E5 | Undo and redo | Planned 0.4 |
 | E6 | Find and replace in a note | Planned 0.4 |
 | E7 | Lists continue on Enter (bullets, numbers, checklists); Enter on an empty item ends the list | Planned 0.4 |
-| E8 | Tap a checklist box in preview to tick it | Planned 0.4 |
+| E8 | Tap a checklist box in preview to tick it | Built 0.2.9, unverified |
 | E9 | Insert image from the photo picker or camera, stored beside the note | Planned 0.4 |
 | E10 | Insert table | Planned 0.4 |
 | E11 | Links between notes (`[[Note title]]`) and a backlinks list | Planned 0.4 |
@@ -308,6 +312,25 @@ The editor must be as good as dedicated Markdown apps (point of parity P3, P4), 
 ### 6.3 Markdown support
 
 Markdig with advanced extensions: CommonMark, tables, task lists, strikethrough, autolinks, footnotes, YAML front matter. Raw HTML disabled. Remote images only when the user turns them on. Status: Built. Math and Mermaid: Later.
+
+### 6.4 Tasks and reminders
+
+Added in 0.2.9 at the owner's request. Tasks stay plain Markdown, so a note with tasks still opens in any Markdown app.
+
+| ID | Requirement | Status |
+| --- | --- | --- |
+| T1 | A task is a list item with a box: `- [ ] Call Sam`. Numbered items count too | Built 0.2.9, unverified |
+| T2 | A task can have a time, written after it as `(@2026-10-23 14:00)`, or a whole day as `(@2026-10-23)`, which reminds at 09:00. The editor's alarm button sets, changes or removes it for the task on the cursor's line, and turns a plain line into a task | Built 0.2.9, unverified |
+| T3 | Quick times: in 1 hour, this evening 18:00, tomorrow 09:00, next Monday 09:00, or any date and time | Built 0.2.9, unverified |
+| T4 | Tasks tab: every open task from every note, timed ones first and soonest first, late ones marked "Late" in words. Tap to tick off with Undo; long press for Remind me, Change reminder, Open note | Built 0.2.9, unverified |
+| T5 | New task from the Tasks tab, with an optional time. Quick tasks go into one note called Tasks | Built 0.2.9, unverified |
+| T6 | A notification at the task's time, with a Done action that ticks the task in its note, and a tap that opens the note | Built 0.2.9, unverified |
+| T7 | Reminders survive a restart, an update and a change of time zone | Built 0.2.9, unverified |
+| T8 | Exact times when the user allows them (Settings, Reminders). Otherwise Android may delay a reminder by a few minutes while the phone is idle | Built 0.2.9, unverified |
+| T9 | Repeating tasks (every day, week, month) | Planned 0.4 |
+| T10 | A Today widget with the day's tasks | Planned 0.5 |
+
+**Implementation.** `Core/Data/NoteTasks.cs` reads and edits task lines, tested against Markdig so each box in a note's view maps to the right line. Only the soonest reminder is scheduled with the alarm manager; when it fires, every task due since the last check is shown and the next is scheduled (`Platforms/Android/Reminders/Reminders.cs`). Nothing leaves the phone.
 
 ---
 
@@ -343,6 +366,7 @@ One viewer for every format: each reader produces the shared document model (7.6
 | R11 | Resume at the last position | Built, unverified |
 | R12 | PDF Original view draws real pages, first pages first | Built, unverified |
 | R13 | Reader themes follow the app theme | Built |
+| R14 | Pinch zoom in both views, from 100 to 500 percent; PDF pages are drawn at twice the screen width so they stay sharp when zoomed | Built 0.2.9, unverified |
 
 ### 7.5 Per format rules
 
@@ -498,7 +522,7 @@ Planned 0.4: Tag, NoteTag, Notebook, Attachment.  Planned 0.5: anchor fields on 
 
 ### 11.4 Permissions
 
-`INTERNET` only for opt in remote images. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs, and no Google Play Services libraries, so the Play build and the GitHub build are the same code. Every permission added later must be justified here and in the Play data safety form (section 14.7).
+`INTERNET` only for opt in remote images. For task reminders (section 6.4): `POST_NOTIFICATIONS`, asked for the first time a reminder is set; `SCHEDULE_EXACT_ALARM`, which Android 14 leaves off until the user allows it in Settings; `RECEIVE_BOOT_COMPLETED`, to set the next reminder again after a restart. Google Play's policy on exact alarm permissions is to verify before the first upload. No storage permissions (Storage Access Framework and the photo picker instead). No analytics, crash reporting or ad SDKs, and no Google Play Services libraries, so the Play build and the GitHub build are the same code. Every permission added later must be justified here and in the Play data safety form (section 14.7).
 
 ### 11.5 Development environment
 

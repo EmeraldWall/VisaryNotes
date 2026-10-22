@@ -12,6 +12,8 @@ public partial class App : Application
         _services = services;
         InitializeComponent();
         themes.Apply();
+        // Alarms are lost when the app is updated or force stopped, so the next reminder is set on every start.
+        _ = ReminderService.RescheduleAsync();
     }
 
     protected override Window CreateWindow(IActivationState? activationState) =>
@@ -55,6 +57,10 @@ public partial class App : Application
                     var opened = await services.GetRequiredService<DocumentService>().PickAndOpenAsync();
                     if (opened is not null)
                         await Shell.Current.GoToAsync($"reader?doc={opened.Entry.Id}");
+                    break;
+                case var open when open.StartsWith("open_note:", StringComparison.Ordinal)
+                                   && int.TryParse(open["open_note:".Length..], out var noteId):
+                    await Shell.Current.GoToAsync($"editor?note={noteId}&mode=view");
                     break;
                 case "continue_reading":
                     var doc = await services.GetRequiredService<Core.Data.LibraryRepository>().GetContinueReadingAsync();

@@ -42,6 +42,7 @@ public static class MauiProgram
         Platforms.Android.Handlers.PillElevation.Register();
         Platforms.Android.Handlers.WebFiles.Register();
         Platforms.Android.Handlers.SafeInsets.Register();
+        Platforms.Android.Handlers.PressRows.Register();
 #endif
 
 #if DEBUG

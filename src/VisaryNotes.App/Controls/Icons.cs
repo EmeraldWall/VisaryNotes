@@ -22,6 +22,7 @@ public static class Icons
     public const string Up = "M6 15L12 9L18 15";
     public const string Down = "M6 9L12 15L18 9";
     public const string Link = "M9.5 14.5L14.5 9.5M11 7L12.5 5.5A4.25 4.25 0 0 1 18.5 11.5L17 13M13 17L11.5 18.5A4.25 4.25 0 0 1 5.5 12.5L7 11";
+    public const string Alarm = "M12 5A7.5 7.5 0 1 0 12 20A7.5 7.5 0 1 0 12 5ZM12 9V13L14.5 15M3 6L6 3M21 6L18 3";
     public const string Quote = "M6 17H10V11H7C7 9 8 8 10 8V6C7 6 5 8 5 11V17ZM14 17H18V11H15C15 9 16 8 18 8V6C15 6 13 8 13 11V17Z";
 
     public static Microsoft.Maui.Controls.Shapes.Path Make(string data, string brushKey = "InkBrush", double size = 24)

@@ -79,13 +79,17 @@ public enum LibraryFilter
     Documents,
     Linked,
     /// <summary>Notes deleted in the last 30 days, which can be restored or deleted for good.</summary>
-    Trash
+    Trash,
+    /// <summary>Open tasks from every note, those with a time first (docs/SPEC.md 6.4).</summary>
+    Tasks
 }
 
 public enum LibraryItemKind
 {
     Note,
-    Document
+    Document,
+    /// <summary>A task line in a note: Id is the note, TaskLine the line.</summary>
+    Task
 }
 
 /// <summary>One row of the unified Library (docs/SPEC.md 6.1).</summary>
@@ -97,7 +101,14 @@ public sealed record LibraryItem(
     string Badge,
     DateTime UpdatedAt,
     bool Linked,
-    bool Pinned)
+    bool Pinned,
+    int TaskLine = -1,
+    DateTime? Due = null,
+    bool Done = false)
 {
     public bool IsDocument => Kind == LibraryItemKind.Document;
+    public bool IsTask => Kind == LibraryItemKind.Task;
 }
+
+/// <summary>An open task with a reminder time, for the reminder scheduler.</summary>
+public sealed record TaskReminder(int NoteId, string NoteTitle, int Line, string Text, DateTime At);

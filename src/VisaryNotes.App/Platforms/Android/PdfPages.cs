@@ -12,7 +12,7 @@ namespace VisaryNotes.App.Platforms.Android;
 public static class PdfPages
 {
     /// <summary>Longest edge of a rendered page; enough to stay sharp when pinch zoomed about two times.</summary>
-    private const int MaxEdgePx = 3000;
+    private const int MaxEdgePx = 3400;
 
     public static Task RenderAsync(string pdfPath, string cacheKey, int targetWidthPx, Func<int, string, Task> deliver, CancellationToken cancel) =>
         Task.Run(async () =>
@@ -21,7 +21,7 @@ public static class PdfPages
             Directory.CreateDirectory(dir);
             using var fd = ParcelFileDescriptor.Open(new Java.IO.File(pdfPath), ParcelFileMode.ReadOnly)!;
             using var renderer = new PdfRenderer(fd);
-            var width = Math.Clamp(targetWidthPx, 600, 2000);
+            var width = Math.Clamp(targetWidthPx, 600, 2400);
             for (var i = 0; i < renderer.PageCount; i++)
             {
                 cancel.ThrowIfCancellationRequested();

@@ -52,6 +52,7 @@ public partial class SettingsPage : ContentPage
         Remote.Toggled += (_, e) => _settings.AllowRemoteImages = e.Value;
 
         CleanRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await CleanUpAsync()) });
+        ReminderRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(ReminderService.OpenExactTimesSettings) });
         ImportRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportAsync()) });
         Pill.HandSwiped += (_, hand) =>
         {
@@ -62,7 +63,18 @@ public partial class SettingsPage : ContentPage
         BuildThemes();
         BuildPill();
         _ready = true;
+        // The system page for exact alarms is a separate screen, so the status is read again on return.
+        Loaded += (_, _) =>
+        {
+            ShowReminderStatus();
+            if (Window is { } window)
+                window.Resumed += (_, _) => ShowReminderStatus();
+        };
     }
+
+    private void ShowReminderStatus() => ReminderStatus.Text = ReminderService.ExactTimes
+        ? "On. Task reminders arrive on the minute."
+        : "Off. Android may delay reminders by a few minutes while the phone is idle. Tap to allow exact times.";
 
     private void BuildPill() =>
         Pill.SetActions([new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync(".."), IsPrimary: true)], _settings.Hand);

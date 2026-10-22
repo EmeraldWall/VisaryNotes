@@ -133,7 +133,8 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
 #if ANDROID
         var cancel = new CancellationTokenSource();
         _pdfRender = cancel;
-        var width = (int)Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width, DeviceDisplay.Current.MainDisplayInfo.Height) * 3 / 2;
+        // Twice the screen width, so a page stays sharp when pinch zoomed (docs/SPEC.md R14).
+        var width = (int)Math.Min(DeviceDisplay.Current.MainDisplayInfo.Width, DeviceDisplay.Current.MainDisplayInfo.Height) * 2;
         var key = Path.GetFileNameWithoutExtension(_opened.Entry.Uri);
         _ = Platforms.Android.PdfPages.RenderAsync(_opened.Entry.Uri, key, width,
             (n, url) => MainThread.InvokeOnMainThreadAsync(() => Web.EvaluateJavaScriptAsync($"window.vnPdfPage({n},{JsonSerializer.Serialize(url)})")),

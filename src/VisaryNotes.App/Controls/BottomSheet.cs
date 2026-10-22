@@ -26,6 +26,85 @@ public static class BottomSheet
     public static Task AlertAsync(ContentPage page, string title, string message, string ok = "OK") =>
         ShowAsync(page, title, message, [], primary: ok, secondary: null);
 
+    /// <summary>One line of text, such as a new name. Returns the trimmed text, or null when cancelled or empty.</summary>
+    public static async Task<string?> PromptAsync(ContentPage page, string title, string initial, string accept, string placeholder = "")
+    {
+        var entry = new Entry { Text = initial, Placeholder = placeholder, ReturnType = ReturnType.Done, ClearButtonVisibility = ClearButtonVisibility.WhileEditing };
+        SemanticProperties.SetDescription(entry, title);
+        var field = new Border { Content = entry };
+        if (Application.Current!.Resources.TryGetValue("Field", out var style) && style is Style s)
+            field.Style = s;
+        entry.Loaded += (_, _) =>
+        {
+            entry.Focus();
+            entry.CursorPosition = 0;
+            entry.SelectionLength = entry.Text?.Length ?? 0;
+        };
+        TaskCompletionSource<string?>? submit = null;
+        entry.Completed += (_, _) => submit?.TrySetResult(accept);
+        var shown = ShowAsync(page, title, null, [], accept, "Cancel", field, s => submit = s);
+        var result = await shown;
+        entry.Unfocus();
+        var text = entry.Text?.Trim();
+        return result == accept && !string.IsNullOrEmpty(text) ? text : null;
+    }
+
+    /// <summary>The answer from <see cref="PickReminderAsync"/>: a time, or none to remove the reminder.</summary>
+    public sealed record ReminderChoice(DateTime? At);
+
+    /// <summary>
+    /// When to be reminded: quick choices first, as most reminders are later today, tomorrow morning or next week,
+    /// then any date and time. Returns null when cancelled.
+    /// </summary>
+    public static async Task<ReminderChoice?> PickReminderAsync(ContentPage page, string task, DateTime? current)
+    {
+        var now = DateTime.Now;
+        var choices = new List<(string Label, DateTime At)>
+        {
+            ("In 1 hour", new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0).AddHours(1))
+        };
+        if (now.Hour < 17)
+            choices.Add(("This evening", now.Date.AddHours(18)));
+        choices.Add(("Tomorrow morning", now.Date.AddDays(1).AddHours(9)));
+        var toMonday = ((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7;
+        choices.Add(("Next Monday", now.Date.AddDays(toMonday == 0 ? 7 : toMonday).AddHours(9)));
+
+        var labels = choices.Select(c => $"{c.Label}, {When(c.At)}").ToList();
+        labels.Add("Pick a date and time");
+        if (current is not null)
+            labels.Add("Remove reminder");
+        var message = current is { } c0 ? $"Now set for {When(c0)}" : null;
+        var picked = await ChooseAsync(page, string.IsNullOrWhiteSpace(task) ? "Remind me" : $"Remind me: {task}", labels, message);
+        if (picked is null)
+            return null;
+        if (picked == "Remove reminder")
+            return new ReminderChoice(null);
+        var index = labels.IndexOf(picked);
+        if (index < choices.Count)
+            return new ReminderChoice(choices[index].At);
+
+        var start = current ?? choices[0].At;
+        var ink = ThemeService.Res("Ink");
+        var date = new DatePicker { Date = start.Date, MinimumDate = now.Date, TextColor = ink, FontFamily = "FigtreeSemiBold" };
+        var time = new TimePicker { Time = start.TimeOfDay, TextColor = ink, FontFamily = "FigtreeSemiBold", Format = "HH:mm" };
+        SemanticProperties.SetDescription(date, "Date");
+        SemanticProperties.SetDescription(time, "Time");
+        var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Star)], ColumnSpacing = ThemeCatalog.Token("space", "sp-3") };
+        row.Add(date, 0, 0);
+        row.Add(time, 1, 0);
+        if (await ShowAsync(page, "Pick a date and time", null, [], "Set", "Cancel", row) != "Set")
+            return null;
+        return new ReminderChoice((date.Date ?? start.Date).Date + (time.Time ?? start.TimeOfDay));
+    }
+
+    /// <summary>A reminder time as people say it: "Today 18:00", "Tomorrow 09:00", "Mon 3 Nov 09:00".</summary>
+    public static string When(DateTime at)
+    {
+        var today = DateTime.Today;
+        var day = at.Date == today ? "Today" : at.Date == today.AddDays(1) ? "Tomorrow" : at.ToString("ddd d MMM", System.Globalization.CultureInfo.CurrentCulture);
+        return $"{day} {at:HH:mm}";
+    }
+
     /// <summary>Closes the open sheet on a page, as the back button does. Returns false if none was open.</summary>
     public static bool Dismiss(Page page)
     {
@@ -35,7 +114,10 @@ public static class BottomSheet
         return true;
     }
 
-    private static async Task<string?> ShowAsync(ContentPage page, string title, string? message, IReadOnlyList<string> options, string? primary, string? secondary)
+    /// <param name="body">Extra controls shown under the message, such as a text field or date pickers.</param>
+    /// <param name="onOpen">Receives the sheet's result source, so a control in the body can submit the sheet.</param>
+    private static async Task<string?> ShowAsync(ContentPage page, string title, string? message, IReadOnlyList<string> options, string? primary, string? secondary,
+        View? body = null, Action<TaskCompletionSource<string?>>? onOpen = null)
     {
         if (page.Content is not Grid root)
             return null;
@@ -78,6 +160,9 @@ public static class BottomSheet
                 LineBreakMode = LineBreakMode.WordWrap
             });
         }
+
+        if (body is not null)
+            content.Add(body);
 
         Grid? overlay = null;
         async Task Close(string? result)
@@ -171,6 +256,13 @@ public static class BottomSheet
         Grid.SetColumnSpan(overlay, Math.Max(1, root.ColumnDefinitions.Count));
         root.Add(overlay);
         Open[page] = () => _ = Close(null);
+        if (onOpen is not null)
+        {
+            // Submitting from inside the body, such as the keyboard's Done key, closes the sheet as the primary button does.
+            var submit = new TaskCompletionSource<string?>();
+            onOpen(submit);
+            _ = submit.Task.ContinueWith(t => MainThread.BeginInvokeOnMainThread(() => _ = Close(t.Result)), TaskScheduler.Default);
+        }
 
         await Task.WhenAll(scrim.FadeToAsync(targetScrim, 160), panel.TranslateToAsync(0, 0, 200, Easing.CubicOut));
         return await done.Task;

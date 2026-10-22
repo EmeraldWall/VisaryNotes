@@ -7,7 +7,10 @@ using VisaryNotes.Core.Theming;
 
 namespace VisaryNotes.App.Pages;
 
-/// <summary>Markdown note editor with autosave (docs/SPEC.md 6.2).</summary>
+/// <summary>
+/// A note, read or written (docs/SPEC.md 6.2). Saved notes open to read, with Edit as the main action, so a
+/// note is not a text field the moment it is opened; new notes open to write. Autosaves while writing.
+/// </summary>
 public partial class EditorPage : ContentPage, IQueryAttributable
 {
     private readonly LibraryRepository _repo;
@@ -57,6 +60,11 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         Body.Text = _note.Body;
         SaveState.Text = _note.Id == 0 ? "New note" : Status("Saved");
         _loading = false;
+        if (_note.Id != 0 && query.TryGetValue("mode", out var mode) && mode?.ToString() == "view")
+        {
+            await ShowPreviewAsync();
+            return;
+        }
         Body.Focus();
         Body.CursorPosition = Body.Text.Length;
     }
@@ -104,6 +112,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         Add("Heading", "H", () => LinePrefix("## "));
         Add("Bulleted list", "•", () => LinePrefix("- "));
         Add("Checklist", Icons.Check, () => LinePrefix("- [ ] "), isIcon: true);
+        Add("Remind me", Icons.Alarm, () => _ = RemindAsync(), isIcon: true);
         Add("Quote", Icons.Quote, () => LinePrefix("> "), isIcon: true);
         Add("Code", "{ }", () => Wrap("`"));
         Add("Link", Icons.Link, () => Wrap("[", "](https://)"), isIcon: true);
@@ -129,6 +138,33 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         var lineStart = pos == 0 ? 0 : text.LastIndexOf('\n', pos - 1) + 1;
         Body.Text = text[..lineStart] + prefix + text[lineStart..];
         Body.CursorPosition = pos + prefix.Length;
+        Body.Focus();
+    }
+
+    /// <summary>
+    /// Gives the task on the cursor's line a reminder time, or changes or removes it (docs/SPEC.md 6.4). A line
+    /// that is not a task yet becomes one. The time is written into the note as "(@2026-10-23 14:00)".
+    /// </summary>
+    private async Task RemindAsync()
+    {
+        var text = Body.Text ?? "";
+        var pos = Math.Clamp(Body.CursorPosition, 0, text.Length);
+        var line = text[..pos].Count(c => c == '\n');
+        var task = NoteTasks.Parse(text).FirstOrDefault(t => t.Line == line);
+        var label = task?.Text ?? text.Split('\n')[line].Trim().TrimStart('-', '*', '+', ' ');
+        Body.Unfocus();
+        var when = await BottomSheet.PickReminderAsync(this, label, task is null ? null : NoteTasks.ReminderAt(task));
+        if (when is null)
+        {
+            Body.Focus();
+            return;
+        }
+        if (when.At is not null && !await ReminderService.EnsureNotificationsAsync())
+            _ = Notice.ShowAsync(this, "Notifications are off, so the time is saved but no reminder will show", above: Dock);
+        Body.Text = NoteTasks.SetDue(text, line, when.At);
+        var lines = Body.Text.Split('\n');
+        Body.CursorPosition = lines.Take(line + 1).Sum(l => l.Length + 1) - 1;
+        await SaveAsync();
         Body.Focus();
     }
 
@@ -164,9 +200,13 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         }
         if (_note.Id == 0 && string.IsNullOrWhiteSpace(body.Trim('#', ' ', '\n')))
             return;
+        var hadTimes = _note.Body.Contains("(@", StringComparison.Ordinal);
         _note.Body = body;
         await _repo.SaveNoteAsync(_note);
         SaveState.Text = Status("Saved");
+        // Only notes that have or had a reminder time can change what is scheduled.
+        if (hadTimes || body.Contains("(@", StringComparison.Ordinal))
+            await ReminderService.RescheduleAsync();
     }
 
     private async Task TogglePreviewAsync()
@@ -175,14 +215,23 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         {
             PreviewHost.IsVisible = false;
             Body.IsVisible = true;
+            ToolbarGlass.IsVisible = true;
             BuildPill();
+            Body.Focus();
             return;
         }
+        await ShowPreviewAsync();
+    }
+
+    /// <summary>The note as it reads. Task boxes can be ticked here; the formatting bar is hidden.</summary>
+    private async Task ShowPreviewAsync()
+    {
         await SaveAsync();
         var html = HtmlRenderer.Page(MarkdownRenderer.ToHtml(Body.Text ?? ""), ViewMode.Reading,
-            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid));
+            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid, TaskBoxes: true));
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
+        ToolbarGlass.IsVisible = false;
         PreviewHost.IsVisible = true;
         Body.Unfocus();
         BuildPill();
@@ -201,7 +250,9 @@ public partial class EditorPage : ContentPage, IQueryAttributable
             if (e.Url.StartsWith("file:///android_asset/", StringComparison.Ordinal))
                 return;
             e.Cancel = true;
-            if (e.Url.StartsWith(LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal)
+            if (e.Url.StartsWith("visary://task?i=", StringComparison.Ordinal) && int.TryParse(e.Url["visary://task?i=".Length..], out var index))
+                await TickAsync(index);
+            else if (e.Url.StartsWith(LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal)
                 && int.TryParse(e.Url[LibraryRepository.DocumentLinkScheme.Length..].TrimEnd('/'), out var docId))
                 await Shell.Current.GoToAsync($"reader?doc={docId}");
             else if (Uri.TryCreate(e.Url, UriKind.Absolute, out var u) && u.Scheme is "http" or "https" or "mailto")
@@ -211,6 +262,16 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         _chromeSync = new WebChrome(web, () => Strip, () => Dock);
         _chromeSync.Track(Strip, Dock, Pill);
         return web;
+    }
+
+    /// <summary>A box ticked in the view. The page already shows the tick, so only the note changes.</summary>
+    private async Task TickAsync(int index)
+    {
+        var tasks = NoteTasks.Parse(Body.Text ?? "");
+        if (index < 0 || index >= tasks.Count)
+            return;
+        Body.Text = NoteTasks.Toggle(Body.Text ?? "", tasks[index].Line);
+        await SaveAsync();
     }
 
     /// <summary>Exports in the formats available in v0.1 and hands the file to the Android share sheet (docs/SPEC.md 8.2).</summary>

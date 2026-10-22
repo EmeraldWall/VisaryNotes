@@ -68,6 +68,14 @@
                     </VerticalStackLayout>
                 </controls:Pressable>
 
+                <Label Text="Reminders" Style="{StaticResource Cap}" />
+                <controls:Pressable x:Name="ReminderRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Exact reminder times" Style="{StaticResource T1}" />
+                        <Label x:Name="ReminderStatus" Style="{StaticResource T2}" MaxLines="3" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </controls:Pressable>
+
                 <BoxView HeightRequest="160" Color="Transparent" />
             </VerticalStackLayout>
         </ScrollView>
