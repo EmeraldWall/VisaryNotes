@@ -321,7 +321,7 @@ Added in 0.2.9 at the owner's request. Tasks stay plain Markdown, so a note with
 | --- | --- | --- |
 | T1 | A task is a list item with a box: `- [ ] Call Sam`. Numbered items count too | Built 0.2.9, unverified |
 | T2 | A task can have a time, written after it as `(@2026-10-23 14:00)`, or a whole day as `(@2026-10-23)`, which reminds at 09:00. The editor's alarm button sets, changes or removes it for the task on the cursor's line, and turns a plain line into a task | Built 0.2.9, unverified |
-| T3 | Quick times: in 1 hour, this evening 18:00, tomorrow 09:00, next Monday 09:00, or any date and time | Built 0.2.9, unverified |
+| T3 | Quick times: in 1 hour, this evening 18:00, tomorrow 09:00, next Monday 09:00, or any date and time. Any date and time is chosen inside the app's sheet (a month grid, hour and minute steppers, common times as chips), never in Android's date and time dialogs, which looked out of place (owner's feedback on 0.2.9) | Built 0.2.10, unverified |
 | T4 | Tasks tab: every open task from every note, timed ones first and soonest first, late ones marked "Late" in words. Tap to tick off with Undo; long press for Remind me, Change reminder, Open note | Built 0.2.9, unverified |
 | T5 | New task from the Tasks tab, with an optional time. Quick tasks go into one note called Tasks | Built 0.2.9, unverified |
 | T6 | A notification at the task's time, with a Done action that ticks the task in its note, and a tap that opens the note | Built 0.2.9, unverified |

@@ -83,18 +83,12 @@ public static class BottomSheet
         if (index < choices.Count)
             return new ReminderChoice(choices[index].At);
 
-        var start = current ?? choices[0].At;
-        var ink = ThemeService.Res("Ink");
-        var date = new DatePicker { Date = start.Date, MinimumDate = now.Date, TextColor = ink, FontFamily = "FigtreeSemiBold" };
-        var time = new TimePicker { Time = start.TimeOfDay, TextColor = ink, FontFamily = "FigtreeSemiBold", Format = "HH:mm" };
-        SemanticProperties.SetDescription(date, "Date");
-        SemanticProperties.SetDescription(time, "Time");
-        var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Star)], ColumnSpacing = ThemeCatalog.Token("space", "sp-3") };
-        row.Add(date, 0, 0);
-        row.Add(time, 1, 0);
-        if (await ShowAsync(page, "Pick a date and time", null, [], "Set", "Cancel", row) != "Set")
+        // Any date and time, chosen in the sheet itself rather than in Android's date and time dialogs.
+        var chooser = new DateTimeChooser(current ?? choices[0].At);
+        var body = new ScrollView { Content = chooser, MaximumHeightRequest = Math.Max(320, page.Height * 0.62) };
+        if (await ShowAsync(page, "Pick a date and time", null, [], "Set", "Cancel", body) != "Set")
             return null;
-        return new ReminderChoice((date.Date ?? start.Date).Date + (time.Time ?? start.TimeOfDay));
+        return new ReminderChoice(chooser.Value);
     }
 
     /// <summary>A reminder time as people say it: "Today 18:00", "Tomorrow 09:00", "Mon 3 Nov 09:00".</summary>

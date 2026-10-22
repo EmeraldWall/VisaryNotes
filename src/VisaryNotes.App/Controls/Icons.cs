@@ -6,6 +6,7 @@ namespace VisaryNotes.App.Controls;
 public static class Icons
 {
     public const string Back = "M15 5L8 12L15 19";
+    public const string Forward = "M9 5L16 12L9 19";
     public const string Search = "M10.5 4A6.5 6.5 0 1 0 10.5 17A6.5 6.5 0 1 0 10.5 4ZM20 20L15.2 15.2";
     public const string Plus = "M12 5V19M5 12H19";
     public const string Folder = "M3 6H9L11 8H21V19H3Z";
