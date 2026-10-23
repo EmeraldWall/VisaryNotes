@@ -20,6 +20,18 @@ public static class ReminderService
 #endif
     }
 
+    /// <summary>
+    /// The one way a reminder time is chosen anywhere in the app: the sheet, then permission to notify when a
+    /// time was picked, with a notice when notifications are off. Returns null when cancelled.
+    /// </summary>
+    public static async Task<Controls.BottomSheet.ReminderChoice?> AskAsync(ContentPage page, string task, DateTime? current, View? noticeAbove)
+    {
+        var choice = await Controls.BottomSheet.PickReminderAsync(page, task, current);
+        if (choice?.At is not null && !await EnsureNotificationsAsync())
+            _ = Controls.Notice.ShowAsync(page, "Notifications are off, so the time is saved but no reminder will show", above: noticeAbove);
+        return choice;
+    }
+
     /// <summary>Asks once for permission to show notifications (Android 13 and later). True when allowed.</summary>
     public static async Task<bool> EnsureNotificationsAsync()
     {

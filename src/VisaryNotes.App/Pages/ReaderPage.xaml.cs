@@ -24,6 +24,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
     private int _highlightCount;
     private readonly WebChrome _chromeSync;
     private CancellationTokenSource? _pdfRender;
+    private bool _pageReady;
 
     public ReaderPage(LibraryRepository repo, DocumentService docs, SettingsService settings, ThemeService themes)
     {
@@ -43,11 +44,9 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             await RenderAsync();
         };
         Web.Navigating += OnWebNavigating;
-        Web.Navigated += async (_, _) =>
-        {
-            await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
-            StartPdfPages();
-        };
+        Web.SelectionActions = [new SelectionAction("quote", "Quote to note"), new SelectionAction("highlight", "Highlight")];
+        Web.SelectionActionChosen += async (_, chosen) => await OnSelectionActionAsync(chosen.Id, chosen.Text);
+        Web.Navigated += async (_, _) => await OnPageReadyAsync();
         CloseSheet.Content = Icons.Make(Icons.Close);
         CloseSheet.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => ShowSheet(false)) });
         OpenNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenLinkedNoteAsync()) });
@@ -60,11 +59,6 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         FindEntry.TextChanged += (_, e) => Find(e.NewTextValue);
         FindEntry.Completed += (_, _) => FindStep(true);
         Thought.Completed += async (_, _) => await AddThoughtAsync();
-        Pill.HandSwiped += (_, hand) =>
-        {
-            _settings.Hand = hand;
-            BuildPill();
-        };
         SizeChanged += (_, _) => Sheet.HeightRequest = Height * 0.55;
     }
 
@@ -105,7 +99,7 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
             new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync("..")),
             new PillAction(Icons.Notes, _highlightCount > 0 ? $"Notes ({_highlightCount})" : "Notes", () => ShowLinkedNoteAsync(), IsPrimary: true),
             new PillAction(Icons.More, "More reading tools", MoreAsync)
-        ], _settings.Hand);
+        ]);
     }
 
     private async Task RenderAsync()
@@ -118,10 +112,28 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         var pillRow = ThemeCatalog.Token("space", "sp-3") + ThemeCatalog.Token("size", "h-control") + 2 * ThemeCatalog.Token("space", "sp-1");
         var modeBar = ModeBar.IsVisible ? ThemeCatalog.Token("size", "h-control") + 2 * ThemeCatalog.Token("space", "sp-2") : 0;
         var settings = new ReaderSettings(_themes.Current, _settings.ReadingFontSize * SystemFontScale(), AllowRemoteImages: _settings.AllowRemoteImages,
-            Solid: _themes.Solid, TopInsetPx: ThemeCatalog.Token("size", "h-strip"), BottomInsetPx: pillRow + modeBar);
+            TopInsetPx: ThemeCatalog.Token("size", "h-strip"), BottomInsetPx: pillRow + modeBar);
         var html = await Task.Run(() => _opened.Document.Html(_mode, settings, highlights));
+        _pageReady = false;
         Web.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
-        Progress.Text = $"{Math.Round(_progress * 100)}%";
+        ShowProgress();
+    }
+
+    private void ShowProgress() => Progress.Text = $"{Math.Round(_progress * 100)}%";
+
+    /// <summary>
+    /// Runs once per page load. Both the WebView's Navigated event and the page's own "ready" message call it,
+    /// because either can be missed, but the work (scroll back, draw PDF pages) must not run twice: a second
+    /// run restarted the PDF drawing from page one.
+    /// </summary>
+    private async Task OnPageReadyAsync()
+    {
+        if (_pageReady)
+            return;
+        _pageReady = true;
+        _chromeSync.Sync();
+        await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
+        StartPdfPages();
     }
 
     /// <summary>In Original view a PDF's pages are drawn natively and handed to the page as they finish.</summary>
@@ -166,32 +178,14 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
 
         var uri = new Uri(e.Url);
         var args = HttpUtility.ParseQueryString(uri.Query);
-        var text = args["text"] ?? "";
         if (_opened is null)
             return;
         var id = _opened.Entry.Id;
 
         switch (uri.Host)
         {
-            case "quote":
-                await _repo.QuoteToNoteAsync(id, _opened.Entry.DisplayName, text);
-                await MarkAsync(text);
-                // Confirm without covering the page, so reading continues; the note is one tap away.
-                _ = Notice.ShowAsync(this, "Quoted into your note", "View", ShowLinkedNoteAsync, Dock);
-                break;
-            case "highlight":
-                await _repo.AddHighlightAsync(id, text);
-                await MarkAsync(text);
-                break;
-            case "copy":
-                await Clipboard.Default.SetTextAsync(text);
-                _ = Notice.ShowAsync(this, "Copied", above: Dock);
-                break;
             case "ready":
-                // Sent by the page itself once loaded, as a backup for the WebView's Navigated event.
-                _chromeSync.Sync();
-                await Web.EvaluateJavaScriptAsync($"window.vnScrollTo && window.vnScrollTo({_progress.ToString(CultureInfo.InvariantCulture)})");
-                StartPdfPages();
+                await OnPageReadyAsync();
                 break;
             case "tap":
                 SetChrome(!_chrome);
@@ -200,10 +194,30 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
                 if (double.TryParse(args["f"], NumberStyles.Float, CultureInfo.InvariantCulture, out var f))
                 {
                     _progress = f;
-                    Progress.Text = $"{Math.Round(f * 100)}%";
+                    ShowProgress();
                     await _repo.SetProgressAsync(id, f, (int)_mode);
                 }
                 break;
+        }
+    }
+
+    /// <summary>Quote to note and Highlight, chosen in the system's selection toolbar.</summary>
+    private async Task OnSelectionActionAsync(string action, string text)
+    {
+        if (_opened is null)
+            return;
+        var id = _opened.Entry.Id;
+        if (action == "quote")
+        {
+            await _repo.QuoteToNoteAsync(id, _opened.Entry.DisplayName, text);
+            await MarkAsync(text);
+            // Confirm without covering the page, so reading continues; the note is one tap away.
+            _ = Notice.ShowAsync(this, "Quoted into your note", "View", ShowLinkedNoteAsync, Dock);
+        }
+        else if (action == "highlight")
+        {
+            await _repo.AddHighlightAsync(id, text);
+            await MarkAsync(text);
         }
     }
 
@@ -260,13 +274,16 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         {
             if (_noteView is null)
             {
-                _noteView = new WebView();
-                _noteView.SetDynamicResource(BackgroundColorProperty, "Paper");
-                _noteView.Navigating += (_, e) =>
+                // A source link to this same document just closes the sheet; the reader is already here.
+                _noteView = NoteWebView.Create(onDocument: id =>
                 {
-                    if (e.Url.StartsWith("visary://", StringComparison.Ordinal))
-                        e.Cancel = true;
-                };
+                    if (id == _opened?.Entry.Id)
+                    {
+                        ShowSheet(false);
+                        return Task.CompletedTask;
+                    }
+                    return Shell.Current.GoToAsync($"reader?doc={id}");
+                });
                 NoteHost.Content = _noteView;
             }
             return _noteView;
@@ -398,13 +415,13 @@ public partial class ReaderPage : ContentPage, IQueryAttributable
         {
             "Larger" => _settings.ReadingFontSize + 1,
             "Smaller" => _settings.ReadingFontSize - 1,
-            "Reset" => 17,
+            "Reset" => SettingsService.DefaultReadingFontSize,
             _ => _settings.ReadingFontSize
         };
-        size = Math.Clamp(size, 14, 28);
-        if (Math.Abs(size - _settings.ReadingFontSize) < 0.01)
-            return;
+        var before = _settings.ReadingFontSize;
         _settings.ReadingFontSize = size;
+        if (Math.Abs(before - _settings.ReadingFontSize) < 0.01)
+            return;
         await RenderAsync();
     }
 

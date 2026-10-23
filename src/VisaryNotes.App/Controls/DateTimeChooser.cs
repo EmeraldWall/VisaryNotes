@@ -194,33 +194,10 @@ public sealed class DateTimeChooser : VerticalStackLayout
         return grid;
     }
 
-    private static Pressable TextButton(string text, string description, Action run)
-    {
-        var label = new Label { Text = text, HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center };
-        Look(label, "FigtreeBold", "FontTitle");
-        return Square(label, description, run);
-    }
+    private static Pressable TextButton(string text, string description, Action run) =>
+        Pressable.Tool(Pressable.Glyph(text, "FontTitle"), description, run);
 
-    private static Pressable IconButton(string icon, string description, Action run) => Square(Icons.Make(icon), description, run);
-
-    private static Pressable Square(View content, string description, Action run)
-    {
-        var size = ThemeCatalog.Token("size", "h-control");
-        var button = new Pressable(() =>
-        {
-            run();
-            return Task.CompletedTask;
-        })
-        {
-            WidthRequest = size,
-            HeightRequest = size,
-            StrokeShape = new RoundRectangle { CornerRadius = ThemeCatalog.Token("radius", "r-2") },
-            Content = content
-        };
-        button.SetDynamicResource(BackgroundColorProperty, "Fill");
-        SemanticProperties.SetDescription(button, description);
-        return button;
-    }
+    private static Pressable IconButton(string icon, string description, Action run) => Pressable.Tool(Icons.Make(icon), description, run);
 
     private static void Look(Label label, string font, string size, bool keepColour = false)
     {

@@ -6,7 +6,8 @@
              Title="Reader">
 
     <Grid>
-        <WebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
+        <!-- Quote to note and Highlight join the system's selection toolbar; there is no second menu in the page. -->
+        <controls:SelectionWebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
 
         <!-- Glance zone: file name and progress only. -->
         <VerticalStackLayout x:Name="Top" VerticalOptions="Start">

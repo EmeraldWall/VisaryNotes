@@ -39,18 +39,26 @@ public sealed class ActionPill : GlassView
                 if (step == 0)
                     return;
                 var next = (Handedness)Math.Clamp((int)_hand + step, 0, 2);
-                if (next != _hand)
-                    HandSwiped?.Invoke(this, next);
+                if (next == _hand)
+                    return;
+                // The pill saves the hand itself, so every screen follows without its own handler.
+                Settings.Hand = next;
+                SetActions(_actions);
+                HandChanged?.Invoke(this, next);
             }
         };
         GestureRecognizers.Add(pan);
     }
 
-    /// <summary>Raised when the user swipes the pill to a new side. The page saves it to settings.</summary>
-    public event EventHandler<Handedness>? HandSwiped;
+    /// <summary>Raised after the user swipes the pill to a new side, which is already saved to settings.</summary>
+    public event EventHandler<Handedness>? HandChanged;
 
-    public void SetActions(IReadOnlyList<PillAction> actions, Handedness hand)
+    private static SettingsService Settings => IPlatformApplication.Current!.Services.GetRequiredService<SettingsService>();
+
+    /// <summary>Shows a screen's actions on the side of the user's hand.</summary>
+    public void SetActions(IReadOnlyList<PillAction> actions)
     {
+        var hand = Settings.Hand;
         _actions = actions;
         _hand = hand;
         HorizontalOptions = hand switch
@@ -104,6 +112,44 @@ public sealed class ActionPill : GlassView
 /// <summary>A tappable area with a pressed state, used for pill items, rows and toolbar buttons.</summary>
 public class Pressable : Border
 {
+    /// <summary>
+    /// The square tool button used by the editor's format bar and the date chooser: one size, shape and fill,
+    /// made in one place.
+    /// </summary>
+    public static Pressable Tool(View content, string description, Action run)
+    {
+        var size = ThemeCatalog.Token("size", "h-control");
+        var button = new Pressable(() =>
+        {
+            run();
+            return Task.CompletedTask;
+        })
+        {
+            WidthRequest = size,
+            HeightRequest = size,
+            StrokeShape = new RoundRectangle { CornerRadius = ThemeCatalog.Token("radius", "r-1") },
+            Content = content
+        };
+        button.SetDynamicResource(BackgroundColorProperty, "Fill");
+        SemanticProperties.SetDescription(button, description);
+        return button;
+    }
+
+    /// <summary>A text glyph for a tool button, such as B, I or a minus sign.</summary>
+    public static Label Glyph(string text, string size = "FontH3")
+    {
+        var label = new Label
+        {
+            Text = text,
+            FontFamily = "FigtreeBold",
+            FontSize = (double)Application.Current!.Resources[size],
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center
+        };
+        label.SetDynamicResource(Label.TextColorProperty, "Ink");
+        return label;
+    }
+
     private readonly Func<Task>? _run;
     private Color? _rest;
 

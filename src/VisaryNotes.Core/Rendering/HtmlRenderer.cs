@@ -12,11 +12,10 @@ public enum ViewMode
     Original
 }
 
-/// <param name="Solid">Reduce transparency or a High Contrast theme: bars become solid paper, no blur.</param>
 /// <param name="TopInsetPx">Space the app's top bar covers, reserved from the first frame so text never starts under it.</param>
 /// <param name="BottomInsetPx">Space the app's bottom bars cover.</param>
 /// <param name="TaskBoxes">Task boxes can be ticked, which the page reports as a "task" message (a note's view).</param>
-public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false, bool Solid = false,
+public sealed record ReaderSettings(Theme Theme, double FontSizePx = 17, string ReadingFont = "Literata", bool AllowRemoteImages = false,
     double TopInsetPx = 0, double BottomInsetPx = 0, bool TaskBoxes = false);
 
 /// <summary>
@@ -94,7 +93,7 @@ public static class HtmlRenderer
         sb.Append("<!doctype html><html><head><meta charset=\"utf-8\">");
         // Pinch zoom is allowed in both views (the WebView turns it on in WebFiles), never below 100 percent.
         sb.Append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes\">");
-        sb.Append("<style>").Append(css).Append("</style></head><body class=\"").Append(mode == ViewMode.Reading ? "mode-reading" : "mode-original").Append(settings.Solid ? " solid" : "").Append("\">");
+        sb.Append("<style>").Append(css).Append("</style></head><body class=\"").Append(mode == ViewMode.Reading ? "mode-reading" : "mode-original").Append("\">");
         sb.Append(bodyHtml);
         var noteList = notes?.ToList() ?? [];
         if (noteList.Count > 0)
@@ -103,10 +102,6 @@ public static class HtmlRenderer
             sb.Append(Esc(string.Join(". ", noteList)));
             sb.Append("</p>");
         }
-        sb.Append("<div id=\"vn-menu\" role=\"toolbar\" aria-label=\"Selection\" hidden>");
-        sb.Append("<button data-act=\"highlight\">Highlight</button>");
-        sb.Append("<button data-act=\"quote\" class=\"primary\">Quote to note</button>");
-        sb.Append("<button data-act=\"copy\">Copy</button></div>");
         sb.Append("<script>window.vnHighlights=").Append(JsonArray(highlights ?? [])).Append(";window.vnTaskBoxes=").Append(settings.TaskBoxes ? "true" : "false")
           .Append(";").Append(BridgeJs).Append("</script>");
         sb.Append("</body></html>");
@@ -364,10 +359,9 @@ public static class HtmlRenderer
         .reading figure{margin:0 0 16px}
         .reading blockquote{margin:0 0 16px;padding:0 0 0 12px;border-left:4px solid var(--accent)}
         .reading pre,.reading code{font-family:'JetBrains Mono',monospace;font-size:.88em}
-        .reading table{display:block;max-width:100%;overflow-x:auto}
-        .reading pre{overflow-x:auto;overflow-wrap:normal;padding:12px;background:var(--fill, rgba(0,0,0,.05));border-radius:2px}
+        .reading pre{overflow-x:auto;overflow-wrap:normal;padding:12px;background:rgba(127,127,127,.12);border-radius:2px}
         .reading .table-wrap{overflow-x:auto;margin:0 0 16px}
-        .reading table{border-collapse:collapse;font-family:'Figtree',sans-serif;font-size:.9em}
+        .reading table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;font-family:'Figtree',sans-serif;font-size:.9em}
         .reading td,.reading th{border:1px solid var(--line);padding:8px;min-width:3em;overflow-wrap:break-word;text-align:left;vertical-align:top}
         .reading td p,.reading th p,.reading dd p,.reading dt p{margin:0}
         .reading dl.pairs{margin:0 0 16px;font-family:'Figtree',sans-serif;font-size:.9em;border-top:1px solid var(--line)}
@@ -399,10 +393,6 @@ public static class HtmlRenderer
         .original-text .rule-line{display:block;white-space:pre;overflow:hidden}
         .original-text{margin:0;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px 16px 0;color:var(--ink)}
         .notice{font-family:'Figtree',sans-serif;font-size:13px;font-weight:500;text-align:center;color:var(--ink);margin:16px 16px 0}
-        #vn-menu{position:absolute;z-index:10;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--glass);border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:'Figtree',sans-serif}
-        #vn-menu[hidden]{display:none}
-        #vn-menu button{min-height:48px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--ink);font:600 15px 'Figtree',sans-serif}
-        #vn-menu button.primary{background:var(--accent);color:var(--onAccent);font-weight:700}
         """;
 
     private const string BridgeJs = """
@@ -411,27 +401,7 @@ public static class HtmlRenderer
             var q = Object.keys(params||{}).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
             window.location.href = 'visary://' + kind + (q ? '?' + q : '');
           }
-          var menu = document.getElementById('vn-menu');
-          var lastText = '';
-          function placeMenu(){
-            var sel = window.getSelection();
-            var text = sel ? sel.toString().trim() : '';
-            if (!text || sel.rangeCount === 0){ menu.hidden = true; lastText=''; return; }
-            lastText = text;
-            var r = sel.getRangeAt(0).getBoundingClientRect();
-            menu.hidden = false;
-            var below = r.top < window.innerHeight * 0.66;
-            var top = (below ? r.bottom + 8 : r.top - menu.offsetHeight - 8) + window.scrollY;
-            var left = Math.max(8, Math.min(window.innerWidth - menu.offsetWidth - 8, r.left + r.width/2 - menu.offsetWidth/2)) + window.scrollX;
-            menu.style.top = top + 'px'; menu.style.left = left + 'px';
-          }
-          var t; document.addEventListener('selectionchange', function(){ clearTimeout(t); t = setTimeout(placeMenu, 250); });
-          menu.addEventListener('click', function(e){
-            var b = e.target.closest('button'); if (!b || !lastText) return;
-            e.stopPropagation();
-            send(b.getAttribute('data-act'), {text: lastText});
-            window.getSelection().removeAllRanges(); menu.hidden = true;
-          });
+          // Selection actions (Quote to note, Highlight) live in the system's selection toolbar, added by the app.
           // In a note's view each task box can be ticked; the app finds the task by its position.
           if (window.vnTaskBoxes){
             var boxes = document.querySelectorAll('li.task-list-item > input[type=checkbox]');
@@ -441,7 +411,7 @@ public static class HtmlRenderer
             });
           }
           document.addEventListener('click', function(e){
-            if (e.target.closest('a,#vn-menu,input')) return;
+            if (e.target.closest('a,input')) return;
             if (window.getSelection().toString()) return;
             send('tap');
           });
@@ -450,7 +420,7 @@ public static class HtmlRenderer
             var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
             var n;
             while ((n = w.nextNode())){
-              if (n.parentNode.closest && n.parentNode.closest('script,style,#vn-menu,mark')) continue;
+              if (n.parentNode.closest && n.parentNode.closest('script,style,mark')) continue;
               var i = n.nodeValue.indexOf(h);
               if (i < 0) continue;
               var range = document.createRange(); range.setStart(n, i); range.setEnd(n, i + h.length);
@@ -469,7 +439,6 @@ public static class HtmlRenderer
             if (!pagePx) return;
             desk.style.zoom = Math.min(1, (w - 16) / pagePx);
           }
-          window.vnFit = fit;
           window.vnPdfPage = function(n, src){
             var img = document.querySelector('[data-pdf-page="' + n + '"] img');
             if (img) img.src = src;

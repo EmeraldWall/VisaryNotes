@@ -111,15 +111,8 @@ public partial class LibraryPage : ContentPage
             await LoadAsync();
         };
         SearchEntry.TextChanged += async (_, e) => await SearchAsync(e.NewTextValue);
-        Pill.HandSwiped += (_, hand) =>
-        {
-            _settings.Hand = hand;
-            BuildPill();
-        };
         _themes.Changed += async (_, _) => await LoadAsync();
 
-        EmptyOpen.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await OpenFileAsync()) });
-        EmptyNote.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await Shell.Current.GoToAsync("editor")) });
         EmptyImport.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportMarkdownAsync()) });
         EmptyTrash.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await EmptyTrashAsync()) });
 
@@ -146,7 +139,7 @@ public partial class LibraryPage : ContentPage
                 ? new PillAction(Icons.Plus, "New task", NewTaskAsync, IsPrimary: true)
                 : new PillAction(Icons.Plus, "New note", () => Shell.Current.GoToAsync("editor"), IsPrimary: true),
             new PillAction(Icons.Search, "Search", () => SetSearching(true))
-        ], _settings.Hand);
+        ]);
     }
 
     private async Task LoadAsync()
@@ -242,8 +235,7 @@ public partial class LibraryPage : ContentPage
         }
         if (_selecting)
         {
-            row.IsSelected = !row.IsSelected;
-            UpdateSelectionBar();
+            ToggleRow(row);
             return;
         }
         if (_filter == LibraryFilter.Trash)
@@ -270,8 +262,7 @@ public partial class LibraryPage : ContentPage
             return;
         if (_selecting)
         {
-            row.IsSelected = !row.IsSelected;
-            UpdateSelectionBar();
+            ToggleRow(row);
             return;
         }
         await ActionsAsync(row);
@@ -311,9 +302,7 @@ public partial class LibraryPage : ContentPage
                 await LoadAsync();
                 break;
             case "Select several":
-                SetSelecting(true);
-                row.IsSelected = true;
-                UpdateSelectionBar();
+                StartSelecting(item);
                 break;
             case "Delete note" or "Remove from Library":
                 await RemoveAsync([item]);
@@ -347,9 +336,7 @@ public partial class LibraryPage : ContentPage
         var text = await BottomSheet.PromptAsync(this, "New task", "", "Next", "What needs doing");
         if (text is null)
             return;
-        var when = await BottomSheet.PickReminderAsync(this, text, null);
-        if (when?.At is not null)
-            await ReminderService.EnsureNotificationsAsync();
+        var when = await ReminderService.AskAsync(this, text, null, Dock);
         await _repo.AddTaskAsync(text, when?.At);
         await ReminderService.RescheduleAsync();
         await LoadAsync();
@@ -383,11 +370,8 @@ public partial class LibraryPage : ContentPage
                 await Shell.Current.GoToAsync($"editor?note={item.Id}&mode=view");
                 break;
             case "Remind me" or "Change reminder":
-                var when = await BottomSheet.PickReminderAsync(this, item.Title, item.Due);
-                if (when is null)
+                if (await ReminderService.AskAsync(this, item.Title, item.Due, Dock) is not { } when)
                     return;
-                if (when.At is not null)
-                    await ReminderService.EnsureNotificationsAsync();
                 await _repo.SetTaskDueAsync(item.Id, item.TaskLine, when.At);
                 await ReminderService.RescheduleAsync();
                 await LoadAsync();
@@ -406,10 +390,7 @@ public partial class LibraryPage : ContentPage
                 _ = Notice.ShowAsync(this, "Note restored", above: Dock);
                 break;
             case "Select several":
-                SetSelecting(true);
-                if (_rows.FirstOrDefault(r => r.Item.Id == item.Id) is { } row)
-                    row.IsSelected = true;
-                UpdateSelectionBar();
+                StartSelecting(item);
                 break;
             case "Delete forever":
                 await DeleteForeverAsync([item]);
@@ -431,6 +412,20 @@ public partial class LibraryPage : ContentPage
         PillRow.IsVisible = !on;
         FilterBar.IsVisible = !on;
         SelectBar.IsVisible = on;
+        UpdateSelectionBar();
+    }
+
+    /// <summary>Selection mode, starting with the row the user acted on.</summary>
+    private void StartSelecting(LibraryItem item)
+    {
+        SetSelecting(true);
+        if (_rows.FirstOrDefault(r => r.Item == item) is { } row)
+            ToggleRow(row);
+    }
+
+    private void ToggleRow(LibraryRow row)
+    {
+        row.IsSelected = !row.IsSelected;
         UpdateSelectionBar();
     }
 
@@ -561,12 +556,10 @@ public partial class LibraryPage : ContentPage
     {
         try
         {
-            var files = await _docs.PickMarkdownFilesAsync();
-            if (files.Count == 0)
+            if (await _docs.ImportMarkdownAsync() is not (var count and > 0))
                 return;
-            var count = await _repo.ImportMarkdownAsync(files);
             await LoadAsync();
-            _ = Notice.ShowAsync(this, count == 1 ? "Imported 1 note" : $"Imported {count} notes", above: Dock);
+            _ = Notice.ShowAsync(this, DocumentService.ImportedText(count), above: Dock);
         }
         catch (Exception ex)
         {

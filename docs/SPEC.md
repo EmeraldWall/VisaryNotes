@@ -272,7 +272,7 @@ Themes switch at runtime through dynamic resources; the reader, widgets and stat
 | N4 | Pin, delete to Trash with undo, restore, delete forever, empty Trash (asks first), 30 days retention | Built |
 | N5 | Multi select with Select all, Pin, Delete, Restore, Delete forever | Built |
 | N6 | Clean up Library: remove documents not opened in 30 days, highlights kept, undo | Built |
-| N7 | First run empty state with three first steps and the privacy promise | Built |
+| N7 | First run empty state with what the app is for, the privacy promise and Bring Markdown notes. Open file and New note are the pill's own buttons and are not repeated in it (0.2.11) | Built |
 | N8 | Markdown import from other apps | Built |
 | N9 | Tags (`#tag` in the note and a tag filter) | Planned 0.4 |
 | N10 | Notebooks: one level of grouping | Planned 0.4 |
@@ -366,6 +366,7 @@ One viewer for every format: each reader produces the shared document model (7.6
 | R11 | Resume at the last position | Built, unverified |
 | R12 | PDF Original view draws real pages, first pages first | Built, unverified |
 | R13 | Reader themes follow the app theme | Built |
+| R15 | One selection toolbar: Quote to note and Highlight are added to Android's own toolbar beside Copy, Share and Select all. The page draws no menu of its own, which had stacked a second popup on top of the system's (owner's feedback on 0.2.10) | Built 0.2.11, unverified |
 | R14 | Pinch zoom in both views, from 100 to 500 percent; PDF pages are drawn at twice the screen width so they stay sharp when zoomed | Built 0.2.9, unverified |
 
 ### 7.5 Per format rules

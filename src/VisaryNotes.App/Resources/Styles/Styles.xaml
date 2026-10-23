@@ -134,11 +134,6 @@
         <Setter Property="Padding" Value="{StaticResource InsetButton}" />
     </Style>
 
-    <Style x:Key="WideButtonPrimary" TargetType="controls:Pressable" BasedOn="{StaticResource WideButton}">
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource Accent}" />
-    </Style>
-
     <Style x:Key="WideButtonText" TargetType="Label">
         <Setter Property="FontFamily" Value="FigtreeBold" />
         <Setter Property="FontSize" Value="{StaticResource FontTitle}" />

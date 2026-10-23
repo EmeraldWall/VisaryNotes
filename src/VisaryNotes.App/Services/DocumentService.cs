@@ -42,7 +42,19 @@ public sealed class DocumentService
         return await ImportAsync(stream, result.FileName, addToLibrary: true);
     }
 
-    public async Task<IReadOnlyList<(string Name, string Text)>> PickMarkdownFilesAsync()
+    /// <summary>
+    /// Bring Markdown notes from another app, used by the Library's first run and by Settings. Returns how many
+    /// notes were added, 0 when the user picked nothing.
+    /// </summary>
+    public async Task<int> ImportMarkdownAsync()
+    {
+        var files = await PickMarkdownFilesAsync();
+        return files.Count == 0 ? 0 : await _repo.ImportMarkdownAsync(files);
+    }
+
+    public static string ImportedText(int count) => count == 1 ? "Imported 1 note" : $"Imported {count} notes";
+
+    private async Task<IReadOnlyList<(string Name, string Text)>> PickMarkdownFilesAsync()
     {
         var results = await FilePicker.Default.PickMultipleAsync(new PickOptions { PickerTitle = "Choose Markdown files to import", FileTypes = SupportedTypes });
         var files = new List<(string, string)>();
@@ -56,12 +68,19 @@ public sealed class DocumentService
         return files;
     }
 
+    /// <summary>A name with the characters files cannot hold removed, or the fallback when nothing is left.</summary>
+    public static string SafeFileName(string name, string fallback)
+    {
+        var safe = string.Concat(name.Where(c => !Path.GetInvalidFileNameChars().Contains(c))).Trim();
+        return safe.Length > 0 ? safe : fallback;
+    }
+
     /// <summary>Stores a private copy, records the document, and parses it off the UI thread.</summary>
     public async Task<OpenedDocument> ImportAsync(Stream stream, string fileName, bool addToLibrary)
     {
         var bytes = await Task.Run(() => ReadLimits.ReadAll(stream));
         var hash = Convert.ToHexString(SHA256.HashData(bytes))[..16].ToLowerInvariant();
-        var safeName = string.Concat(fileName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
+        var safeName = SafeFileName(fileName, "Document");
         var path = Path.Combine(_docsDir, $"{hash}-{safeName}");
         if (!File.Exists(path))
             await File.WriteAllBytesAsync(path, bytes);

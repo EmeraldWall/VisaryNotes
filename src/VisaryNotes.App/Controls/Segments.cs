@@ -15,12 +15,7 @@ public sealed class Segments : Grid
     public Segments()
     {
         ColumnSpacing = ThemeCatalog.Token("space", "sp-1");
-        Loaded += (_, _) =>
-        {
-            if (Handler?.MauiContext?.Services.GetService<ThemeService>() is { } themes)
-                themes.Changed += (_, _) => Paint();
-            Paint();
-        };
+        ThemeService.Follow(this, Paint);
     }
 
     public int Selected

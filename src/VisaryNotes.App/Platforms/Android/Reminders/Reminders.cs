@@ -22,7 +22,7 @@ public static class Reminders
 
     internal static LibraryRepository Repository =>
         IPlatformApplication.Current?.Services.GetService<LibraryRepository>()
-        ?? new LibraryRepository(System.IO.Path.Combine(FileSystem.AppDataDirectory, "library.db3"));
+        ?? new LibraryRepository(MauiProgram.LibraryPath);
 
     public static async Task RescheduleAsync()
     {

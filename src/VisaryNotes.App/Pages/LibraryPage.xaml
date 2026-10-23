@@ -29,17 +29,12 @@
                             </VerticalStackLayout>
                         </Grid>
                     </controls:Pressable>
-                    <!-- First run: three clear ways in and the promises that lower the cost of trying (docs/UX-REVIEW.md, TPB and IDT). -->
+                    <!-- First run: what the app is for, the promises that lower the cost of trying (docs/UX-REVIEW.md, TPB and IDT),
+                         and the one way in the pill does not offer. Open file and New note are the pill's own buttons, not repeated here. -->
                     <VerticalStackLayout x:Name="EmptyText" IsVisible="False" Padding="{StaticResource InsetSheet}" Spacing="{StaticResource Sp3}">
                         <Label Text="Your reading and your notes, in one place" Style="{StaticResource T1}" FontFamily="FigtreeBold" MaxLines="2" LineBreakMode="WordWrap" />
                         <Label Style="{StaticResource T2}" TextColor="{DynamicResource Ink}" MaxLines="4" LineBreakMode="WordWrap"
-                               Text="Open a file someone sent you, select a passage, and quote it into a note. The quote keeps a link back to its page." />
-                        <controls:Pressable x:Name="EmptyOpen" Style="{StaticResource WideButtonPrimary}" SemanticProperties.Description="Open a document">
-                            <Label Text="Open a document" Style="{StaticResource WideButtonPrimaryText}" />
-                        </controls:Pressable>
-                        <controls:Pressable x:Name="EmptyNote" Style="{StaticResource WideButton}" SemanticProperties.Description="Write a note">
-                            <Label Text="Write a note" Style="{StaticResource WideButtonText}" />
-                        </controls:Pressable>
+                               Text="Open a file someone sent you, select a passage, and quote it into a note. The quote keeps a link back to its page. Start with Open file or New note below." />
                         <controls:Pressable x:Name="EmptyImport" Style="{StaticResource WideButton}" SemanticProperties.Description="Bring Markdown notes from another app">
                             <Label Text="Bring Markdown notes" Style="{StaticResource WideButtonText}" />
                         </controls:Pressable>

@@ -31,10 +31,8 @@ public sealed class ThemeService
         var t = Current;
 
         r["Paper"] = C(t.Paper);
-        r["Desk"] = C(t.Desk);
         r["Ink"] = C(t.Ink);
         r["Soft"] = C(t.Soft);
-        r["Glass"] = C(t.Glass);
         r["Accent"] = C(t.Accent);
         r["AccentText"] = C(t.AccentText);
         r["OnAccent"] = C(t.OnAccent);
@@ -43,14 +41,6 @@ public sealed class ThemeService
         r["Line"] = C(t.Line);
         r["Fill"] = C(t.Ink).WithAlpha(t.IsDark ? 0.10f : 0.06f);
 
-        // The concave glass: clear centre, denser rim, shadow under the top edge, light catch on the bottom edge.
-        var glass = C(t.Glass);
-        r["GlassCore"] = Solid ? C(t.Paper) : glass.WithAlpha((float)t.GlassAlpha);
-        r["GlassRim"] = Solid ? C(t.Paper) : glass.WithAlpha((float)Math.Min(1, t.GlassAlpha + t.GlassRimExtra));
-        // Native glass has no backdrop blur yet, so where it covers content it uses the adaptive maximum,
-        // the tint the design already sets for busy backdrops (docs/DESIGN.md 4.2.1).
-        r["GlassDenseCore"] = Solid ? C(t.Paper) : glass.WithAlpha((float)t.GlassAlphaMax);
-        r["GlassDenseRim"] = Solid ? C(t.Paper) : glass.WithAlpha((float)Math.Min(1, t.GlassAlphaMax + 0.1));
         // Bars that sit over content (top strip, mode bar, toolbar) take a tint between paper and desk, so they
         // read as bars and never vanish into the page. The glass colour alone is almost the paper colour in the
         // light themes, which left bars looking transparent on phones (docs/SPEC.md B1, B2).
@@ -58,10 +48,8 @@ public sealed class ThemeService
         r["Bar"] = t.IsHighContrast ? C(t.Paper) : Solid ? bar : bar.WithAlpha(BarAlpha);
         r["Clear"] = Colors.Transparent;
         r["BarEdge"] = t.IsHighContrast ? C(t.Line) : C(t.Line).WithAlpha(t.IsDark ? 0.7f : 0.55f);
-        r["EdgeLo"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.Black.WithAlpha(0.6f) : Colors.Black.WithAlpha(0.22f);
-        r["EdgeHi"] = t.IsHighContrast ? C(t.Line) : t.IsDark ? Colors.White.WithAlpha(0.2f) : Colors.White.WithAlpha(0.95f);
 
-        foreach (var key in new[] { "Paper", "Desk", "Ink", "Soft", "Accent", "AccentText", "OnAccent", "Line", "Fill", "BarEdge" })
+        foreach (var key in new[] { "Paper", "Ink", "OnAccent", "Line", "BarEdge" })
             r[key + "Brush"] = new SolidColorBrush((Color)r[key]);
 
         Application.Current.UserAppTheme = t.IsDark ? AppTheme.Dark : AppTheme.Light;
@@ -73,6 +61,29 @@ public sealed class ThemeService
     public const float BarAlpha = 0.94f;
 
     public static Color C(string hex) => Color.FromArgb(hex);
+
+    /// <summary>
+    /// Repaints a control now and whenever the theme changes, while it is on screen. The subscription ends when
+    /// the control unloads, so a control that loads again never gets a second one.
+    /// </summary>
+    public static void Follow(VisualElement element, Action repaint)
+    {
+        EventHandler handler = (_, _) => repaint();
+        element.Loaded += (_, _) =>
+        {
+            repaint();
+            if (element.Handler?.MauiContext?.Services.GetService<ThemeService>() is { } themes)
+            {
+                themes.Changed -= handler;
+                themes.Changed += handler;
+            }
+        };
+        element.Unloaded += (_, _) =>
+        {
+            if (element.Handler?.MauiContext?.Services.GetService<ThemeService>() is { } themes)
+                themes.Changed -= handler;
+        };
+    }
 
     private static Color Mix(Color a, Color b, float t) =>
         new(a.Red + (b.Red - a.Red) * t, a.Green + (b.Green - a.Green) * t, a.Blue + (b.Blue - a.Blue) * t);

@@ -34,7 +34,7 @@ public partial class SettingsPage : ContentPage
         FontSizeLabel.Text = $"Text size {settings.ReadingFontSize:0}";
         void Step(int by)
         {
-            _settings.ReadingFontSize = Math.Clamp(_settings.ReadingFontSize + by, 14, 28);
+            _settings.ReadingFontSize += by;
             FontSizeLabel.Text = $"Text size {_settings.ReadingFontSize:0}";
         }
         Smaller.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => Step(-1)) });
@@ -54,12 +54,7 @@ public partial class SettingsPage : ContentPage
         CleanRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await CleanUpAsync()) });
         ReminderRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(ReminderService.OpenExactTimesSettings) });
         ImportRow.GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(async () => await ImportAsync()) });
-        Pill.HandSwiped += (_, hand) =>
-        {
-            _settings.Hand = hand;
-            Hands.Selected = (int)hand;
-            BuildPill();
-        };
+        Pill.HandChanged += (_, hand) => Hands.Selected = (int)hand;
         BuildThemes();
         BuildPill();
         _ready = true;
@@ -77,7 +72,7 @@ public partial class SettingsPage : ContentPage
         : "Off. Android may delay reminders by a few minutes while the phone is idle. Tap to allow exact times.";
 
     private void BuildPill() =>
-        Pill.SetActions([new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync(".."), IsPrimary: true)], _settings.Hand);
+        Pill.SetActions([new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync(".."), IsPrimary: true)]);
 
     private void BuildThemes()
     {
@@ -169,11 +164,8 @@ public partial class SettingsPage : ContentPage
     {
         try
         {
-            var files = await _docs.PickMarkdownFilesAsync();
-            if (files.Count == 0)
-                return;
-            var count = await _repo.ImportMarkdownAsync(files);
-            ImportStatus.Text = count == 1 ? "Imported 1 note" : $"Imported {count} notes";
+            if (await _docs.ImportMarkdownAsync() is var count and > 0)
+                ImportStatus.Text = DocumentService.ImportedText(count);
         }
         catch (Exception ex)
         {

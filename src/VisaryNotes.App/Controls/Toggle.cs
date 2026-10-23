@@ -44,12 +44,7 @@ public sealed class Toggle : ContentView
         // A 48dp touch target around the 32dp track.
         Content = new Grid { HeightRequest = ThemeCatalog.Token("size", "h-control"), Children = { _track } };
         GestureRecognizers.Add(new TapGestureRecognizer { Command = new Command(() => IsToggled = !IsToggled) });
-        Loaded += (_, _) =>
-        {
-            if (Handler?.MauiContext?.Services.GetService<ThemeService>() is { } themes)
-                themes.Changed += (_, _) => Paint(false);
-            Paint(false);
-        };
+        ThemeService.Follow(this, () => Paint(false));
     }
 
     public bool IsToggled

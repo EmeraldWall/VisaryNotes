@@ -7,11 +7,20 @@ namespace VisaryNotes.App;
 
 public static class MauiProgram
 {
+    /// <summary>The one Library database, also opened by reminders when the app itself is not running.</summary>
+    public static string LibraryPath => Path.Combine(FileSystem.AppDataDirectory, "library.db3");
+
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .ConfigureMauiHandlers(handlers =>
+            {
+#if ANDROID
+                handlers.AddHandler<Controls.SelectionWebView, Platforms.Android.Handlers.SelectionWebViewHandler>();
+#endif
+            })
             .ConfigureFonts(fonts =>
             {
                 // All fonts are bundled under open licences (licenses/ folder at the repository root).
@@ -25,8 +34,7 @@ public static class MauiProgram
                 fonts.AddFont("Tinos-Bold.ttf", "TinosBold");
             });
 
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "library.db3");
-        builder.Services.AddSingleton(_ => new LibraryRepository(dbPath));
+        builder.Services.AddSingleton(_ => new LibraryRepository(LibraryPath));
         builder.Services.AddSingleton<SettingsService>();
         builder.Services.AddSingleton<ThemeService>();
         builder.Services.AddSingleton<DocumentService>();

@@ -162,4 +162,14 @@ public class ReaderInsetTests
         Assert.Contains("window.vnHeadings", html);
         Assert.Contains("send('ready')", html);
     }
+
+    [Fact]
+    public void Page_draws_no_selection_menu_of_its_own()
+    {
+        // The app adds its selection actions to Android's toolbar; a menu in the page would show a second one (R15).
+        var html = Rendering.HtmlRenderer.Page("<main class=\"reading\"><p>T</p></main>", Rendering.ViewMode.Reading,
+            new Rendering.ReaderSettings(Theming.ThemeCatalog.Get("Daylight")));
+        Assert.DoesNotContain("vn-menu", html);
+        Assert.DoesNotContain("selectionchange", html);
+    }
 }

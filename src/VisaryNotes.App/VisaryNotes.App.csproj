@@ -14,8 +14,8 @@
 
 		<ApplicationTitle>VisaryNotes</ApplicationTitle>
 		<ApplicationId>com.vishvplus.visarynotes</ApplicationId>
-		<ApplicationDisplayVersion>0.2.10</ApplicationDisplayVersion>
-		<ApplicationVersion>12</ApplicationVersion>
+		<ApplicationDisplayVersion>0.2.11</ApplicationDisplayVersion>
+		<ApplicationVersion>13</ApplicationVersion>
 
 		<SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
 	</PropertyGroup>

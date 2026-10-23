@@ -31,11 +31,6 @@ public partial class EditorPage : ContentPage, IQueryAttributable
 
         BuildToolbar();
         Body.TextChanged += (_, _) => ScheduleSave();
-        Pill.HandSwiped += (_, hand) =>
-        {
-            _settings.Hand = hand;
-            BuildPill();
-        };
         Dock.SizeChanged += (_, _) =>
         {
             // The text starts below the strip and ends above the pill and toolbar, so no bar covers it at rest.
@@ -85,27 +80,13 @@ public partial class EditorPage : ContentPage, IQueryAttributable
             new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync("..")),
             new PillAction(previewing ? Icons.Edit : Icons.Preview, previewing ? "Edit" : "Preview", TogglePreviewAsync, IsPrimary: true),
             new PillAction(Icons.Share, "Share", ShareAsync)
-        ], _settings.Hand);
+        ]);
     }
 
     private void BuildToolbar()
     {
-        void Add(string label, string glyphOrIcon, Action apply, bool isIcon = false)
-        {
-            var size = ThemeCatalog.Token("size", "h-control");
-            var b = new Pressable(() => { apply(); return Task.CompletedTask; })
-            {
-                WidthRequest = size,
-                HeightRequest = size,
-                StrokeShape = new RoundRectangle { CornerRadius = ThemeCatalog.Token("radius", "r-1") }
-            };
-            b.SetDynamicResource(BackgroundColorProperty, "Fill");
-            b.Content = isIcon
-                ? Icons.Make(glyphOrIcon)
-                : new Label { Text = glyphOrIcon, FontFamily = "FigtreeBold", FontSize = (double)Application.Current!.Resources["FontH3"], HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
-            SemanticProperties.SetDescription(b, label);
-            Toolbar.Add(b);
-        }
+        void Add(string label, string glyphOrIcon, Action apply, bool isIcon = false) =>
+            Toolbar.Add(Pressable.Tool(isIcon ? Icons.Make(glyphOrIcon) : Pressable.Glyph(glyphOrIcon), label, apply));
 
         Add("Bold", "B", () => Wrap("**"));
         Add("Italic", "I", () => Wrap("*"));
@@ -153,14 +134,11 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         var task = NoteTasks.Parse(text).FirstOrDefault(t => t.Line == line);
         var label = task?.Text ?? text.Split('\n')[line].Trim().TrimStart('-', '*', '+', ' ');
         Body.Unfocus();
-        var when = await BottomSheet.PickReminderAsync(this, label, task is null ? null : NoteTasks.ReminderAt(task));
-        if (when is null)
+        if (await ReminderService.AskAsync(this, label, task is null ? null : NoteTasks.ReminderAt(task), Dock) is not { } when)
         {
             Body.Focus();
             return;
         }
-        if (when.At is not null && !await ReminderService.EnsureNotificationsAsync())
-            _ = Notice.ShowAsync(this, "Notifications are off, so the time is saved but no reminder will show", above: Dock);
         Body.Text = NoteTasks.SetDue(text, line, when.At);
         var lines = Body.Text.Split('\n');
         Body.CursorPosition = lines.Take(line + 1).Sum(l => l.Length + 1) - 1;
@@ -228,7 +206,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
     {
         await SaveAsync();
         var html = HtmlRenderer.Page(MarkdownRenderer.ToHtml(Body.Text ?? ""), ViewMode.Reading,
-            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, Solid: _themes.Solid, TaskBoxes: true));
+            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, TaskBoxes: true));
         Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
         Body.IsVisible = false;
         ToolbarGlass.IsVisible = false;
@@ -243,21 +221,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
     /// <summary>The preview is made on first use, because a WebView is slow to create.</summary>
     private WebView CreatePreview()
     {
-        var web = new WebView();
-        web.SetDynamicResource(BackgroundColorProperty, "Paper");
-        web.Navigating += async (_, e) =>
-        {
-            if (e.Url.StartsWith("file:///android_asset/", StringComparison.Ordinal))
-                return;
-            e.Cancel = true;
-            if (e.Url.StartsWith("visary://task?i=", StringComparison.Ordinal) && int.TryParse(e.Url["visary://task?i=".Length..], out var index))
-                await TickAsync(index);
-            else if (e.Url.StartsWith(LibraryRepository.DocumentLinkScheme, StringComparison.Ordinal)
-                && int.TryParse(e.Url[LibraryRepository.DocumentLinkScheme.Length..].TrimEnd('/'), out var docId))
-                await Shell.Current.GoToAsync($"reader?doc={docId}");
-            else if (Uri.TryCreate(e.Url, UriKind.Absolute, out var u) && u.Scheme is "http" or "https" or "mailto")
-                await Launcher.Default.OpenAsync(u);
-        };
+        var web = NoteWebView.Create(onTask: TickAsync);
         PreviewHost.Content = web;
         _chromeSync = new WebChrome(web, () => Strip, () => Dock);
         _chromeSync.Track(Strip, Dock, Pill);
@@ -283,9 +247,7 @@ public partial class EditorPage : ContentPage, IQueryAttributable
         var choice = await BottomSheet.ChooseAsync(this, "Share as", ["Word (.docx)", "Markdown (.md)", "Plain text (.txt)", "Web page (.html)"]);
         if (choice is null or "Cancel")
             return;
-        var name = string.Concat((_note.Title.Length > 0 ? _note.Title : "Note").Where(c => !System.IO.Path.GetInvalidFileNameChars().Contains(c)));
-        if (name.Length == 0)
-            name = "Note";
+        var name = DocumentService.SafeFileName(_note.Title, "Note");
         string path;
         if (choice == "Word (.docx)")
         {

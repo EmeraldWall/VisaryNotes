@@ -64,7 +64,7 @@
                 <controls:Pressable x:Name="CleanRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
                     <VerticalStackLayout VerticalOptions="Center">
                         <Label Text="Clean up Library" Style="{StaticResource T1}" />
-                        <Label x:Name="CleanStatus" Text="Remove documents not opened in 30 days. Highlights and quotes are kept." Style="{StaticResource T2}" MaxLines="2" LineBreakMode="WordWrap" />
+                        <Label Text="Remove documents not opened in 30 days. Highlights and quotes are kept." Style="{StaticResource T2}" MaxLines="2" LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </controls:Pressable>
 
