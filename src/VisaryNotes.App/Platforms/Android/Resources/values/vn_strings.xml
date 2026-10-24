@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vn_widget_capture_desc">New note, checklist or open a file in one tap</string>
+    <string name="vn_widget_reading_desc">Pick up the last document where you left it</string>
+</resources>

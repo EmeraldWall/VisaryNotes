@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VisaryNotes foldable v4</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&amp;family=Literata:opsz,wght@7..72,400;7..72,600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<style>
+/* lint:off  token definitions, generated from tools/design/tokens.json */
+.app{--sp-0:0px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--h-strip:48px;--h-control:48px;--h-primary:56px;--badge:40px;--icon:24px;--r-0:0px;--r-1:2px;--r-2:4px;--r-pill:999px;--fs-caption:12px;--lh-caption:16px;--fs-label:13px;--lh-label:20px;--fs-ui:15px;--lh-ui:20px;--fs-title:16px;--lh-title:24px;--fs-read:17px;--lh-read:28px;--fs-h3:20px;--lh-h3:28px;--fs-h2:26px;--lh-h2:32px}
+/* lint:on */
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app *{box-sizing:border-box}
+:where(.app) button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+.app button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.glass{position:relative;background:radial-gradient(140% 180% at 50% 50%,var(--glassCore) 55%,var(--glassRim) 100%);-webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi)}
+.chamfer{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.primary{flex:1.3;height:var(--h-primary);background:linear-gradient(225deg,var(--bevel) 0 6px,rgba(255,255,255,0) 6px),var(--accent);color:var(--onAccent);display:flex;align-items:center;justify-content:center;gap:var(--sp-2);font-size:var(--fs-title);font-weight:700}
+.slot{flex:1;height:var(--h-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;border-radius:var(--r-1)}
+.segs{display:flex;gap:var(--sp-1)}
+.seg{flex:1;height:var(--h-control);font-size:var(--fs-ui);font-weight:600;border:1.5px solid var(--ink);border-radius:var(--r-1)}
+.seg.on{background:var(--ink);color:var(--paper)}
+.bar{padding:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2)}
+.dock{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+.pillrow{display:flex;justify-content:center;padding:var(--sp-0) var(--sp-4) var(--sp-3)}
+.pill{display:flex;align-items:center;gap:var(--sp-1);padding:var(--sp-1);border-radius:var(--r-pill);box-shadow:inset 0 1px 0 var(--edgeLo),inset 0 10px 14px -10px var(--edgeLo),inset 0 -1px 0 var(--edgeHi),inset 0 -8px 12px -10px var(--edgeHi),0 6px 18px rgba(0,0,0,0.18)}
+.pt{height:var(--h-control);padding:var(--sp-0) var(--sp-3);border-radius:var(--r-pill);display:flex;align-items:center;gap:var(--sp-1);font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;flex:none}
+.pp{height:var(--h-control);padding:var(--sp-0) var(--sp-4);border-radius:var(--r-pill);background:var(--accent);color:var(--onAccent);display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-title);line-height:var(--lh-title);font-weight:700;flex:none}
+.strip{position:absolute;top:0;left:0;right:0;height:var(--h-strip);display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-0) var(--sp-4)}
+.t1{font-size:var(--fs-title);line-height:var(--lh-title);font-weight:600}
+.t2{font-size:var(--fs-label);line-height:var(--lh-label);font-weight:600;color:var(--soft)}
+.read{font-family:'Literata',Georgia,serif;font-size:var(--fs-read);line-height:var(--lh-read)}
+.read h2{margin:var(--sp-0);font-size:var(--fs-h2);line-height:var(--lh-h2);font-weight:600}
+.read h3{margin:var(--sp-0);font-size:var(--fs-h3);line-height:var(--lh-h3);font-weight:600}
+.read p{margin:var(--sp-0)}
+.flow{display:flex;flex-direction:column;gap:var(--sp-4)}
+.quote{border-left:4px solid var(--accent);padding:var(--sp-0) var(--sp-0) var(--sp-0) var(--sp-3)}
+.src{font-family:'Figtree',sans-serif;font-size:var(--fs-label);line-height:var(--lh-label);color:var(--accentText);font-weight:700}
+.mk{color:var(--soft);font-family:'JetBrains Mono',monospace;font-size:var(--fs-ui)}
+.hl{background:var(--hl);box-shadow:inset 0 -2px 0 var(--accent)}
+.ib{width:var(--h-control);height:var(--h-control);display:grid;place-items:center;border-radius:var(--r-1);background:var(--fill);flex:none}
+</style>
+</helmet>
+<div class="app" style="position: relative; width: 940px; height: 844px; overflow: hidden; background: var(--paper); color: var(--ink); font-family: 'Figtree', system-ui, sans-serif; {{vars}}">
+
+<div style="position: absolute; left: 0; top: 0; bottom: 0; width: 469px; overflow: hidden">
+<div class="read" style="position: absolute; inset: 0; padding: var(--sp-4) var(--sp-6) var(--sp-0)">
+<div class="flow">
+<p>for plot holders and volunteers, autumn edition, page one of three.</p>
+<h2>Autumn Newsletter</h2>
+<h3>Harvest day</h3>
+<p>Join us on Saturday morning for the shared harvest. <span class="hl">Bring a basket and gloves.</span> Squash, beans and the last tomatoes will be split between all plot holders.</p>
+<h3>Composting</h3>
+<p>The new bays by the gate are ready. <span class="hl">Green waste goes in the left bay, woody waste in the right.</span> Please do not add cooked food.</p>
+<h3>Tool shed rota</h3>
+<p>Week 1 Amara, week 2 Jonas, week 3 Priya. Keys are with whoever holds the week.</p>
+<h3>Seed swap</h3>
+<p>Bring saved seeds in labelled envelopes to the shed on the first Sunday of the month.</p>
+</div>
+</div>
+<div class="glass strip"><span class="t1" style="flex: 1">Autumn Newsletter.odt</span><span class="t2" style="color: var(--ink)">Page 1 / 3</span></div>
+<div class="dock">
+<div class="pillrow">
+<div class="glass pill" role="toolbar">
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Library</button>
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.8-4.8"></path></svg>Find</button>
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 4h14v16H5z"></path><path d="M9 9h6"></path></svg>Highlights</button>
+</div>
+</div>
+<div class="glass bar">
+<div class="segs"><button class="seg on">Reading</button><button class="seg">Original</button></div>
+</div>
+</div>
+</div>
+
+<div aria-hidden="true" style="position: absolute; left: 469px; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: 0.35"></div>
+
+<div style="position: absolute; left: 471px; right: 0; top: 0; bottom: 0; background: var(--paper2); overflow: hidden">
+<div class="read" style="position: absolute; inset: 0; padding: var(--sp-12) var(--sp-6) var(--sp-0)">
+<div class="flow">
+<h2 style="font-family: 'Figtree', sans-serif; font-weight: 700"><span class="mk"># </span>Garden notes, autumn</h2>
+<div class="quote"><div>Bring a basket and gloves.</div><span class="src">Newsletter, page 1, Harvest day</span></div>
+<p>Ask Jonas if the shed key is still under the pot. Two baskets in the car boot.</p>
+<div class="quote"><div>Green waste goes in the left bay, woody waste in the right.</div><span class="src">Newsletter, page 1, Composting</span></div>
+<p>Move our prunings to the right bay on Saturday. Check whether the old bay can take the leaf mould from the oak.</p>
+<p>Seed swap: beans and two tomato varieties, labelled with year and plot number.</p>
+<p>Remember the gate code changes in November.</p>
+</div>
+</div>
+<div class="glass strip"><span class="t1" style="flex: 1">Linked note</span><span class="t2">Saved</span></div>
+<div class="dock">
+<div class="pillrow">
+<div class="glass pill" role="toolbar">
+<button class="pt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"></path></svg>Share</button>
+<button class="pp"><span style="font-family: 'Literata', serif; font-size: var(--fs-h2)">&#8220;</span>Quote selection</button>
+</div>
+</div>
+<div class="glass bar">
+<div role="toolbar" aria-label="Formatting" style="display: flex; gap: var(--sp-1)">
+<button class="ib" aria-label="Bold" style="font-weight: 800; font-size: var(--fs-h3)">B</button>
+<button class="ib" aria-label="Italic" style="font-style: italic; font-family: 'Literata', serif; font-size: var(--fs-h3)">I</button>
+<button class="ib" aria-label="Heading" style="font-weight: 700; font-size: var(--fs-title)">H</button>
+<button class="ib" aria-label="Checklist"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><rect x="3" y="4" width="7" height="7"></rect><path d="M14 7h7M3 15h7v6H3zM14 18h7"></path></svg></button>
+<button class="ib" aria-label="Insert link"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M10 14l4-4M8 11l-3 3 5 5 3-3M16 13l3-3-5-5-3 3"></path></svg></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["Daylight","Sepia","Dusk","Night","OLED","High Contrast Light","High Contrast Dark"],"default":"Daylight"},"$preview":{"width":940,"height":844}}'>
+const GLASS = {light: 0.35, dark: 0.45, rim: 0.2};
+const THEMES = {
+  'Daylight': {paper:'#FBFAF7', paper2:'#F4F5F1', ink:'#15181A', soft:'#474D52', glass:'#F7F7F4', accent:'#0A6249', accentText:'#08573F', onAccent:'#FFFFFF', hl:'#FFE680', line:'#7E8780', fill:'#ECEEEA', edgeHi:'rgba(255,255,255,0.95)', edgeLo:'rgba(0,0,0,0.22)', bevel:'rgba(255,255,255,0.45)'},
+  'Sepia': {paper:'#F3EBD9', paper2:'#EEE4CE', ink:'#251C12', soft:'#54452F', glass:'#F1E8D4', accent:'#7A3B10', accentText:'#6E340D', onAccent:'#FFFFFF', hl:'#F6D27A', line:'#8C7B60', fill:'#E8DDC6', edgeHi:'rgba(255,255,255,0.8)', edgeLo:'rgba(60,40,10,0.28)', bevel:'rgba(255,255,255,0.4)'},
+  'Dusk': {paper:'#1C1E20', paper2:'#202325', ink:'#ECEDEE', soft:'#B9BEC3', glass:'#232628', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#06261C', hl:'#5B4A12', line:'#7B8288', fill:'#2A2D30', edgeHi:'rgba(255,255,255,0.22)', edgeLo:'rgba(0,0,0,0.6)', bevel:'rgba(255,255,255,0.5)'},
+  'Night': {paper:'#17140F', paper2:'#1B1813', ink:'#ECE1CE', soft:'#BCAE96', glass:'#1E1A14', accent:'#E2A658', accentText:'#EBB673', onAccent:'#2A1A05', hl:'#5A4313', line:'#857A68', fill:'#26211A', edgeHi:'rgba(255,240,210,0.2)', edgeLo:'rgba(0,0,0,0.6)', bevel:'rgba(255,255,255,0.5)'},
+  'OLED': {paper:'#000000', paper2:'#060606', ink:'#E4E4E4', soft:'#A9A9A9', glass:'#101010', accent:'#5ACBA4', accentText:'#6FD9B4', onAccent:'#00180F', hl:'#4A3C0E', line:'#6E6E6E', fill:'#1A1A1A', edgeHi:'rgba(255,255,255,0.24)', edgeLo:'rgba(255,255,255,0.06)', bevel:'rgba(255,255,255,0.5)'},
+  'High Contrast Light': {solidGlass:true, paper:'#FFFFFF', paper2:'#FFFFFF', ink:'#000000', soft:'#262626', glass:'#FFFFFF', accent:'#002FA7', accentText:'#002FA7', onAccent:'#FFFFFF', hl:'#FFE94D', line:'#000000', fill:'#FFFFFF', edgeHi:'#000000', edgeLo:'#000000', bevel:'rgba(255,255,255,0)'},
+  'High Contrast Dark': {solidGlass:true, paper:'#000000', paper2:'#000000', ink:'#FFFFFF', soft:'#E6E6E6', glass:'#000000', accent:'#FFD60A', accentText:'#FFD60A', onAccent:'#000000', hl:'#5C4A00', line:'#FFFFFF', fill:'#000000', edgeHi:'#FFFFFF', edgeLo:'#FFFFFF', bevel:'rgba(0,0,0,0)'}
+};
+function isDark(hex) {
+  const h = hex.replace('#', '');
+  return parseInt(h.slice(0, 2), 16) + parseInt(h.slice(2, 4), 16) + parseInt(h.slice(4, 6), 16) < 240;
+}
+function rgba(hex, a) {
+  const h = hex.replace('#', '');
+  return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+}
+class Component extends DCLogic {
+  renderVals() {
+    const t = THEMES[this.props.theme ?? 'Daylight'] || THEMES.Daylight;
+    const a = GLASS[isDark(t.paper) ? 'dark' : 'light'];
+    const base = t.solidGlass ? t.glass : rgba(t.glass, a);
+    const rim = t.solidGlass ? t.glass : rgba(t.glass, Math.min(1, a + GLASS.rim));
+    return { vars: Object.keys(t).filter((k) => k !== 'solidGlass').map((k) => '--' + k + ':' + t[k]).join(';') + ';--glassCore:' + base + ';--glassRim:' + rim };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+using Microsoft.Maui.Controls.Shapes;
+using VisaryNotes.App.Controls;
+using VisaryNotes.App.Services;
+using VisaryNotes.Core.Data;
+using VisaryNotes.Core.Rendering;
+using VisaryNotes.Core.Theming;
+
+namespace VisaryNotes.App.Pages;
+
+/// <summary>
+/// A note, read or written (docs/SPEC.md 6.2). Saved notes open to read, with Edit as the main action, so a
+/// note is not a text field the moment it is opened; new notes open to write. Autosaves while writing.
+/// </summary>
+public partial class EditorPage : ContentPage, IQueryAttributable
+{
+    private readonly LibraryRepository _repo;
+    private readonly SettingsService _settings;
+    private readonly ThemeService _themes;
+    private Note _note = new() { Body = "" };
+    private CancellationTokenSource? _saveDelay;
+    private bool _loading;
+    private WebChrome? _chromeSync;
+    private WebView? _preview;
+
+    public EditorPage(LibraryRepository repo, SettingsService settings, ThemeService themes)
+    {
+        _repo = repo;
+        _settings = settings;
+        _themes = themes;
+        InitializeComponent();
+
+        BuildToolbar();
+        Body.TextChanged += (_, _) => ScheduleSave();
+        Dock.SizeChanged += (_, _) =>
+        {
+            // The text starts below the strip and ends above the pill and toolbar, so no bar covers it at rest.
+            var side = ThemeCatalog.Token("space", "sp-6");
+            Body.Margin = new Thickness(side, ThemeCatalog.Token("size", "h-strip") + ThemeCatalog.Token("space", "sp-4"), side, Dock.Height);
+        };
+        BuildPill();
+    }
+
+    public async void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        _loading = true;
+        if (query.TryGetValue("note", out var raw) && int.TryParse(raw?.ToString(), out var id) && await _repo.GetNoteAsync(id) is { } note)
+            _note = note;
+        else if (query.TryGetValue("text", out var shared) && shared is string sharedText)
+            _note = new Note { Body = sharedText };
+        else if (query.TryGetValue("template", out var t) && t?.ToString() == "checklist")
+            _note = new Note { Body = "# Checklist\n\n- [ ] " };
+        else
+            _note = new Note { Body = "# " };
+
+        Body.Text = _note.Body;
+        SaveState.Text = _note.Id == 0 ? "New note" : Status("Saved");
+        _loading = false;
+        if (_note.Id != 0 && query.TryGetValue("mode", out var mode) && mode?.ToString() == "view")
+        {
+            await ShowPreviewAsync();
+            return;
+        }
+        Body.Focus();
+        Body.CursorPosition = Body.Text.Length;
+    }
+
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _saveDelay?.Cancel();
+        await SaveAsync();
+    }
+
+    /// <summary>Preview, or Edit while previewing, is the main action; Share is used less often (E14).</summary>
+    private void BuildPill()
+    {
+        var previewing = PreviewHost.IsVisible;
+        Pill.SetActions(
+        [
+            new PillAction(Icons.Back, "Back to Library", () => Shell.Current.GoToAsync("..")),
+            new PillAction(previewing ? Icons.Edit : Icons.Preview, previewing ? "Edit" : "Preview", TogglePreviewAsync, IsPrimary: true),
+            new PillAction(Icons.Share, "Share", ShareAsync)
+        ]);
+    }
+
+    private void BuildToolbar()
+    {
+        void Add(string label, string glyphOrIcon, Action apply, bool isIcon = false) =>
+            Toolbar.Add(Pressable.Tool(isIcon ? Icons.Make(glyphOrIcon) : Pressable.Glyph(glyphOrIcon), label, apply));
+
+        Add("Bold", "B", () => Wrap("**"));
+        Add("Italic", "I", () => Wrap("*"));
+        Add("Heading", "H", () => LinePrefix("## "));
+        Add("Bulleted list", "•", () => LinePrefix("- "));
+        Add("Checklist", Icons.Check, () => LinePrefix("- [ ] "), isIcon: true);
+        Add("Remind me", Icons.Alarm, () => _ = RemindAsync(), isIcon: true);
+        Add("Quote", Icons.Quote, () => LinePrefix("> "), isIcon: true);
+        Add("Code", "{ }", () => Wrap("`"));
+        Add("Link", Icons.Link, () => Wrap("[", "](https://)"), isIcon: true);
+    }
+
+    private void Wrap(string open, string? close = null)
+    {
+        close ??= open;
+        var text = Body.Text ?? "";
+        var start = Math.Clamp(Body.CursorPosition, 0, text.Length);
+        var length = Math.Clamp(Body.SelectionLength, 0, text.Length - start);
+        var selected = text.Substring(start, length);
+        Body.Text = text[..start] + open + selected + close + text[(start + length)..];
+        Body.CursorPosition = start + open.Length;
+        Body.SelectionLength = selected.Length;
+        Body.Focus();
+    }
+
+    private void LinePrefix(string prefix)
+    {
+        var text = Body.Text ?? "";
+        var pos = Math.Clamp(Body.CursorPosition, 0, text.Length);
+        var lineStart = pos == 0 ? 0 : text.LastIndexOf('\n', pos - 1) + 1;
+        Body.Text = text[..lineStart] + prefix + text[lineStart..];
+        Body.CursorPosition = pos + prefix.Length;
+        Body.Focus();
+    }
+
+    /// <summary>
+    /// Gives the task on the cursor's line a reminder time, or changes or removes it (docs/SPEC.md 6.4). A line
+    /// that is not a task yet becomes one. The time is written into the note as "(@2026-10-23 14:00)".
+    /// </summary>
+    private async Task RemindAsync()
+    {
+        var text = Body.Text ?? "";
+        var pos = Math.Clamp(Body.CursorPosition, 0, text.Length);
+        var line = text[..pos].Count(c => c == '\n');
+        var task = NoteTasks.Parse(text).FirstOrDefault(t => t.Line == line);
+        var label = task?.Text ?? text.Split('\n')[line].Trim().TrimStart('-', '*', '+', ' ');
+        Body.Unfocus();
+        if (await ReminderService.AskAsync(this, label, task is null ? null : NoteTasks.ReminderAt(task), Dock) is not { } when)
+        {
+            Body.Focus();
+            return;
+        }
+        Body.Text = NoteTasks.SetDue(text, line, when.At);
+        var lines = Body.Text.Split('\n');
+        Body.CursorPosition = lines.Take(line + 1).Sum(l => l.Length + 1) - 1;
+        await SaveAsync();
+        Body.Focus();
+    }
+
+    private void ScheduleSave()
+    {
+        if (_loading)
+            return;
+        SaveState.Text = "Editing";
+        _saveDelay?.Cancel();
+        _saveDelay = new CancellationTokenSource();
+        var token = _saveDelay.Token;
+        Task.Delay(800, token).ContinueWith(async t =>
+        {
+            if (!t.IsCanceled)
+                await MainThread.InvokeOnMainThreadAsync(SaveAsync);
+        }, TaskScheduler.Default);
+    }
+
+    /// <summary>Save state with a word count, as writing apps show, so progress is visible at a glance.</summary>
+    private string Status(string state)
+    {
+        var words = MarkdownRenderer.ToPlainText(Body.Text ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+        return words == 0 ? state : $"{state} · {words} {(words == 1 ? "word" : "words")}";
+    }
+
+    private async Task SaveAsync()
+    {
+        var body = Body.Text ?? "";
+        if (body == _note.Body && _note.Id != 0)
+        {
+            SaveState.Text = Status("Saved");
+            return;
+        }
+        if (_note.Id == 0 && string.IsNullOrWhiteSpace(body.Trim('#', ' ', '\n')))
+            return;
+        var hadTimes = _note.Body.Contains("(@", StringComparison.Ordinal);
+        _note.Body = body;
+        await _repo.SaveNoteAsync(_note);
+        SaveState.Text = Status("Saved");
+        // Only notes that have or had a reminder time can change what is scheduled.
+        if (hadTimes || body.Contains("(@", StringComparison.Ordinal))
+            await ReminderService.RescheduleAsync();
+    }
+
+    private async Task TogglePreviewAsync()
+    {
+        if (PreviewHost.IsVisible)
+        {
+            PreviewHost.IsVisible = false;
+            Body.IsVisible = true;
+            ToolbarGlass.IsVisible = true;
+            BuildPill();
+            Body.Focus();
+            return;
+        }
+        await ShowPreviewAsync();
+    }
+
+    /// <summary>The note as it reads. Task boxes can be ticked here; the formatting bar is hidden.</summary>
+    private async Task ShowPreviewAsync()
+    {
+        await SaveAsync();
+        var html = HtmlRenderer.Page(MarkdownRenderer.ToHtml(Body.Text ?? ""), ViewMode.Reading,
+            new ReaderSettings(_themes.Current, _settings.ReadingFontSize, AllowRemoteImages: _settings.AllowRemoteImages, TaskBoxes: true));
+        Preview.Source = new HtmlWebViewSource { Html = html, BaseUrl = "file:///android_asset/" };
+        Body.IsVisible = false;
+        ToolbarGlass.IsVisible = false;
+        PreviewHost.IsVisible = true;
+        Body.Unfocus();
+        BuildPill();
+        _chromeSync?.Sync();
+    }
+
+    private WebView Preview => _preview ??= CreatePreview();
+
+    /// <summary>The preview is made on first use, because a WebView is slow to create.</summary>
+    private WebView CreatePreview()
+    {
+        var web = NoteWebView.Create(onTask: TickAsync);
+        PreviewHost.Content = web;
+        _chromeSync = new WebChrome(web, () => Strip, () => Dock);
+        _chromeSync.Track(Strip, Dock, Pill);
+        return web;
+    }
+
+    /// <summary>A box ticked in the view. The page already shows the tick, so only the note changes.</summary>
+    private async Task TickAsync(int index)
+    {
+        var tasks = NoteTasks.Parse(Body.Text ?? "");
+        if (index < 0 || index >= tasks.Count)
+            return;
+        Body.Text = NoteTasks.Toggle(Body.Text ?? "", tasks[index].Line);
+        await SaveAsync();
+    }
+
+    /// <summary>Exports in the formats available in v0.1 and hands the file to the Android share sheet (docs/SPEC.md 8.2).</summary>
+    private async Task ShareAsync()
+    {
+        await SaveAsync();
+        // The sheet rises from the bottom edge, so the keyboard goes away first.
+        Body.Unfocus();
+        var choice = await BottomSheet.ChooseAsync(this, "Share as", ["Word (.docx)", "Markdown (.md)", "Plain text (.txt)", "Web page (.html)"]);
+        if (choice is null or "Cancel")
+            return;
+        var name = DocumentService.SafeFileName(_note.Title, "Note");
+        string path;
+        if (choice == "Word (.docx)")
+        {
+            // Word is what most people can open, so a note can go back in the format others expect.
+            path = System.IO.Path.Combine(FileSystem.CacheDirectory, name + ".docx");
+            var title = _note.Title.Length > 0 ? _note.Title : "Note";
+            await File.WriteAllBytesAsync(path, await Task.Run(() => Core.Export.DocxWriter.FromMarkdown(_note.Body, title)));
+        }
+        else
+        {
+            var (ext, content) = choice switch
+            {
+                "Plain text (.txt)" => (".txt", MarkdownRenderer.ToPlainText(_note.Body)),
+                "Web page (.html)" => (".html", HtmlRenderer.Page(MarkdownRenderer.ToHtml(_note.Body), ViewMode.Reading, new ReaderSettings(ThemeCatalog.Get("Daylight")))),
+                _ => (".md", _note.Body)
+            };
+            path = System.IO.Path.Combine(FileSystem.CacheDirectory, name + ext);
+            await File.WriteAllTextAsync(path, content);
+        }
+        await Share.Default.RequestAsync(new ShareFileRequest(name, new ShareFile(path)));
+    }
+
+    /// <summary>Back closes an open sheet before it leaves the page.</summary>
+    protected override bool OnBackButtonPressed() => BottomSheet.Dismiss(this) || base.OnBackButtonPressed();
+}

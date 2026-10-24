@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Continue Reading widget (docs/SPEC.md 9.2). The whole widget is one target. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/vn_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/vn_widget_frost"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/vn_sp_4"
+    android:paddingTop="@dimen/vn_sp_3"
+    android:paddingEnd="@dimen/vn_sp_4"
+    android:paddingBottom="@dimen/vn_sp_3">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Continue reading"
+        android:textColor="@color/vn_widget_soft"
+        android:textSize="@dimen/vn_text_caption" />
+
+    <TextView
+        android:id="@+id/vn_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Nothing open yet"
+        android:textColor="@color/vn_widget_ink"
+        android:textSize="@dimen/vn_text_title"
+        android:textStyle="bold" />
+
+    <ProgressBar
+        android:id="@+id/vn_progress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/vn_quote_bar"
+        android:layout_marginTop="@dimen/vn_sp_2"
+        android:max="100"
+        android:progressTint="@color/vn_widget_accent"
+        android:progressBackgroundTint="@color/vn_widget_line" />
+
+    <TextView
+        android:id="@+id/vn_percent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/vn_sp_1"
+        android:textColor="@color/vn_widget_soft"
+        android:textSize="@dimen/vn_text_caption" />
+</LinearLayout>

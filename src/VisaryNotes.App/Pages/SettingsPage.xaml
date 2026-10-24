@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.SettingsPage"
+             Title="Settings">
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout>
+                <BoxView HeightRequest="{StaticResource HStrip}" Color="Transparent" />
+
+                <Label Text="Hand" Style="{StaticResource Cap}" />
+                <controls:Segments x:Name="Hands" Margin="{StaticResource InsetScreen}" />
+                <Label Style="{StaticResource T2}" MaxLines="3" LineBreakMode="WordWrap" Margin="{StaticResource InsetScreen}"
+                       Text="Moves the action pill to that thumb. You can also swipe the pill sideways. Centre suits both hands." />
+
+                <Label Text="Density" Style="{StaticResource Cap}" />
+                <controls:Segments x:Name="Densities" Margin="{StaticResource InsetScreen}" />
+
+                <Label Text="Theme" Style="{StaticResource Cap}" />
+                <BoxView HeightRequest="1" Color="{DynamicResource Line}" />
+                <VerticalStackLayout x:Name="ThemeList" />
+
+                <Label Text="Reading" Style="{StaticResource Cap}" />
+                <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <Label x:Name="FontSizeLabel" Style="{StaticResource T1}" VerticalTextAlignment="Center" />
+                    <!-- Smaller and larger, as two outlined 48dp buttons in the app's control shape. -->
+                    <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource Sp2}" VerticalOptions="Center">
+                        <controls:Pressable x:Name="Smaller" Style="{StaticResource OutlineButton}" SemanticProperties.Description="Smaller text">
+                            <Label Text="A&#x2212;" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                        </controls:Pressable>
+                        <controls:Pressable x:Name="Larger" Style="{StaticResource OutlineButton}" SemanticProperties.Description="Larger text">
+                            <Label Text="A+" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontH3}" />
+                        </controls:Pressable>
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <Label Text="Glass and privacy" Style="{StaticResource Cap}" />
+                <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Reduce transparency" Style="{StaticResource T1}" />
+                        <Label Text="Bars become solid paper" Style="{StaticResource T2}" />
+                    </VerticalStackLayout>
+                    <controls:Toggle x:Name="Solid" Grid.Column="1" SemanticProperties.Hint="Reduce transparency" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Load images from the web" Style="{StaticResource T1}" />
+                        <Label Text="Off keeps every file fully offline" Style="{StaticResource T2}" />
+                    </VerticalStackLayout>
+                    <controls:Toggle x:Name="Remote" Grid.Column="1" SemanticProperties.Hint="Load images from the web" />
+                </Grid>
+
+                <Label Text="Bring your notes" Style="{StaticResource Cap}" />
+                <controls:Pressable x:Name="ImportRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Import Markdown files" Style="{StaticResource T1}" />
+                        <Label x:Name="ImportStatus" Text="From Markor, Obsidian or any .md files" Style="{StaticResource T2}" />
+                    </VerticalStackLayout>
+                </controls:Pressable>
+
+                <Label Text="Library" Style="{StaticResource Cap}" />
+                <controls:Pressable x:Name="CleanRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Clean up Library" Style="{StaticResource T1}" />
+                        <Label Text="Remove documents not opened in 30 days. Highlights and quotes are kept." Style="{StaticResource T2}" MaxLines="2" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </controls:Pressable>
+
+                <Label Text="Reminders" Style="{StaticResource Cap}" />
+                <controls:Pressable x:Name="ReminderRow" Padding="{StaticResource InsetRow}" MinimumHeightRequest="{StaticResource HRow}">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Exact reminder times" Style="{StaticResource T1}" />
+                        <Label x:Name="ReminderStatus" Style="{StaticResource T2}" MaxLines="3" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </controls:Pressable>
+
+                <BoxView HeightRequest="160" Color="Transparent" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <controls:GlassView VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+            <Label Text="Settings" Style="{StaticResource StripTitle}" Margin="{StaticResource InsetStrip}" />
+        </controls:GlassView>
+
+        <Grid x:Name="PillRow" VerticalOptions="End" Padding="{StaticResource InsetPillRow}">
+            <controls:ActionPill x:Name="Pill" />
+        </Grid>
+    </Grid>
+</ContentPage>

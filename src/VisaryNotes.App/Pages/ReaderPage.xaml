@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.ReaderPage"
+             Title="Reader">
+
+    <Grid>
+        <!-- Quote to note and Highlight join the system's selection toolbar; there is no second menu in the page. -->
+        <controls:SelectionWebView x:Name="Web" BackgroundColor="{DynamicResource Paper}" />
+
+        <!-- Glance zone: file name and progress only. -->
+        <VerticalStackLayout x:Name="Top" VerticalOptions="Start">
+            <controls:GlassView x:Name="Strip" HeightRequest="{StaticResource HStrip}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                    <Label x:Name="FileName" Style="{StaticResource StripTitle}" />
+                    <Label x:Name="Progress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
+                </Grid>
+            </controls:GlassView>
+            <Label x:Name="Warning" IsVisible="False" Padding="{StaticResource InsetRow}"
+                   Style="{StaticResource T2}" MaxLines="4" LineBreakMode="WordWrap" BackgroundColor="{DynamicResource Highlight}" TextColor="{DynamicResource Ink}" />
+        </VerticalStackLayout>
+
+        <!-- Act zone: action pill above the view switch. -->
+        <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
+            <Grid x:Name="PillRow" Padding="{StaticResource InsetPillRow}">
+                <controls:ActionPill x:Name="Pill" />
+            </Grid>
+            <!-- Find in document: field, match count, previous, next, close. Replaces the pill while open. -->
+            <controls:GlassView x:Name="FindBar" IsVisible="False">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{StaticResource Sp1}" Margin="{StaticResource InsetBar}">
+                    <Border Style="{StaticResource Field}" HeightRequest="{StaticResource HControl}">
+                        <Entry x:Name="FindEntry" Placeholder="Find in document" ReturnType="Search" SemanticProperties.Description="Find in document" />
+                    </Border>
+                    <Label x:Name="FindCount" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" VerticalTextAlignment="Center" />
+                    <controls:Pressable x:Name="FindPrev" Grid.Column="2" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Previous match" />
+                    <controls:Pressable x:Name="FindNext" Grid.Column="3" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Next match" />
+                    <controls:Pressable x:Name="FindClose" Grid.Column="4" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}" SemanticProperties.Description="Close find" />
+                </Grid>
+            </controls:GlassView>
+            <controls:GlassView x:Name="ModeBar">
+                <controls:Segments x:Name="Modes" Margin="{StaticResource InsetBar}" />
+            </controls:GlassView>
+        </VerticalStackLayout>
+
+        <!-- Linked note sheet: paper, because it holds long text (docs/DESIGN.md 4.1). -->
+        <Grid x:Name="Sheet" IsVisible="False" VerticalOptions="End" RowDefinitions="Auto,*,Auto" BackgroundColor="{DynamicResource Paper}">
+            <BoxView HeightRequest="2" Color="{DynamicResource Ink}" VerticalOptions="Start" />
+            <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource InsetSheet}">
+                <Label x:Name="SheetTitle" Style="{StaticResource T1}" FontFamily="FigtreeBold" VerticalTextAlignment="Center" />
+                <controls:Pressable x:Name="OpenNote" Grid.Column="1" HeightRequest="{StaticResource HControl}" Padding="{StaticResource InsetButtonSmall}"
+                                    SemanticProperties.Description="Open the note in the editor">
+                    <Label Text="Open note" Style="{StaticResource T1}" TextColor="{DynamicResource AccentText}" VerticalTextAlignment="Center" />
+                </controls:Pressable>
+            </Grid>
+            <!-- Created when the sheet first opens: WebViews are slow to create. -->
+            <ContentView x:Name="NoteHost" Grid.Row="1" />
+            <controls:GlassView Grid.Row="2">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}" Margin="{StaticResource InsetBar}">
+                    <Border Style="{StaticResource Field}">
+                        <Entry x:Name="Thought" Placeholder="Add a thought" ReturnType="Send" SemanticProperties.Description="Add a thought to the note" />
+                    </Border>
+                    <controls:GlassView Grid.Column="1" IsPill="True" WidthRequest="{StaticResource HPrimary}" HeightRequest="{StaticResource HPrimary}">
+                        <controls:Pressable x:Name="CloseSheet" SemanticProperties.Description="Close notes" />
+                    </controls:GlassView>
+                </Grid>
+            </controls:GlassView>
+        </Grid>
+    </Grid>
+</ContentPage>

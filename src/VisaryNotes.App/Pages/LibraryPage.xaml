@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:pages="clr-namespace:VisaryNotes.App.Pages"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.LibraryPage"
+             x:DataType="pages:LibraryPage"
+             Title="Library">
+
+    <Grid>
+        <!-- Read zone: content scrolls under the glass strip and the dock (docs/DESIGN.md 5.2). -->
+        <CollectionView x:Name="List" SelectionMode="None">
+            <CollectionView.Header>
+                <VerticalStackLayout>
+                    <BoxView HeightRequest="{StaticResource HStrip}" Color="Transparent" />
+                    <controls:Pressable x:Name="ContinueRow" IsVisible="False" Padding="{StaticResource InsetRow}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}">
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{DynamicResource Ink}">
+                                <Label x:Name="ContinueBadge" Style="{StaticResource BadgeText}" TextColor="{DynamicResource Paper}" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource Sp1}" VerticalOptions="Center">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label x:Name="ContinueTitle" Style="{StaticResource T1}" />
+                                    <Label x:Name="ContinueProgress" Grid.Column="1" Style="{StaticResource T2}" FontFamily="FigtreeBold" TextColor="{DynamicResource Ink}" />
+                                </Grid>
+                                <Grid HeightRequest="4" BackgroundColor="{DynamicResource Line}" ColumnDefinitions="*">
+                                    <BoxView x:Name="ContinueBar" Color="{DynamicResource Accent}" HorizontalOptions="Start" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </controls:Pressable>
+                    <!-- First run: what the app is for, the promises that lower the cost of trying (docs/UX-REVIEW.md, TPB and IDT),
+                         and the one way in the pill does not offer. Open file and New note are the pill's own buttons, not repeated here. -->
+                    <VerticalStackLayout x:Name="EmptyText" IsVisible="False" Padding="{StaticResource InsetSheet}" Spacing="{StaticResource Sp3}">
+                        <Label Text="Your reading and your notes, in one place" Style="{StaticResource T1}" FontFamily="FigtreeBold" MaxLines="2" LineBreakMode="WordWrap" />
+                        <Label Style="{StaticResource T2}" TextColor="{DynamicResource Ink}" MaxLines="4" LineBreakMode="WordWrap"
+                               Text="Open a file someone sent you, select a passage, and quote it into a note. The quote keeps a link back to its page. Start with Open file or New note below." />
+                        <controls:Pressable x:Name="EmptyImport" Style="{StaticResource WideButton}" SemanticProperties.Description="Bring Markdown notes from another app">
+                            <Label Text="Bring Markdown notes" Style="{StaticResource WideButtonText}" />
+                        </controls:Pressable>
+                        <Label Style="{StaticResource T2}" MaxLines="3" LineBreakMode="WordWrap"
+                               Text="Works offline. No account. Notes stay plain Markdown that you can take anywhere." />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout x:Name="TrashHeader" IsVisible="False" Padding="{StaticResource InsetSheet}" Spacing="{StaticResource Sp3}">
+                        <Label x:Name="TrashText" Style="{StaticResource T2}" TextColor="{DynamicResource Ink}" MaxLines="3" LineBreakMode="WordWrap" />
+                        <controls:Pressable x:Name="EmptyTrash" Style="{StaticResource WideButton}" SemanticProperties.Description="Empty Trash">
+                            <Label Text="Empty Trash" Style="{StaticResource WideButtonText}" />
+                        </controls:Pressable>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="pages:LibraryRow">
+                    <!-- Row actions sit behind a visible more button instead of a hidden swipe, so they can be
+                         found, reached by TalkBack, and the list stays light to scroll (docs/UX-REVIEW.md). -->
+                    <Grid BackgroundColor="{Binding RowFill}" ColumnDefinitions="*,Auto">
+                        <!-- Tap opens (or ticks a task); a long press opens the row's actions, as on any Android list. -->
+                        <controls:PressRow ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Sp3}"
+                                           Padding="{StaticResource InsetRowLead}" MinimumHeightRequest="{Binding RowHeight}"
+                                           Tapped="OnRowTapped" LongPressed="OnRowLongPressed">
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{Binding BadgeFill}" IsVisible="{Binding NotSelecting}">
+                                <Label Text="{Binding Badge}" Style="{StaticResource BadgeText}" TextColor="{Binding BadgeInk}" />
+                            </Border>
+                            <!-- In selection mode the badge becomes a check box: outlined when off, filled ink with a tick when on. -->
+                            <Border Style="{StaticResource Badge}" BackgroundColor="{Binding CheckFill}" IsVisible="{Binding IsSelecting}">
+                                <Path Data="M5 12L9 16L19 6" Stroke="{DynamicResource PaperBrush}" StrokeThickness="2.5" StrokeLineCap="Square"
+                                      WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center"
+                                      IsVisible="{Binding IsSelected}" InputTransparent="True" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp3}">
+                                    <Label Text="{Binding Title}" Style="{StaticResource T1}" />
+                                    <Label Grid.Column="1" Text="{Binding DateText}" Style="{StaticResource T2}" TextColor="{Binding DateInk}" />
+                                </Grid>
+                                <Label Text="{Binding Snippet}" Style="{StaticResource T2}" IsVisible="{Binding ShowSnippet}" />
+                            </VerticalStackLayout>
+                        </controls:PressRow>
+                        <controls:Pressable Grid.Column="1" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
+                                            VerticalOptions="Center" Margin="{StaticResource InsetRowTrail}" IsVisible="{Binding NotSelecting}"
+                                            SemanticProperties.Description="{Binding MoreLabel}">
+                            <controls:Pressable.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMoreTapped" />
+                            </controls:Pressable.GestureRecognizers>
+                            <Path Data="M5 12H6M11.5 12H12.5M18 12H19" Stroke="{DynamicResource InkBrush}" StrokeThickness="2.5"
+                                  StrokeLineCap="Square" WidthRequest="24" HeightRequest="24" HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True" />
+                        </controls:Pressable>
+                        <BoxView Grid.ColumnSpan="2" HeightRequest="1" Color="{DynamicResource Line}" VerticalOptions="End" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <BoxView HeightRequest="220" Color="Transparent" />
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <!-- Glance zone: passive information only. Settings is rarely used, so it may live here. -->
+        <controls:GlassView VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Sp3}" Padding="{StaticResource InsetStrip}">
+                <Label Text="Library" Style="{StaticResource StripTitle}" />
+                <Label x:Name="Counts" Grid.Column="1" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
+                <controls:Pressable x:Name="SettingsButton" Grid.Column="2" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
+                                    SemanticProperties.Description="Settings" />
+            </Grid>
+        </controls:GlassView>
+
+        <!-- Act zone: floating action pill above the filter tabs (docs/DESIGN.md 4.4, E1 to E3). -->
+        <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
+            <Grid x:Name="PillRow" Padding="{StaticResource InsetPillRow}">
+                <controls:ActionPill x:Name="Pill" />
+                <Grid x:Name="SearchRow" IsVisible="False" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Sp2}">
+                    <Border Style="{StaticResource Field}">
+                        <Entry x:Name="SearchEntry" Placeholder="Search notes and documents" ReturnType="Search"
+                               SemanticProperties.Description="Search notes and documents" />
+                    </Border>
+                    <controls:GlassView Grid.Column="1" IsPill="True" WidthRequest="{StaticResource HPrimary}" HeightRequest="{StaticResource HPrimary}">
+                        <controls:Pressable x:Name="CancelSearch" SemanticProperties.Description="Cancel search" />
+                    </controls:GlassView>
+                </Grid>
+            </Grid>
+            <controls:GlassView x:Name="FilterBar">
+                <controls:Segments x:Name="Filters" Margin="{StaticResource InsetBar}" />
+            </controls:GlassView>
+            <!-- Selection mode replaces the pill and filters with the actions for the selected rows. -->
+            <controls:GlassView x:Name="SelectBar" IsVisible="False">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="{StaticResource Sp1}" Margin="{StaticResource InsetBar}">
+                    <controls:Pressable x:Name="SelectClose" WidthRequest="{StaticResource HControl}" HeightRequest="{StaticResource HControl}"
+                                        SemanticProperties.Description="Done selecting" />
+                    <Label x:Name="SelectCount" Grid.Column="1" Style="{StaticResource T1}" FontFamily="FigtreeBold" VerticalTextAlignment="Center" />
+                    <controls:Pressable x:Name="SelectAll" Grid.Column="2" HeightRequest="{StaticResource HControl}" Padding="{StaticResource InsetButtonSmall}"
+                                        SemanticProperties.Description="Select all">
+                        <Label Text="All" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                    <controls:Pressable x:Name="SelectSecond" Grid.Column="3" Style="{StaticResource SmallButton}">
+                        <Label x:Name="SelectSecondText" Style="{StaticResource OutlineButtonText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                    <controls:Pressable x:Name="SelectPrimary" Grid.Column="4" Style="{StaticResource SmallButtonPrimary}">
+                        <Label x:Name="SelectPrimaryText" Style="{StaticResource WideButtonPrimaryText}" FontSize="{StaticResource FontUi}" />
+                    </controls:Pressable>
+                </Grid>
+            </controls:GlassView>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

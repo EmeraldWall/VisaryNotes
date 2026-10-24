@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:VisaryNotes.App.Controls"
+             x:Class="VisaryNotes.App.Pages.EditorPage"
+             Title="Note">
+
+    <Grid>
+        <controls:MarkdownEditor x:Name="Body" AutoSize="Disabled"
+                                 Placeholder="Start with a heading, then write"
+                                 SemanticProperties.Description="Note text in Markdown" />
+        <!-- The preview WebView is created on first use: WebViews are slow to create. -->
+        <ContentView x:Name="PreviewHost" IsVisible="False" />
+
+        <controls:GlassView x:Name="Strip" VerticalOptions="Start" HeightRequest="{StaticResource HStrip}">
+            <!-- Save state and word count only: the note's own heading is already the first line below (E13). -->
+            <Grid Padding="{StaticResource InsetStrip}">
+                <Label x:Name="SaveState" Style="{StaticResource T2}" VerticalTextAlignment="Center" />
+            </Grid>
+        </controls:GlassView>
+
+        <VerticalStackLayout x:Name="Dock" VerticalOptions="End">
+            <Grid Padding="{StaticResource InsetPillRow}">
+                <controls:ActionPill x:Name="Pill" />
+            </Grid>
+            <controls:GlassView x:Name="ToolbarGlass">
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="{StaticResource InsetBar}">
+                    <HorizontalStackLayout x:Name="Toolbar" Spacing="{StaticResource Sp1}" />
+                </ScrollView>
+            </controls:GlassView>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

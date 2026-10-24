@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VisaryNotes.App.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Daylight colours as a starting point. ThemeService replaces them before the first page appears. -->
+            <Color x:Key="Paper">#FBFAF7</Color>
+            <Color x:Key="Ink">#15181A</Color>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Generated/Tokens.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

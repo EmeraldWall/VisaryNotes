@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 108 108">
+  <!-- Source drawing of the adaptive icon. Android uses the vector drawables in
+       src/VisaryNotes.App/Platforms/Android/Resources (vn_icon_*.xml); keep both in step. -->
+  <defs>
+    <radialGradient id="glass" cx="54" cy="50" r="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0E7356"/><stop offset="0.55" stop-color="#0A6249"/><stop offset="1" stop-color="#06483A"/>
+    </radialGradient>
+  </defs>
+  <rect width="108" height="108" fill="url(#glass)"/>
+  <g id="mark">
+    <path fill="#000" fill-opacity="0.2" d="M37,30.5H63L73,40.5V80.5H37Z"/>
+    <path fill="#FBFAF7" d="M36,29H62L72,39V79H36Z"/>
+    <path fill="#D9D6CC" d="M62,29V39H72Z"/>
+    <path fill="#0A6249" d="M40.4,43.5L45.6,40.5L54,55L62.4,40.5L67.6,43.5L56.6,62.5H51.4Z"/>
+    <path fill="#15181A" d="M42,66.5H66V69.5H42Z"/>
+    <path fill="#15181A" d="M42,72H58V75H42Z"/>
+  </g>
+</svg>

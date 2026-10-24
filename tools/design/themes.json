@@ -1,0 +1,93 @@
+{
+ "Daylight": {
+  "paper": "#FBFAF7",
+  "desk": "#E6E9E5",
+  "ink": "#15181A",
+  "soft": "#474D52",
+  "glass": "#F7F7F4",
+  "accent": "#0A6249",
+  "accentText": "#08573F",
+  "onAccent": "#FFFFFF",
+  "hl": "#FFE680",
+  "sel": "#C7DBFF",
+  "line": "#7E8780"
+ },
+ "Sepia": {
+  "paper": "#F3EBD9",
+  "desk": "#E3D7BE",
+  "ink": "#251C12",
+  "soft": "#54452F",
+  "glass": "#F1E8D4",
+  "accent": "#7A3B10",
+  "accentText": "#6E340D",
+  "onAccent": "#FFFFFF",
+  "hl": "#F6D27A",
+  "sel": "#C9D7F2",
+  "line": "#8C7B60"
+ },
+ "Dusk": {
+  "paper": "#1C1E20",
+  "desk": "#131415",
+  "ink": "#ECEDEE",
+  "soft": "#B9BEC3",
+  "glass": "#232628",
+  "accent": "#5ACBA4",
+  "accentText": "#6FD9B4",
+  "onAccent": "#06261C",
+  "hl": "#5B4A12",
+  "sel": "#24406E",
+  "line": "#7B8288"
+ },
+ "Night": {
+  "paper": "#17140F",
+  "desk": "#0E0C09",
+  "ink": "#ECE1CE",
+  "soft": "#BCAE96",
+  "glass": "#1E1A14",
+  "accent": "#E2A658",
+  "accentText": "#EBB673",
+  "onAccent": "#2A1A05",
+  "hl": "#5A4313",
+  "sel": "#3A3550",
+  "line": "#857A68"
+ },
+ "OLED": {
+  "paper": "#000000",
+  "desk": "#000000",
+  "ink": "#E4E4E4",
+  "soft": "#A9A9A9",
+  "glass": "#101010",
+  "accent": "#5ACBA4",
+  "accentText": "#6FD9B4",
+  "onAccent": "#00180F",
+  "hl": "#4A3C0E",
+  "sel": "#1E3560",
+  "line": "#6E6E6E"
+ },
+ "High Contrast Light": {
+  "paper": "#FFFFFF",
+  "desk": "#FFFFFF",
+  "ink": "#000000",
+  "soft": "#262626",
+  "glass": "#FFFFFF",
+  "accent": "#002FA7",
+  "accentText": "#002FA7",
+  "onAccent": "#FFFFFF",
+  "hl": "#FFE94D",
+  "sel": "#BFD3FF",
+  "line": "#000000"
+ },
+ "High Contrast Dark": {
+  "paper": "#000000",
+  "desk": "#000000",
+  "ink": "#FFFFFF",
+  "soft": "#E6E6E6",
+  "glass": "#000000",
+  "accent": "#FFD60A",
+  "accentText": "#FFD60A",
+  "onAccent": "#000000",
+  "hl": "#5C4A00",
+  "sel": "#1F3A80",
+  "line": "#FFFFFF"
+ }
+}

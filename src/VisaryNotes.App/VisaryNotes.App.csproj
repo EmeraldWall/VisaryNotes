@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Android only for v1 (docs/SPEC.md 1.3). -->
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>VisaryNotes.App</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+
+		<!-- Material 3 controls stay off: MAUI 10 draws Entry as an outlined Material field with a floating label
+		     and a purple default outline, which doubles up with the app's own field (docs/SPEC.md 4). -->
+		<UseMaterial3>false</UseMaterial3>
+
+		<ApplicationTitle>VisaryNotes</ApplicationTitle>
+		<ApplicationId>com.vishvplus.visarynotes</ApplicationId>
+		<ApplicationDisplayVersion>0.2.11</ApplicationDisplayVersion>
+		<ApplicationVersion>13</ApplicationVersion>
+
+		<SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- The app icon is a hand written adaptive icon with a themed (monochrome) layer, which MauiIcon cannot
+		     produce: Platforms/Android/Resources/mipmap-anydpi-v26/vn_icon.xml. Source drawing: design/icon. -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#FBFAF7" BaseSize="128,128" />
+		<MauiImage Include="Resources\Images\*" />
+		<MauiFont Include="Resources\Fonts\*" />
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+		<PackageReference Include="CommunityToolkit.Mvvm" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\VisaryNotes.Core\VisaryNotes.Core.csproj" />
+	</ItemGroup>
+
+</Project>

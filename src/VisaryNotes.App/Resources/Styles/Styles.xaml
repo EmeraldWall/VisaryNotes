@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Component styles. Every size comes from Generated/Tokens.xaml (tools/design/tokens.json).
+    Rule from docs/DESIGN.md 4.8: implicit styles never set Padding or Margin. Only keyed component styles do.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:VisaryNotes.App.Controls">
+
+    <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{DynamicResource Paper}" />
+        <Setter Property="Shell.NavBarIsVisible" Value="False" />
+        <!-- All keeps pages clear of the system bars, as the default does, and also lifts them above the
+             keyboard, so bottom bars and fields stay visible while typing (MAUI 10 SafeAreaRegions). -->
+        <Setter Property="SafeAreaEdges" Value="All" />
+    </Style>
+
+    <Style TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeMedium" />
+        <Setter Property="FontSize" Value="{StaticResource FontUi}" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+    </Style>
+
+    <Style x:Key="T1" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeSemiBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontTitle}" />
+        <Setter Property="LineHeight" Value="1.5" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+        <Setter Property="MaxLines" Value="1" />
+    </Style>
+
+    <Style x:Key="T2" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeMedium" />
+        <Setter Property="FontSize" Value="{StaticResource FontLabel}" />
+        <Setter Property="TextColor" Value="{DynamicResource Soft}" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+        <Setter Property="MaxLines" Value="1" />
+    </Style>
+
+    <Style x:Key="Cap" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontCaption}" />
+        <Setter Property="TextColor" Value="{DynamicResource Soft}" />
+        <Setter Property="CharacterSpacing" Value="1" />
+        <Setter Property="TextTransform" Value="Uppercase" />
+        <Setter Property="Margin" Value="{StaticResource InsetSectionLabel}" />
+    </Style>
+
+    <Style x:Key="StripTitle" TargetType="Label" BasedOn="{StaticResource T1}">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PillPrimaryText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontTitle}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnAccent}" />
+    </Style>
+
+    <Style x:Key="SegmentText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeSemiBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontUi}" />
+    </Style>
+
+    <Style x:Key="Badge" TargetType="Border">
+        <Setter Property="WidthRequest" Value="{StaticResource Badge}" />
+        <Setter Property="HeightRequest" Value="{StaticResource Badge}" />
+        <Setter Property="StrokeThickness" Value="1.5" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="BadgeText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontCaption}" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="Field" TargetType="Border">
+        <Setter Property="HeightRequest" Value="{StaticResource HPrimary}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Paper}" />
+        <Setter Property="Padding" Value="{StaticResource InsetButton}" />
+    </Style>
+
+    <Style TargetType="Entry">
+        <Setter Property="FontFamily" Value="FigtreeMedium" />
+        <Setter Property="FontSize" Value="{StaticResource FontTitle}" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource Soft}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style TargetType="Editor">
+        <Setter Property="FontFamily" Value="Literata" />
+        <Setter Property="FontSize" Value="{StaticResource FontRead}" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="PlaceholderColor" Value="{DynamicResource Soft}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
+    <Style TargetType="CollectionView">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
+    <!-- Square cornered outlined button (2dp ink, r-1) used for small secondary actions. -->
+    <Style x:Key="OutlineButton" TargetType="controls:Pressable">
+        <Setter Property="WidthRequest" Value="{StaticResource HControl}" />
+        <Setter Property="HeightRequest" Value="{StaticResource HControl}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+    </Style>
+
+    <Style x:Key="OutlineButtonText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+
+    <!-- Full width 56dp buttons for first run and empty states. Primary is accent filled, the rest outlined. -->
+    <Style x:Key="WideButton" TargetType="controls:Pressable">
+        <Setter Property="HeightRequest" Value="{StaticResource HPrimary}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+        <Setter Property="Padding" Value="{StaticResource InsetButton}" />
+    </Style>
+
+    <Style x:Key="WideButtonText" TargetType="Label">
+        <Setter Property="FontFamily" Value="FigtreeBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontTitle}" />
+        <Setter Property="TextColor" Value="{DynamicResource Ink}" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="WideButtonPrimaryText" TargetType="Label" BasedOn="{StaticResource WideButtonText}">
+        <Setter Property="TextColor" Value="{DynamicResource OnAccent}" />
+    </Style>
+
+    <!-- 48dp text buttons for bars: outlined, and accent filled for the main action. -->
+    <Style x:Key="SmallButton" TargetType="controls:Pressable">
+        <Setter Property="HeightRequest" Value="{StaticResource HControl}" />
+        <Setter Property="Padding" Value="{StaticResource InsetButtonSmall}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="Stroke" Value="{DynamicResource InkBrush}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 2" />
+    </Style>
+
+    <Style x:Key="SmallButtonPrimary" TargetType="controls:Pressable" BasedOn="{StaticResource SmallButton}">
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{DynamicResource Accent}" />
+        <Setter Property="ThumbColor" Value="{DynamicResource Ink}" />
+    </Style>
+
+</ResourceDictionary>
